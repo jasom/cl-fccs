@@ -432,6 +432,13 @@
 	collect `(deffield ,(make-keyword (format nil "~A-ATTR-BONUS" skill)) (character)
 		   (calculate-field ,(get-skill-attr item) character))))
 
+#.`(deffield :total-ranks (character)
+     (+
+      ,@(loop for item in +skills+
+	     for skill = (ssub "_" " " (string item))
+	     collect `(aget ,(make-keyword (format nil "~a-RANKS" skill)) character))))
+
+
 (deffield :career-level (character)
   (let ((sum 0))
     (loop for item in (aget :classes character)

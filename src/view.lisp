@@ -597,10 +597,13 @@
 		       (:div
 			:class-name "pure-u-1 pure-u-xl-1-2"
 			(:h2
+			 :class-name "pure-u-3-4"
 			 :style ({(create text-align "center"
 					  margin 0
 					  background-color "#e0e0e0"))
 			 "Skills")
+			(output-field total-ranks
+				      :class-name "pure-u-1-4")
 			(skill-table #.(subseq +skills+ 0 (ceiling (length +skills+) 2)))
 			(skill-table #.(subseq +skills+ (ceiling (length +skills+) 2))))
 		       (:div
