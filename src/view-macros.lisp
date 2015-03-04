@@ -131,12 +131,14 @@
 (defmacro output-field (name &key
 			       (class-name nil)
 			       (show-label t)
+			       (label-as nil)
 			       (input-class "pure-input-1"))
   `(htm
     (:*fudgable-field
      :name ,(make-keyword name)
      :class-name ({ ,class-name )
      :show-label ({ ,show-label )
+     :label-as ({ ,label-as )
      :default-fudge ({ (if (listp (aget ,(make-keyword name) (chain this state fudges)))
 			  (aget ,(make-keyword name) (chain this state fudges)) 
 			  (list)))

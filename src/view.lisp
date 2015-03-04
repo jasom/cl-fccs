@@ -74,7 +74,9 @@
 				
 		       ))))))
 	       ({ (when (chain this props show-label)
-		 (htm (:label ({(better-capitalize (chain this props name)))))))))))
+		 (htm (:label ({(better-capitalize
+				 (or (chain this props label-as)
+				     (chain this props name))))))))))))
 
 (defreact *validating-checkbox
     get-initial-state (lambda ()
