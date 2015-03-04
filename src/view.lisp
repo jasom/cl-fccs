@@ -843,8 +843,8 @@
 				       :class-name "pure-u-1-6"
 				       :show-label nil)
 			 (:div
-			  :class-name "pure-u-1-3"
-			  "Melee label")
+			  :class-name "pure-u-1-3 label"
+			  "Melee")
 			 (output-field :melee-bonus
 				       :class-name "pure-u-1-6"
 				       :show-label nil)
@@ -858,8 +858,8 @@
 				       :class-name "pure-u-1-6"
 				       :show-label nil)
 			 (:div
-			  :class-name "pure-u-1-3"
-			  "Ranged label")
+			  :class-name "pure-u-1-3 label"
+			  "Ranged")
 			 (output-field :ranged-bonus
 				       :class-name "pure-u-1-6"
 				       :show-label nil)
@@ -908,8 +908,8 @@
 				       :class-name "pure-u-1-6"
 				       :show-label nil)
 			 (:div
-			  :class-name "pure-u-1-3"
-			  "Reflex label")
+			  :class-name "pure-u-1-3 label"
+			  "Reflex")
 			 (output-field :reflex-bonus
 				       :class-name "pure-u-1-6"
 				       :show-label nil)
@@ -923,8 +923,8 @@
 				       :class-name "pure-u-1-6"
 				       :show-label nil)
 			 (:div
-			  :class-name "pure-u-1-3"
-			  "Will label")
+			  :class-name "pure-u-1-3 label"
+			  "Will")
 			 (output-field :will-bonus
 				       :class-name "pure-u-1-6"
 				       :show-label nil)
