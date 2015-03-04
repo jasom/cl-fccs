@@ -284,8 +284,10 @@
 	    (htm
 	     (:div
 	      (input-field type :class-name "pure-u-1-3 pure-u-md-1-6")
-	      (input-field dmg-die :class-name "pure-u-1-3 pure-u-md-1-6")
+	      (input-field dmg-die :class-name "pure-u-1-6 pure-u-md-1-12")
+	      (:div :style ({(create text-align :center)) :class-name "pure-u-1-24" "+")
 	      ({(chain this props dmg-bonus))
+	      ({(chain this props atk-bonus))
 	      (input-field threat
 			  :parser ({ parse-int) :class-name "pure-u-1-3 pure-u-md-1-6")
 	      (input-field size :class-name "pure-u-1-6 pure-u-md-1-12")
@@ -294,7 +296,8 @@
 	      (input-field weight
 			  :parser ({ parse-int) :class-name "pure-u-1-3 pure-u-md-1-6")
 	      (input-field rng
-			  :parser ({ parse-int) :class-name "pure-u-1-3 pure-u-md-1-6")
+			  :parser ({ (lambda (x) (when x (parse-int x))))
+			  :class-name "pure-u-1-3 pure-u-md-1-6")
 	      (input-field shots
 			  :parser ({ parse-int) :class-name "pure-u-1-3 pure-u-md-1-6")
 	      (input-field qualities :class-name "pure-u-1 pure-u-md-1-2")))))
@@ -941,7 +944,10 @@
 			 :default-value ({(or (chain this state :weapon-1) nil))
 			 ;TODO validator
 			 :on-change ({(chain this (handle-change this :weapon-1)))
+			 :atk-bonus ({(output-field weapon-1-atk-bonus
+						    :class-name "pure-u-1-6"))
 			 :dmg-bonus ({(output-field weapon-1-dmg-bonus
+						    :label-as "Dmg. Bonus"
 						    :class-name "pure-u-1-6")))
 			)
 		       ))))

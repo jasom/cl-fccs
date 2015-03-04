@@ -657,12 +657,37 @@
 (deffield :travel-speed (character)
   (ceiling (/ (calculate-field :ground-speed character) 10)))
 
+(deffield :weapon-1-atk-bonus (character)
+  (let ((base-bonus
+	  (cond
+	    ((aget :rng (aget :weapon-1 character))
+	     (calculate-field :ranged-bonus character))
+	    ((eql (aget :type (aget :weapon-1 character)) :unarmed)
+	     (calculate-field :unarmed-bonus character))
+	    (t
+	     (calculate-field :melee-bonus character))))
+	(proficient-bonus
+	 (cond
+	   ((not (member (aget :type (aget :weapon-1 character))
+			 (aget :proficiency-list character)))
+	    -4)
+	   ((member (aget :type (aget :weapon-1 character))
+		    (aget :forte-list character))
+	    1)
+	   (t 0))))
+    (+ base-bonus proficient-bonus)))
+		    
+
 (deffield :weapon-1-dmg-bonus (character)
-  (if (or
-       (re-match "finesse" (aget :qualities (aget :weapon-1 character)))
-       (eql :hurled (aget :type (aget :weapon-1 character))))
-      (calculate-field :dex-mod character)
-      (calculate-field :str-mod character)))
+  (cond
+    ((re-match "finesse" (aget :qualities (aget :weapon-1 character)))
+     (calculate-field :dex-mod character))
+    ((member (aget :type (aget :weapon-1 character))
+	     '(:bows :black-powder :siege-weapons))
+     0)
+    (t
+     (calculate-field :str-mod character))))
+
 
 #+(or)(
    (armor-type :type (or null (member :partial :moderate))

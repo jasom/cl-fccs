@@ -1,3 +1,0 @@
-* TODO Skill Total
-* DONE Save List As
-* TODO Add List As None
