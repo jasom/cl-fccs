@@ -207,15 +207,18 @@
 			(chain ths props (on-change newarray)))))
     del (lambda (the-key)
 	  (let ((ths this))
-	  (destructuring-bind (newitems newkeys)
-	      (loop for item in (chain ths props value)
-		 for key in (chain ths state keys)
-		   unless (eql key the-key)
-		   collect item into items
-		   collect key into keys
-		   finally (return (list items keys)))
-	    (chain this (set-state (create keys newkeys)))
-	    (chain this props (on-change newitems)))))
+	    (lambda (ev)
+	      (chain ev (prevent-default))
+	      (destructuring-bind (newitems newkeys)
+		  (loop for item in (chain ths props value)
+		     for key in (chain ths state keys)
+		     unless (eql key the-key)
+		     collect item into items and
+		     collect key into keys
+		     finally (return (list items keys)))
+		(chain ths props (on-change newitems))
+		(chain ths (set-state (create keys newkeys)))
+		))))
 		       
     add (lambda ()
 	  (let ((newarray (chain this props value (slice)))
@@ -255,10 +258,7 @@
 			     :class-name "pure-u-1 pure-u-md-1-12"
 			     (:button :class-name "pure-button"
 				      :style ({(create margin 0 padding "0.25em"))
-				      :on-click ({ (chain
-						    (lambda (event)
-						      (chain event (prevent-default))
-						      (chain ths (del key)))))
+				      :on-click ({ (chain ths (del key)))
 				      (esc (string #\en_dash))))
 			    ({ (chain ths props (make-row item (chain ths (handle-change ths i)))))
 			    )))))
