@@ -19,7 +19,7 @@
 				   :style ({(create background-color "white"
 						    padding 0))
 				   :validator ({ (chain this (validate this ',name)))
-				   :on-change ({ (chain this (handle-change this ',name))))
+				   :on-change ({ (chain this (handle-change ',name))))
 	       ,@(when show-label
 		       `((:label :html-for ({ id)
 				 ,(better-capitalize (string name)))))
@@ -48,7 +48,7 @@
 			     :style ({(create background-color "white"
 					      padding 0))
 			     :validator ({ (chain this (validate this ',name)))
-			     :on-change ({ (chain this (handle-change this ',name))))
+			     :on-change ({ (chain this (handle-change ',name))))
 	 ,@(when show-label
 		 `((:label :html-for ({ id)
 			   ,(better-capitalize (string name)))))
@@ -145,7 +145,7 @@
      :validate-fudge ({(chain this
 			      (validate-fudge this ,(make-keyword name))))
      :fudge-changed ({(chain this
-			     (on-fudge-change this ,(make-keyword name))))
+			     (on-fudge-change ,(make-keyword name))))
      :value ({ (calculate-field ,(make-keyword name) (chain this state)))
      :input-class ,input-class))
   #+(or)`({
@@ -169,39 +169,39 @@
 					     on-change) &body b)
   `(defreact ,react-name
     mixins (list (chain *react addons *pure-render-mixin))
-    handle-change (lambda (ths v)
-		(lambda (newval)
-		  (let ((updater (create)))
-		    (setf (getprop updater v) newval)
-		    (chain ths (set-state updater)))
-		  ,@(when on-change
-			  `((let ((updater (create)))
-			      (setf (getprop updater v)
-				    (create $set newval))
-			      (,on-change
-				(chain *react addons (update
-						      (chain ths state)
-						      updater))
-				v))))))
-    on-fudge-change (lambda (ths the-fudge)
-		    (lambda (newval)
+    handle-change (lambda (v)
+		    (tlambda (newval)
 		      (let ((updater (create)))
-			(setf (aget the-fudge updater)
-			      (create $set newval))
-			(chain ths (set-state
-				    (create fudges
-					    (chain *react addons
-						   (update (chain ths state fudges)
-							   updater))))))
+			(setf (getprop updater v) newval)
+			(chain this (set-state updater)))
 		      ,@(when on-change
-			      `((let ((updater (create fudges (create))))
-				  (setf (aget the-fudge (aget :fudges updater))
+			      `((let ((updater (create)))
+				  (setf (getprop updater v)
 					(create $set newval))
 				  (,on-change
 				   (chain *react addons (update
-							 (chain ths state)
+							 (chain this state)
 							 updater))
-				   the-fudge))))))
+				   v))))))
+    on-fudge-change (lambda (the-fudge)
+		      (tlambda (newval)
+			(let ((updater (create)))
+			  (setf (aget the-fudge updater)
+				(create $set newval))
+			  (chain this (set-state
+				      (create fudges
+					      (chain *react addons
+						     (update (chain this state fudges)
+							     updater))))))
+			,@(when on-change
+				`((let ((updater (create fudges (create))))
+				    (setf (aget the-fudge (aget :fudges updater))
+					  (create $set newval))
+				    (,on-change
+				     (chain *react addons (update
+							   (chain this state)
+							   updater))
+				     the-fudge))))))
     validate-fudge (lambda (ths the-fudge)
 		     (lambda (newval)
 		       (let ((updater (create fudges (create))))
@@ -243,7 +243,7 @@
 		:parser ,parser
 		:class-name ,choice-class
 		:id ({ id)
-		:on-change ({ (chain this (handle-change this ',name)))
+		:on-change ({ (chain this (handle-change ',name)))
 		,@(loop for choice in choices
 		     for choice-value in choice-values
 		     collect `(:option :value ,choice-value
@@ -269,7 +269,7 @@
 	  :validator ({ (chain this (validate this ',name)))
 	  :parser ,parser
 	  :class-name ,checkbox-class
-	  :on-change ({ (chain this (handle-change this ',name)))
+	  :on-change ({ (chain this (handle-change ',name)))
 	  :choices ,choices))))))
 
 #+ps(defvar *row-keyn* 0)
@@ -289,7 +289,7 @@
 	:read-only ,read-only
 	:value ({ (chain this state ,name))
 	:validator ({ (chain this (validate this ',name)))
-	:on-change ({ (chain this (handle-change this ',name)))
+	:on-change ({ (chain this (handle-change ',name)))
 	:inner-class ,inner-class
 	:row-key ({ ,row-key)
 	:make-new ({ ,make-new)

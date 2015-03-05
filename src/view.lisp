@@ -1,7 +1,7 @@
 #-ps(in-package cl-fccs)
 
 (defreact-for-classish (*fudge fudge
-			       :on-change (lambda (v) (chain ths props (on-change v))))
+			       :on-change (tlambda (v) (chain this props (on-change v))))
   get-initial-state (lambda () (chain this props default-value))
   render (lambda ()
 	   (htm
@@ -140,51 +140,65 @@
 			(create value (chain this props default-value)))
     handle-changed (lambda (val)
 		     (chain
-		      (lambda (ev)
-			(let
-			    ((value-copy (chain this state value (slice ))))
-			  (if (chain ev target checked)
-			      (chain value-copy (splice 0 0 val))
-			      (chain value-copy
-				     (splice 
-				      (loop for i from 0
-					 for item in value-copy
-					 when (= item val) return i
-					 finally (return (1+ i)))
-				      1)))
-			  (chain this (set-state (create value value-copy)))
-			  (when (chain this props (validator value-copy))
-			 (chain this props (on-change value-copy)))))
-		      (bind this)))
+			 (lambda (ev)
+			   (let
+			       ((value-copy (chain this state value (slice ))))
+			     (if (chain ev target checked)
+				 (chain value-copy (splice 0 0 val))
+				 (chain value-copy
+				   (splice 
+				    (loop for i from 0
+				       for item in value-copy
+				       when (= item val) return i
+				       finally (return (1+ i)))
+				    1)))
+			     (chain this (set-state (create value value-copy)))
+			     (when (chain this props (validator value-copy))
+			       (chain this props (on-change value-copy)))))
+		       (bind this)))
     render (lambda ()
 	     (htm
 	      (:fieldset
-	      ;:class-name ({ (chain this props class-name))
-	      ({
-		(tlet ((ths this))
-		  (loop for item in (chain ths props choices)
-		     collect (htm
-			      (:div :class-name ({(chain ths props class-name))
-				     :key ({ item)
-				    (:input
-				     :type :checkbox
-				     :class-name "pure-checkbox"
-				     ;:label ({ item)
-				     :checked ({ (member item (chain ths state value)))
-				     :on-change ({ (chain ths (handle-changed item))))
-				    (:label ({ item)))))))))))
+					;:class-name ({ (chain this props class-name))
+	       ({(loop for item in (chain this props choices)
+		    collect (htm
+			     (:div :class-name ({(chain this props class-name))
+				   :key ({ item)
+				   (:input
+				    :type :checkbox
+				    :class-name "pure-checkbox"
+					;:label ({ item)
+				    :checked ({ (member item (chain this state value)))
+				    :on-change ({ (chain this (handle-changed item))))
+				   (:label ({ item))))))))))
 
 (defreact *validating-select
     get-initial-state (lambda ()
 			(create value (chain this props default-value)))
     handle-changed (lambda (ev)
+		     (when (chain this timeout)
+		       (chain window (clear-timeout (chain this timeout))))
+		     (let* ((rawval (chain ev target value))
+			    (val (chain this props (parser rawval)))
+			    (fn
+				(tlambda ()
+				  (if (chain this props (validator val))
+				      (progn
+					(chain this props (on-change val))
+					(chain this (set-state (create valid t))))
+				      (chain this (set-state (create valid nil)))
+				      )))
+			    (timeout (chain window (set-timeout fn 250))))
+		       (chain this (set-state (create value rawval)))
+		       (setf (chain this timeout) timeout)))
+    #+(or)(lambda (ev)
 		     (let ((val (chain this props (parser (chain ev target value)))))
 		       (chain this (set-state (create value (chain ev target value))))
 		       (when (chain this props (validator val))
 			 (chain this props (on-change val)))))
     render (lambda ()
 	     (htm (:select :value ({ (chain this state value))
-			   :class-name ({ (chain this props :class-name))
+			   :class-name ({ (chain this props class-name))
 			   :on-change ({ (chain this handle-changed))
 			   :id ({ (chain this props id))
 			   :style ({
@@ -304,7 +318,7 @@
 
 		  
 (defreact-for-classish (*fc-class fc-class
-				  :on-change (lambda (v) (chain ths props (on-change v))))
+				  :on-change (tlambda (v) (chain this props (on-change v))))
   get-initial-state (lambda () (chain this props default-value))
   render (lambda ()
 	   (htm
@@ -320,7 +334,7 @@
 	       
 
 (defreact-for-classish (*ability-info ability-info
-				  :on-change (lambda (v) (chain ths props (on-change v))))
+				  :on-change (tlambda (v) (chain this props (on-change v))))
   get-initial-state (lambda () (chain this props default-value))
   render (lambda ()
 	   (htm
@@ -347,7 +361,7 @@
 			       :class-name "pure-u-5-12")))))
 
 (defreact-for-classish (*feat-info feat-info
-				  :on-change (lambda (v) (chain ths props (on-change v))))
+				  :on-change (tlambda (v) (chain this props (on-change v))))
   get-initial-state (lambda () (chain this props default-value))
   render (lambda ()
 	   (htm
@@ -364,13 +378,11 @@
 				:parser #'to-keyword
 				:class-name "pure-u-5-12")))))
 			
-(defreact-for-classish (*character fc-character :on-change (chain ths update-abilities))
+(defreact-for-classish (*character fc-character :on-change (tlambda (newch) (chain this (update-abilities newch))))
     get-initial-state (lambda ()
 			(let ((value (chain this props default-value)))
 			  (setf (aget :section value) "basics")
 			  value))
-
-			
     update-abilities (lambda (newch field) 
 		       (unless (chain this upload-timer)
 			 (setf (chain this upload-timer)
@@ -943,7 +955,7 @@
 			(:*weapon-info
 			 :default-value ({(or (chain this state :weapon-1) nil))
 			 ;TODO validator
-			 :on-change ({(chain this (handle-change this :weapon-1)))
+			 :on-change ({(chain this (handle-change :weapon-1)))
 			 :atk-bonus ({(output-field weapon-1-atk-bonus
 						    :class-name "pure-u-1-6"))
 			 :dmg-bonus ({(output-field weapon-1-dmg-bonus
