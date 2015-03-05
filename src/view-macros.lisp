@@ -29,6 +29,7 @@
 			       (class-name "pure-u-1 pure-u-md-1-6")
 			       (input-class "pure-input-1")
 			       input-type
+			       (label-as nil)
 			       (show-label t)
 			       (parser '({ (lambda (x) x))))
   (let ((name (alexandria:make-keyword (string name))))
@@ -51,7 +52,9 @@
 			     :on-change ({ (chain this (handle-change ',name))))
 	 ,@(when show-label
 		 `((:label :html-for ({ id)
-			   ,(better-capitalize (string name)))))
+			   ,(if label-as
+				label-as
+				(better-capitalize (string name))))))
 	 ))))))
 
 (defmacro skill-table (skills)
@@ -247,7 +250,7 @@
 		,@(loop for choice in choices
 		     for choice-value in choice-values
 		     collect `(:option :value ,choice-value
-				       (esc (string ,choice)))))
+				       (esc (better-capitalize (string ,choice))))))
 	       (:label :html-for ({ id) ,(better-capitalize(string name)))))))))
 
 
