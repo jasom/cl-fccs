@@ -22,13 +22,25 @@
       (chain console (log (chain *l-z-string (compress encoded-data) length) ))
       (chain request (send encoded-data)))))
 
+(defun get-h-offset (element)
+  (let* ((rect (chain element (get-bounding-client-rect)))
+	 (brect (chain document body (get-bounding-client-rect))))
+    (- (chain rect left) (chain brect left))))
+
+
 (defreact *fudgable-field
     mixins (list (chain *react addons *pure-render-mixin))
     get-initial-state (lambda ()
 			(create popup nil))
     handle-click (lambda (ev)
 		   (when (> (chain ev detail) 1)
-		     (chain this (set-state (create popup t)))))
+		     (chain this
+		       (set-state
+			(create popup
+				(if (> (get-h-offset (chain ev current-target))
+				       200)
+				    :right
+				    :left))))))
     render (lambda ()
 	     (htm
 	      (:div
@@ -47,7 +59,10 @@
 				       display :block
 				       height 0))
 		      (:div
-		       :class-name "positioned-popup"
+		       :class-name
+		       ({(if (eql (chain this state popup) :left)
+			     "positioned-popup-left"
+			     "positioned-popup-right"))
 		       (:*val-list
 			:value ({(chain this props default-fudge))
 			:validator ({(chain this props validate-fudge))
