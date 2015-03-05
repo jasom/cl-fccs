@@ -372,7 +372,7 @@
 			       :class-name "pure-u-1-4")
 		  (choice-field list-as 
 				(:combat :non-combat :spellcasting)
-				:parser #'to-keyword
+				:choice-values ("combat" "non-combat" "spellcasting")
 			       :class-name "pure-u-5-12")))))
 
 (defreact-for-classish (*feat-info feat-info
@@ -390,7 +390,7 @@
 		  
 		  (choice-field list-as 
 				(:combat :non-combat :spellcasting)
-				:parser #'to-keyword
+				:choice-values ("combat" "non-combat" "spellcasting")
 				:class-name "pure-u-5-12")))))
 			
 (defreact-for-classish (*character fc-character :on-change (tlambda (newch) (chain this (update-abilities newch))))
