@@ -266,7 +266,9 @@
       (list)))
 
 (defclassish weapon-info
-    (type :validator
+    (name :validator #'string-validator
+	  :initform "")
+  (type :validator
 	   (lambda (&key value &allow-other-keys)
 	     (member value (append (list :||) '#.+proficiencies+)))
 	   :fixup (lambda (&key value &allow-other-keys) (to-keyword value))
@@ -660,7 +662,8 @@
 (deffield :weapon-1-atk-bonus (character)
   (let ((base-bonus
 	  (cond
-	    ((aget :rng (aget :weapon-1 character))
+	    ((member (aget :type (aget :weapon-1 character))
+		     '(:hurled :bows :black-powder :siege-weapons))
 	     (calculate-field :ranged-bonus character))
 	    ((eql (aget :type (aget :weapon-1 character)) :unarmed)
 	     (calculate-field :unarmed-bonus character))

@@ -307,28 +307,32 @@
 				 "+")))))))))
 
 (defreact-for-classish (*weapon-info weapon-info
-			       :on-change (lambda (v) (chain ths props (on-change v))))
+			       :on-change (tlambda (v) (chain this props (on-change v))))
   get-initial-state (lambda () (chain this props default-value))
   render (lambda ()
 	    (htm
 	     (:div
-	      (input-field type :class-name "pure-u-1-3 pure-u-md-1-6")
+	      (input-field name :class-name "pure-u-1-3")
+	      (choice-field type #.cl-fccs::+proficiencies+
+			    :choice-values #.(mapcar (lambda (x) (string-downcase (string x))) cl-fccs::+proficiencies+)
+			    :class-name "pure-u-1-3")
 	      (input-field dmg-die :class-name "pure-u-1-6 pure-u-md-1-12")
 	      (:div :style ({(create text-align :center)) :class-name "pure-u-1-24" "+")
 	      ({(chain this props dmg-bonus))
 	      ({(chain this props atk-bonus))
 	      (input-field threat
-			  :parser ({ parse-int) :class-name "pure-u-1-3 pure-u-md-1-6")
+			  :parser ({ parse-int) :class-name "pure-u-1-6 pure-u-md-1-12")
 	      (input-field size :class-name "pure-u-1-6 pure-u-md-1-12")
 	      (input-field hand
 			  :parser ({ parse-int) :class-name "pure-u-1-6 pure-u-md-1-12")
 	      (input-field weight
-			  :parser ({ parse-int) :class-name "pure-u-1-3 pure-u-md-1-6")
+			   :label-as "Wgt."
+			  :parser ({ parse-int) :class-name "pure-u-1-6 pure-u-md-1-12")
 	      (input-field rng
 			  :parser ({ (lambda (x) (when x (parse-int x))))
-			  :class-name "pure-u-1-3 pure-u-md-1-6")
+			  :class-name "pure-u-1-6 pure-u-md-1-12")
 	      (input-field shots
-			  :parser ({ parse-int) :class-name "pure-u-1-3 pure-u-md-1-6")
+			  :parser ({ parse-int) :class-name "pure-u-1-6 pure-u-md-1-12")
 	      (input-field qualities :class-name "pure-u-1 pure-u-md-1-2")))))
 
 		  
@@ -973,10 +977,11 @@
 			 ;TODO validator
 			 :on-change ({(chain this (handle-change :weapon-1)))
 			 :atk-bonus ({(output-field weapon-1-atk-bonus
-						    :class-name "pure-u-1-6"))
+						    :label-as "Atk"
+						    :class-name "pure-u-1-6 pure-u-md-1-12"))
 			 :dmg-bonus ({(output-field weapon-1-dmg-bonus
 						    :label-as "Dmg. Bonus"
-						    :class-name "pure-u-1-6")))
+						    :class-name "pure-u-1-6 pure-u-md-1-12")))
 			)
 		       ))))
 		   ))))))
