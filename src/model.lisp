@@ -408,7 +408,7 @@
 			       (list-fixup :value (aget (to-keyword item) value))))
 		   value)
 	   :validator (lambda (&key &allow-other-keys) t))
-   (critical-inturies :initform ""
+   (critical-injuries :initform ""
 		      :validator #'string-validator)
    (weapon-1 :initform (make-weapon-info)
 	    :fixup
