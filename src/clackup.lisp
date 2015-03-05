@@ -96,9 +96,10 @@
 					(:html (:body (:p "Error"))))))
       (match env
 	((property :path-info "/fccs2/")
+	 (with-db-connection
 	 `(200
 	   (:content-type "text/html")
-	   (,(render-page
+	     (,(render-page
 	      (s)
 	      (:script
 	       (princ "React.render(React.createElement(CharacterList, {value : " s)
@@ -114,51 +115,52 @@
 			    :career-level
 			    (calculate-field :career-level character)))
 		s)
-	       (princ "}),document.body)" s))))))
+	       (princ "}),document.body)" s)))))))
 	#+(or)((property :path-info "/fccs2/error/")
 	       (error "hi"))
 	((and (property :request-method :POST)
 	      (property :path-info "/fccs2/new-character/"))
-	 (let ((id (new-character)))
-	   `(303
-	     (:location ,(format nil "/fccs2/character/~A" id)
-			:content-type "text/html")
-	     (,(cl-who:with-html-output-to-string
-		(s)
-		(:htm (:head) (:body "See Other")))))))
-	
-
+	 (with-db-connection
+	   (let ((id (new-character)))
+	     `(303
+	       (:location ,(format nil "/fccs2/character/~A" id)
+			  :content-type "text/html")
+	       (,(cl-who:with-html-output-to-string
+		  (s)
+		  (:htm (:head) (:body "See Other"))))))))
 	((and (property :request-method :POST)
 	      (property :path-info (ppcre "^/fccs2/save-character/(\\d*)$" id)))
-	 (if (get-character id) ;;TODO just check if id is valid
-	     (let ((parsed-body (parse-json-body body)))
-	       (fixup-fc-character parsed-body)
-	       (when (fc-character-p parsed-body)
-		 (log:info "We have a character!")
-		 (save-character id parsed-body))
-	       `(200
-		 (:content-type "text/html")))
-	     `(404
-	       (:content-type "text/html")
-	       (cl-who:with-html-output-to-string (s)
-		 (:htm (:head) (:body "Couldn't locate character"))))))
-	((property :path-info (ppcre "^/fccs2/character/(\\d*)$" id))
-	 (let ((character (get-character id)))
-	   (if character
-	       `(200
-		 (:content-type "text/html")
-		 (,(render-page
-		    (s)
-		    (:script
-		     (format s "React.render(React.createElement(Character, {id: ~D, defaultValue : " id)
-		     (princ "fixupFcCharacter(" s)
-		     (encode-classish character s)
-		     (princ ")}),document.body)" s)))))
+	 (with-db-connection
+	   (if (get-character id) ;;TODO just check if id is valid
+	       (let ((parsed-body (parse-json-body body)))
+		 (fixup-fc-character parsed-body)
+		 (when (fc-character-p parsed-body)
+		   (log:info "We have a character!")
+		   (save-character id parsed-body))
+		 `(200
+		   (:content-type "text/html")))
 	       `(404
 		 (:content-type "text/html")
-		 (,(cl-who:with-html-output-to-string (s)
-						      (:htm (:head)
-							    (:body (:P "Error: could-not-find character")))))))))
+		 (cl-who:with-html-output-to-string (s)
+		   (:htm (:head) (:body "Couldn't locate character")))))))
+	((property :path-info (ppcre "^/fccs2/character/(\\d*)$" id))
+	 (with-db-connection
+	   (let ((character (get-character id)))
+	     (if character
+		 `(200
+		   (:content-type "text/html")
+		   (,(render-page
+		      (s)
+		      (:script
+		       (format s "React.render(React.createElement(Character, {id: ~D, defaultValue : " id)
+		       (princ "fixupFcCharacter(" s)
+		       (encode-classish character s)
+		       (princ ")}),document.body)" s)))))
+		 `(404
+		   (:content-type "text/html")
+		   (,(cl-who:with-html-output-to-string (s)
+							(:htm (:head)
+							      (:body (:P "Error: could-not-find character"))))))))))
 	(_
 	 `(404
 	   (:content-type "text/html")

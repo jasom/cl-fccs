@@ -26,7 +26,7 @@
 		((:file "ps-compat")
 		 (:file "view-macros")
 		 (:file "closure-server")
-		 (:file "clackup")
 		 (:file "store")
+		 (:file "clackup")
 		 (:file "model")))))
 

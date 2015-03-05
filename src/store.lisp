@@ -14,6 +14,14 @@
     (dotimes (i (length s) v)
       (setf (aref v i) (char-code (aref s i))))))
 
+(defmacro with-db-connection (&body b)
+  `(let ((redis::*connection*))
+     (unwind-protect
+	  (progn
+	    (redis:connect)
+	    ,@b)
+       (redis:disconnect))))
+
 (defun ensure-connected ()
   (unless (redis:connected-p)
     (redis:connect)))
