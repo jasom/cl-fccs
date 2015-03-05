@@ -776,6 +776,7 @@
 			(output-field income
 				      :class-name "pure-u-1 pure-u-md-1-2"))
 
+		       (:h2 :class-name "pure-u-1 heading" "Abilities")
 		       (list-field ability-list
 				   (lambda (data updater)
 				     (htm (:*ability-info
