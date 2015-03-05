@@ -463,7 +463,7 @@
 	       ({(cond
 		   ((= (chain this state section) "basics")
 		    (htm
-		     (:form
+		     (:form :key "basics"
 		      :class-name "pure-form pure-form-stacked"
 		      (:div
 		       :class-name "pure-g"
@@ -800,7 +800,7 @@
 		       ))))
 		   ((= (chain this state section) "combat")
 		    (htm
-		     (:form
+		     (:form :key "combat"
 		      :class-name "pure-form pure-form-stacked"
 		      (:div
 		       :class-name "pure-g"
