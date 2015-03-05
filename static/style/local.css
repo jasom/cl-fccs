@@ -1,0 +1,98 @@
+/*
+* {
+    font-size: 50%;
+}
+*/
+.pure-g [class *= "pure-u"] {
+        /* Set your content font stack here: */
+            /* font-family: Georgia, Times, "Times New Roman", serif; */
+            /* font-size: 12px; */
+}
+.pure-g > div {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    padding: 0 0.2em;
+}
+
+.pure-table td, .pure-table th {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    padding: 0 0.2em;
+}
+
+.pure-form select {
+    padding: 0
+}
+
+.pure-form-stacked div.pure-input-1 {
+    display: block;
+    margin-bottom: .25em;
+    margin-top: .25em;
+}
+
+div.pure-input-1 {
+    padding: 0.5em 0.6em;
+    display: inline-block;
+    border: 1px solid rgb(204, 204, 204);
+    box-shadow: 0px 1px 3px rgb(221, 221, 221) inset;
+    border-radius: 4px 4px 4px 4px;
+    background: #e0e0e0;
+    -moz-box-sizing: border-box;
+}
+
+div.positioned-popup-left, div.positioned-popup-right {
+    position: fixed;
+    background-color: white;
+    border-radius: .5em;
+    border-style: solid;
+    border-color: #444;
+    border-width: thin;
+    width: 90%;
+    left: 5%;
+    top: 5%;
+}
+
+@media screen and (min-width: 35.5em) {
+    div.positioned-popup-left {
+        position: absolute;
+        background-color: white;
+        border-radius: .5em;
+        border-style: solid;
+        border-color: #444;
+        border-width: thin;
+        width: 14em;
+        padding: .5em;
+        left: 0;
+        right: auto; 
+    }
+    div.positioned-popup-right {
+        position: absolute;
+        background-color: white;
+        border-radius: .5em;
+        border-style: solid;
+        border-color: #444;
+        border-width: thin;
+        width: 14em;
+        padding: .5em;
+        left: auto;
+        right: 0
+    }
+}
+@media screen and (min-width: 48em) {
+}
+@media screen and (min-width: 64em) {
+}
+@media screen and (min-width: 84em) {
+}
+
+h2.heading {
+    text-align: center;
+    margin: 0;
+    background-color: #eee;
+}
+
+.pure-form label, .label {
+    font-size: 12px;
+}
