@@ -1,6 +1,10 @@
 (in-package #:cl-fccs)
 #-ps(declaim (optimize (speed 1)(space 1) (debug 1)))
 
+(defun key-fmt (k &rest args)
+  (make-keyword
+   (apply #'format nil (string k) args)))
+
 (defp +career-levels+
     #-ps fccg::+career-levels+
     #+ps (ps:lisp `(quote ,fccg::+career-levels+)))
@@ -412,12 +416,16 @@
 	   :validator (lambda (&key &allow-other-keys) t))
    (critical-injuries :initform ""
 		      :validator #'string-validator)
-   (weapon-1 :initform (make-weapon-info)
-	    :fixup
-	    (lambda (&key value &allow-other-keys)
-	      (fixup-weapon-info value))
-	     :validator (lambda (&key value &allow-other-keys)
-			      (weapon-info-p value)))
+   ,@
+   (loop for i from 1 to 4
+	collect
+	`(,(intern (string (key-fmt :weapon-~d i)) *package*)
+	   :initform (make-weapon-info)
+		   :fixup
+		   (lambda (&key value &allow-other-keys)
+		     (fixup-weapon-info value))
+		   :validator (lambda (&key value &allow-other-keys)
+				(weapon-info-p value))))
    )
 
 #.
@@ -659,37 +667,41 @@
 (deffield :travel-speed (character)
   (ceiling (/ (calculate-field :ground-speed character) 10)))
 
-(deffield :weapon-1-atk-bonus (character)
-  (let ((base-bonus
-	  (cond
-	    ((member (aget :type (aget :weapon-1 character))
-		     '(:hurled :bows :black-powder :siege-weapons))
-	     (calculate-field :ranged-bonus character))
-	    ((eql (aget :type (aget :weapon-1 character)) :unarmed)
-	     (calculate-field :unarmed-bonus character))
-	    (t
-	     (calculate-field :melee-bonus character))))
-	(proficient-bonus
-	 (cond
-	   ((not (member (aget :type (aget :weapon-1 character))
-			 (aget :proficiency-list character)))
-	    -4)
-	   ((member (aget :type (aget :weapon-1 character))
-		    (aget :forte-list character))
-	    1)
-	   (t 0))))
-    (+ base-bonus proficient-bonus)))
-		    
+#.`(progn
+    ,@(loop
+	 for i from 1 to 6
+	 collect
+	   `(deffield ,(key-fmt :weapon-~D-atk-bonus i) (character)
+	      (let ((base-bonus
+		     (cond
+		       ((member (aget :type (aget ,(key-fmt :weapon-~d i) character))
+				'(:hurled :bows :black-powder :siege-weapons))
+			(calculate-field :ranged-bonus character))
+		       ((eql (aget :type (aget ,(key-fmt :weapon-~d i) character)) :unarmed)
+			(calculate-field :unarmed-bonus character))
+		       (t
+			(calculate-field :melee-bonus character))))
+		    (proficient-bonus
+		     (cond
+		       ((not (member (aget :type (aget ,(key-fmt :weapon-~d i) character))
+				     (aget :proficiency-list character)))
+			-4)
+		       ((member (aget :type (aget ,(key-fmt :weapon-~d i) character))
+				(aget :forte-list character))
+			1)
+		       (t 0))))
+		(+ base-bonus proficient-bonus)))
 
-(deffield :weapon-1-dmg-bonus (character)
-  (cond
-    ((re-match "finesse" (aget :qualities (aget :weapon-1 character)))
-     (calculate-field :dex-mod character))
-    ((member (aget :type (aget :weapon-1 character))
-	     '(:bows :black-powder :siege-weapons))
-     0)
-    (t
-     (calculate-field :str-mod character))))
+	 collect `(deffield ,(key-fmt :weapon-~d-dmg-bonus i) (character)
+		    (cond
+		      ((re-match "finesse" (aget :qualities (aget ,(key-fmt :weapon-~d i)character)))
+		       (calculate-field :dex-mod character))
+		      ((member (aget :type (aget ,(key-fmt :weapon-~d i)character))
+			       '(:bows :black-powder :siege-weapons))
+		       0)
+		      (t
+		       (calculate-field :str-mod character))))))
+
 
 
 #+(or)(

@@ -312,10 +312,10 @@
   render (lambda ()
 	    (htm
 	     (:div
-	      (input-field name :class-name "pure-u-1-3")
+	      (input-field name :class-name "pure-u-1 pure-u-md-9-24")
 	      (choice-field type #.cl-fccs::+proficiencies+
 			    :choice-values #.(mapcar (lambda (x) (string-downcase (string x))) cl-fccs::+proficiencies+)
-			    :class-name "pure-u-1-3")
+			    :class-name "pure-u-1 pure-u-md-1-3")
 	      (input-field dmg-die :class-name "pure-u-1-6 pure-u-md-1-12")
 	      (:div :style ({(create text-align :center)) :class-name "pure-u-1-24" "+")
 	      ({(chain this props dmg-bonus))
@@ -972,16 +972,10 @@
 			 (output-field :will-misc-mod
 				       :class-name "pure-u-1-6"
 				       :show-label nil))
-			(:*weapon-info
-			 :default-value ({(or (chain this state :weapon-1) nil))
-			 ;TODO validator
-			 :on-change ({(chain this (handle-change :weapon-1)))
-			 :atk-bonus ({(output-field weapon-1-atk-bonus
-						    :label-as "Atk"
-						    :class-name "pure-u-1-6 pure-u-md-1-12"))
-			 :dmg-bonus ({(output-field weapon-1-dmg-bonus
-						    :label-as "Dmg. Bonus"
-						    :class-name "pure-u-1-6 pure-u-md-1-12")))
+			(weapon-table 4)
+			(choice-field armor-type (:none :partial :moderate)
+				      :class-name "pure-u-1 pure-u-md-1-4"
+				      :choice-values ("none" "partial" "moderate"))
 			)
 		       ))))
 		   ))))))

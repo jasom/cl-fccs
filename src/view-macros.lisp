@@ -131,6 +131,22 @@
 				     :input-class "pure-input-1"
 				     :parser ({ parse-int)))))))))
 
+(defmacro weapon-table (n)
+  `(htm
+    (:div :class-name "pure-u-1"
+	  ,@(loop for i from 1 to n
+	       collect
+		 `(:*weapon-info
+		   :default-value ({(or (chain this state ,(key-fmt :weapon-~d i)) nil))
+					;TODO validator
+		   :on-change ({(chain this (handle-change ,(key-fmt :weapon-~d i))))
+		   :atk-bonus ({(output-field weapon-1-atk-bonus
+					      :label-as "Atk"
+					      :class-name "pure-u-1-6 pure-u-md-1-12"))
+		   :dmg-bonus ({(output-field ,(key-fmt :weapon-~d-dmg-bonus i)
+					      :label-as "Dmg. Bonus"
+					      :class-name "pure-u-1-6 pure-u-md-1-12")))))))
+
 (defmacro output-field (name &key
 			       (class-name nil)
 			       (show-label t)
