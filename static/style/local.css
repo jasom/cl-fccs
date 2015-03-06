@@ -23,7 +23,8 @@
 }
 
 .pure-form select {
-    padding: 0
+    height: auto;
+    padding: 0;
 }
 
 .pure-form-stacked div.pure-input-1 {

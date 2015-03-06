@@ -209,8 +209,10 @@
       t)
 
 #+ps(defun listp (item)
-      (and (not (= (typeof item) "undefined"))
-	   (= (chain item constructor) *Array)))
+      (and
+       (not (= nil item))
+       (not (= (typeof item) "undefined"))
+       (= (chain item constructor) *Array)))
 
 #+ps(defun emptyp (item)
       (and (listp item)

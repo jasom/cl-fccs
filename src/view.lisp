@@ -119,7 +119,9 @@
     get-initial-state (lambda ()
 			(let ((val (chain this props default-value)))
 			  (create value val
-				  valid (chain this props (validator val)))))
+				  valid (chain this props
+					       (validator
+						(chain this props (parser val)))))))
     handle-changed (lambda (ev)
 		     (when (chain this timeout)
 		       (chain window (clear-timeout (chain this timeout))))
@@ -131,7 +133,7 @@
 				   (progn
 				     (chain this props (on-change val))
 				     (chain this (set-state
-						  (create value val valid t))))
+						  (create valid t))))
 				   (chain this (set-state (create valid nil)))
 				   )))
 			    (timeout (chain window (set-timeout fn 250))))
@@ -987,7 +989,6 @@
 	   (lambda ()
 	     (setf (chain window location)
 		   (+ "/fccs2/character/" id))))
-	   
     render (lambda ()
 	     (let ((ths this))
 	       (htm

@@ -269,6 +269,9 @@
       value
       (list)))
 
+(defun keyword-fixup (&key value &allow-other-keys)
+  (to-keyword value))
+
 (defclassish weapon-info
     (name :validator #'string-validator
 	  :initform "")
