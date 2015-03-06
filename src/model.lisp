@@ -429,6 +429,23 @@
 		     (fixup-weapon-info value))
 		   :validator (lambda (&key value &allow-other-keys)
 				(weapon-info-p value))))
+   (armor-type :initform :none
+	       :validator (lambda (&key value &allow-other-keys)
+			    (member value '(:none :partial :moderate)))
+	       :fixup #'keyword-fixup)
+   (armor-name :validator #'string-validator
+	       :initform "")
+   (armor-craftsmanship :validator #'string-validator
+			:initform "")
+   (armor-construction :validator #'string-validator
+		       :initform "")
+   (armor-customizations :validator (list-of #'stringp)
+			 :fixup #'list-fixup
+			 :initform (list))
+   (armor-fittings :validator (lambda (&key value &allow-other-keys)
+				(member value '(:none :light :heavy)))
+		   :fixup #'keyword-fixup
+		   :initform :none)
    )
 
 #.

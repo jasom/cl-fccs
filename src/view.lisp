@@ -815,10 +815,14 @@
 		       (:div
 			:class-name "pure-u-1 pure-u-md-1-2 pure-u-xl-1-4 pure-g"
 			(output-field defense :class-name "pure-u-1-6")
-			(output-field base-defense :class-name "pure-u-1-6")
-			(output-field defense-attr-mod :class-name "pure-u-1-6")
-			(output-field defense-size-mod :class-name "pure-u-1-6")
-			(output-field defense-misc-mod :class-name "pure-u-1-6")
+			(output-field base-defense :class-name "pure-u-1-6"
+				      :label-as "Base")
+			(output-field defense-attr-mod :label-as "Attr"
+				      :class-name "pure-u-1-6")
+			(output-field defense-size-mod :label-as "Size"
+				      :class-name "pure-u-1-6")
+			(output-field defense-misc-mod :label-as "Misc"
+				      :class-name "pure-u-1-6")
 			(output-field vitality :class-name "pure-u-1-2")
 			(output-field wounds :class-name "pure-u-1-2")
 			(input-field critical-injuries :class-name "pure-u-1")
@@ -979,6 +983,20 @@
 			(choice-field armor-type (:none :partial :moderate)
 				      :class-name "pure-u-1 pure-u-md-1-4"
 				      :choice-values ("none" "partial" "moderate"))
+			(input-field armor-name
+				     :class-name "pure-u-1 pure-u-md-1-4")
+			(input-field armor-craftsmanship
+				     :class-name "pure-u-1 pure-u-md-1-4")
+			(input-field armor-construction
+				     :class-name "pure-u-1 pure-u-md-1-4")
+			(input-field armor-customizations
+				     :class-name "pure-u-1 pure-u-md-5-6"
+				     :formatter (lambda (x)
+						  (chain x (join ", ")))
+				     :parser ({ (lambda (x) (chain x
+							      (split (ps:new (*reg-exp ", *")))))))
+			(choice-field armor-fittings
+				      ("none" "light" "heavy"))
 			)
 		       ))))
 		   ))))))

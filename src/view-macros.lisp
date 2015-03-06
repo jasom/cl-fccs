@@ -31,6 +31,7 @@
 			       input-type
 			       (label-as nil)
 			       (show-label t)
+			       (formatter '(lambda (x) x))
 			       (parser '({ (lambda (x) x))))
   (let ((name (alexandria:make-keyword (string name))))
   `({
@@ -39,7 +40,7 @@
 	(:div
 	 :class-name ,class-name
 	 :style ({(create margin 0))
-	 (:*validating-input :default-value ({ (chain this state ,name))
+	 (:*validating-input :default-value ({ (funcall ,formatter (chain this state ,name)))
 			     :parser ,parser
 			     :id ({ id)
 			     :input-class ,input-class
