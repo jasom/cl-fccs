@@ -522,9 +522,11 @@
 			  (:thead
 			   (:tr
 			    (:th
-			     :col-span 4
+			     :col-span 3
 			     :style ({(create text-align "center"))
-			     "Physical Attributes")))
+			     "Physical Attributes")
+			    (:th
+			     (output-field skill-points :show-label nil))))
 			  (:tr
 			   (:td "Name")
 			   (:td "Base")
@@ -565,8 +567,7 @@
 					      :input-class "pure-input-1"))
 			   (:td (output-field con-mod :class-name nil
 					      :show-label nil
-					      :input-class "pure-input-1")))	
-			  ))
+					      :input-class "pure-input-1")))))
 			(:div
 			 :class-name "pure-u-1 pure-u-md-1-2"
 			 (:table

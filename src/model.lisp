@@ -435,6 +435,7 @@
 	collect `(deffield ,(make-keyword (format nil "~a-BONUS" skill)) (character)
 		   (+
 		    (calculate-field ,(get-skill-attr item) character)
+		    (calculate-field ,(make-keyword (format nil "~a-MISC-BONUS" skill)) character)
 		    (aget ,(make-keyword (format nil "~a-RANKS" skill)) character)))
 	collect `(deffield  ,(make-keyword (format nil "~a-MISC-BONUS" skill)) (character)
 		   (declare (ignore character))
@@ -490,6 +491,24 @@
 	    `(deffield ,(make-keyword (format nil "~A-MOD" item)) (character)
 	       (floor (- (calculate-field ,(make-keyword (format nil "REAL-~A" item))
 					  character) 10) 2))))
+
+(defun calculate-points (attr-score)
+  (loop with base-score = (- attr-score 8)
+     with result = 0
+     for subtractme = 4 then 2
+     while (> base-score 0)
+     do (incf result base-score)
+       (decf base-score subtractme)
+     finally (return result)))
+       
+
+#.`(deffield :skill-points (character)
+     (+
+     ,@(loop for item in '("STR" "DEX" "CON"
+		      "INT" "WIS" "CHA")
+     collect
+       `(calculate-points
+	 (aget ,(make-keyword (format nil "BASE-~A" item)) character)))))
 
 (deffield :lifestyle (character)
   (+ (calculate-field :cha-mod character)
