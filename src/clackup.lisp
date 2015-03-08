@@ -188,7 +188,7 @@
 			    (funcall 'authenticate user pass)))
 	  (clack.middleware.static:<CLACK-MIDDLEWARE-STATIC>
 	   :path (format nil "~apub/" *prepend-path*)
-	   :root #p"/home/aidenn/psx/pub/")
+	   :root (asdf:system-relative-pathname 'cl-fccs "build/pub/"))
 	  (lambda (env) (funcall 'app env)))
 	 :server :hunchentoot
 	 :use-default-middlewares nil

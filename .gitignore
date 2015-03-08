@@ -3,3 +3,8 @@
 *~
 *.fasl
 data/data.lisp
+.redo
+build/*.gz
+build/pub
+build/*.js
+build/*.css

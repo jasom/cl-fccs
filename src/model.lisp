@@ -1,9 +1,10 @@
 (in-package #:cl-fccs)
 #-ps(declaim (optimize (speed 1)(space 1) (debug 1)))
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
 (defun key-fmt (k &rest args)
   (make-keyword
-   (apply #'format nil (string k) args)))
+   (apply #'format nil (string k) args))))
 
 (defp +career-levels+
     #-ps fccg::+career-levels+
@@ -1839,15 +1840,17 @@
 (eval-when (:load-toplevel)
   (defvar *deploy* t "Set to nil for development")
   (time
-   (with-open-file (f "/home/aidenn/psx/src/foo.js" :direction :output :if-exists :supersede)
+   (with-open-file (f (asdf:system-relative-pathname 'cl-fccs "build/in.js") :direction :output :if-exists :supersede)
      (let ((*features* (cons :ps *features*)))
-       (write-string (ps:ps-compile-file "/home/aidenn/src/lisp/cl-fccs/src/ps-compat.lisp") f)
-       (write-string (ps:ps-compile-file "/home/aidenn/src/lisp/cl-fccs/src/model.lisp") f)
-       (write-string (ps:ps-compile-file "/home/aidenn/src/lisp/cl-fccs/src/view-macros.lisp") f)
-       (write-string (ps:ps-compile-file "/home/aidenn/src/lisp/cl-fccs/src/view.lisp") f))))
+       (write-string (ps:ps-compile-file "/Users/jmiller/src/lisp/cl-fccs/src/ps-compat.lisp") f)
+       (write-string (ps:ps-compile-file "/Users/jmiller/src/lisp/cl-fccs/src/model.lisp") f)
+       (write-string (ps:ps-compile-file "/Users/jmiller/src/lisp/cl-fccs/src/view-macros.lisp") f)
+       (write-string (ps:ps-compile-file "/Users/jmiller/src/lisp/cl-fccs/src/view.lisp") f))))
   (log:info
-   (uiop:run-program "/home/aidenn/gh/redo/redo" :directory "/home/aidenn/psx"
-		     :output :string :error-output :output)))
+   (uiop:run-program
+    (namestring (uiop:merge-pathnames* "gh/redo/redo" (user-homedir-pathname)))
+     :directory (asdf:system-relative-pathname 'cl-fccs "build/")
+     :output :string :error-output :output)))
   ;(time
    ;(uiop:run-program
     ;'("/home/aidenn/gh/react/bin/jsx"

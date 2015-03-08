@@ -8,6 +8,7 @@
 	       #:clack-middleware-auth-basic
                #:parenscriptx
                #:alexandria
+               #:log4cl
 	       #:cl-redis
 	       #:cl-store
 	       #:optima.ppcre
@@ -25,7 +26,7 @@
 		:components
 		((:file "ps-compat")
 		 (:file "view-macros")
-		 (:file "closure-server")
+		 ;(:file "closure-server")
 		 (:file "store")
 		 (:file "clackup")
 		 (:file "model")))))
