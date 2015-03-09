@@ -12,7 +12,6 @@
     
 (defp *fields* (amake))
 
-
 #-ps(defun ht-to-obj (ht)
       (let ((result nil))
 	(maphash (lambda (k v)
@@ -741,6 +740,36 @@
 		       0)
 		      (t
 		       (calculate-field :str-mod character))))))
+
+(deffield :action-attack (character)
+  (calculate-field :weapon-1-atk-bonus character))
+
+(deffield :action-bullrush (character)
+  (calculate-field :athletics-bonus character))
+
+(deffield :action-coupe-de-grace (character)
+  (calculate-field :weapon-1-atk-bonus character))
+
+(deffield :action-disarm (character)
+  (calculate-field :weapon-1-atk-bonus character))
+
+(deffield :action-feint (character)
+  (calculate-field :prestidigitation-bonus character))
+
+(deffield :action-grapple (character)
+ (calculate-field :athletics-bonus character))
+
+(deffield :action-pummel (character)
+ (calculate-field :unarmed-bonus character))
+
+(deffield :action-taunt (character)
+(calculate-field :sense_motive-bonus character))
+
+(deffield :action-threaten (character)
+  (calculate-field :intimidate-bonus character))
+
+(deffield :action-trip (character)
+  (calculate-field :acrobatics-bonus character))
 
 
 

@@ -998,6 +998,19 @@
 			(choice-field armor-fittings
 				      ("none" "light" "heavy"))
 			)
+		       (:div
+			:class-name "pure-u-1 pure-u-md-1-2 pure-u-xl-1-4 pure-g"
+			(output-field action-attack)
+			(output-field action-bullrush)
+			(output-field action-coupe-de-grace)
+			(output-field action-disarm)
+			(output-field action-feint)
+			(output-field action-grapple)
+			(output-field action-pummel)
+			(output-field action-taunt)
+			(output-field action-threaten)
+			(output-field action-trip)
+			)
 		       ))))
 		   ))))))
 
