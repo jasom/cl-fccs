@@ -1,27 +1,30 @@
 (in-package :cl-fccs)
 
-#+ps(ps:lisp ps:*ps-lisp-library*)
+;#+ps(ps:lisp ps:*ps-lisp-library*)
 
-(defmacro aget (key table &optional default)
-  #+ps
-  (if default
-    `(if (ps:in ,key ,table)
-	 (ps:getprop ,table ,key)
-	 ,default)
-    `(ps:getprop ,table ,key))
-  #-ps`(cl:gethash ,key ,table ,default))
+#+ps(defun aget (key table &optional def)
+      (chain table (get key def)))
+
+#+ps(defun mapcar (fun list)
+      (chain list (map fun)))
+
+#-ps(ps:defpsmacro list (&rest args)
+      `(ps:new (chain *immutable (*list (ps:array ,@args)))))
+  
+#-ps(defmacro aget (key table &optional def)
+      `(gethash ,key ,table ,def))
 
 (defun amake ()
-  #+ps(ps:create)
+  #+ps(ps:new (chain *immutable (*map)))
   #-ps(make-hash-table :test #'equalp))
 
 (defun akeys (obj)
-  #+ps(chain *object (keys obj))
+  #+ps(chain obj (key-seq))
   #-ps(loop for k being the hash-keys of obj
 	   collect k))
 
 (defun ain (key table)
-  #+ps(ps:in key table)
+  #+ps(chain table (has key))
   #-ps(let ((v '#:dummy))
 	(not (eql (gethash key table v) v))))
 
@@ -192,31 +195,48 @@
 		   collect (throwaway-name name)))
 	     r)))))))
 
+(defun pappend (list &rest lists)
+  #-ps (apply #'append list lists)
+  #+ps (apply (chain list concat) lists))
+
+(defun unloopable (list)
+  #-ps list
+  #+ps (ps:new (chain *immutable (*list list))))
+
+(defun loopable (list)
+  #-ps list
+  #+ps (if list
+	   (chain list (to-array))
+	   nil))
+
+#+ps(defun nth (n list)
+      (chain list (get n)))
+      
+#+ps(defun mapcan (fn list)
+      (chain (mapcar fn list)
+	     (reduce (lambda (sofar val)
+		       (chain sofar (concat val))))))
+      
 
 #+ps(defun stringp (value)
       (= (typeof value) "string"))
 
 #+ps(defun member (value list &key (key (lambda (x) x)))
-      (loop for item in list
-	 do (when (= value (funcall #'key item))
-	      (return-from member t)))
-      nil)
-
+      (chain (mapcar key list) (contains value)))
 
 #+ps(defun every (predicate list)
-      (loop for item in list
-	   do (unless (funcall predicate item) (return-from every nil)))
-      t)
+      (chain list (every predicate)))
 
 #+ps(defun listp (item)
-      (and
-       (not (= nil item))
-       (not (= (typeof item) "undefined"))
-       (= (chain item constructor) *Array)))
+      (chain *immutable *list (is-list item)))
 
 #+ps(defun emptyp (item)
       (and (listp item)
-	   (= (chain item length) 0)))
+	   (chain item (is-empty))))
+
+(defun range (start end &optional (step 1))
+  #-ps(loop for i from start below end by step)
+  #+ps(ps:new (chain *immutable (*range start end step))))
 
 #+ps(defmacro tlet ((&rest bindings) &body b)
       `(funcall
@@ -230,3 +250,124 @@
   `(chain
     (lambda ,args ,@b)
     (bind this)))
+
+
+#-ps(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defparameter *ps-setf-expanders* (make-hash-table)))
+
+(defmacro ps-define-setf-expander (access-fn lambda-list &body b)
+  (let ((wv (or (lambda-fiddle:whole-lambda-var lambda-list) (gensym)))
+	    (ev (or (lambda-fiddle:environment-lambda-var lambda-list) (gensym)))
+	    (ll
+	     (lambda-fiddle:remove-whole-part 
+	      (lambda-fiddle:remove-environment-part lambda-list))))
+	;;(print ll)
+	(setf (gethash access-fn *ps-setf-expanders*)
+	      (eval
+		 `(lambda (,wv ,ev)
+		   (destructuring-bind ,ll (cdr ,wv)
+		     ,@b)))))
+  '(progn))
+	  
+#-ps(defun ps-get-setf-expansion (place &optional environment)
+      (cond
+	((and (listp place) (gethash (car place) *ps-setf-expanders*))
+	 (funcall (gethash (car place) *ps-setf-expanders*) place environment))
+	(t
+	 (let ((new (gensym)))
+	   (values nil nil (list new) `(ps::ps-assign ,place ,new) place)))))
+
+(ps-define-setf-expander aget (key table &optional def &environment env)
+  (multiple-value-bind (dummies vals newval setter getter)
+      (ps-get-setf-expansion table env)
+    (declare (ignorable setter newval))
+    (let ((store (gensym))
+	  (key-dummy (gensym))
+	  (def-dummy (gensym)))
+      (values
+       `(,key-dummy ,def-dummy ,@dummies)
+       `(,key ,def ,@vals)
+       `(,store)
+       `(progn
+	  (setf ,table
+		(chain ,getter (set ,key-dummy ,store)))
+	  ,store)
+       `(aget ,key-dummy ,getter ,def-dummy)))))
+
+#-ps(eval-when (:compile-toplevel :load-toplevel :execute)
+      (defun optimize-setf (exp)
+	(labels
+	    ((let*-to-let-helper (vars body &optional (depth 1))
+	       (when (= depth 100)
+		 (break))
+	       (if (null vars)
+		   body
+		   `((let (,(car vars))
+		       ,@(let*-to-let-helper (cdr vars) body (1+ depth))))))
+	     (let*-to-let (form)
+	       (destructuring-bind
+		     (let-star vars &body b) form
+		 (assert (eql 'let* let-star))
+		 (if (null vars)
+		     `(let () ,@b)
+		     `(let (,(car vars))
+			,@(let*-to-let-helper (cdr vars) b))
+		     ))))
+	  #+(or)exp
+	  #-(or)
+	  (cond
+	    ((not (listp exp))
+	     exp)
+	    ((eql (car exp) 'let*)
+	     (optimize-setf (let*-to-let exp)))
+	    ((not (eql (car exp) 'let))
+	     exp)
+	    (t
+	     (destructuring-bind (letter vars &body b) exp
+	       (declare (ignore letter))
+	       (loop
+		  with flat = (alexandria:flatten b)
+		  with tree = b
+		  for (var assignment) in vars
+		  when (<= (count var flat) 1)
+		  do (setf tree (subst assignment var tree))
+		  else collect (list var assignment) into new-vars
+		  finally (return
+			    (if (eql (length tree) 1)
+				`(let ,new-vars ,(optimize-setf (car tree)))
+				`(let ,new-vars ,@tree))))))))))
+
+(defmacro ps-setf (place value &rest args &environment env)
+  (multiple-value-bind (temp-vars value-forms store-vars store-form access-form)
+      (ps-get-setf-expansion place env)
+    (declare (ignorable access-form))
+    `(progn
+       ,(optimize-setf
+	`(let* (,@(loop for temp in temp-vars
+		    for value in value-forms
+		    collect (list temp value)))
+	  ;; parenscript and multiple-values is buggy
+	  #+(or)(multiple-value-bind ,store-vars ,(multiple-value-list value)
+		,store-form)
+	  #-(or)(let ((,(car store-vars) ,value))
+		,store-form)))
+       ,@(when args
+	       `((ps-setf ,@args))))))
+
+(defmacro ps-incf (place &optional (n 1) &environment env)
+  (multiple-value-bind (temp-vars value-forms store-vars store-form access-form)
+      (ps-get-setf-expansion place env)
+    (let ((nsym (gensym)))
+      (optimize-setf
+       `(let* ((,nsym ,n)
+	       ,@(loop for temp in temp-vars
+		    for value in value-forms
+		    collect (list temp value)))
+	  (let ((,(car store-vars) (+ ,access-form ,nsym)))
+	    ,store-form))))))
+
+#-ps(ps:defpsmacro setf (&rest args)
+      `(ps-setf ,@args))
+      
+#-ps(ps:defpsmacro incf (&rest args)
+      `(ps-incf ,@args))

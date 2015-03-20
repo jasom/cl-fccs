@@ -3,4 +3,6 @@ JSX="$HOME/gh/react/bin/jsx"
 CLOSURE="$HOME/src/clojure-compiler.jar"
 OPT=DEBUG
 REACTJS="$HOME/gh/react/build/react-with-addons.js"
-YUICOMP=~/src/yuicompressor-2.4.8.jar
+IMMUTABLEJS="$HOME/gh/immutable-js/dist/immutable.min.js"
+YUICOMP="$HOME/src/yuicompressor-2.4.8.jar"
+PRETTY="$HOME/psx/node_modules/js-beautify/js/bin/js-beautify.js -f -"

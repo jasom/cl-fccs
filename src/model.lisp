@@ -28,8 +28,8 @@
 		     (t
 		      (push `',v result)))
 		   (push k result)) ht)
-	`(create
-	  ,@result)))
+	`(chain *Immutable
+		(from-j-s (create ,@result)))))
 
 (defun calculate-field (fn character)
   (or
@@ -38,7 +38,7 @@
 	   (base-fudge (funcall (aget fn *fields*) character)))
        (cond
 	 ((integerp base-fudge)
-	  (loop for item in (aget fn (aget :fudges character))
+	  (loop for item in (loopable (aget fn (aget :fudges character)))
 	     do (incf total-fudge (aget :value item)))
 	  (+ total-fudge 
 	     base-fudge))
@@ -95,7 +95,7 @@
 	 (strong (aget :strong-attr character))
 	 (weak (aget :weak-attr character))
 	 (mod 0))
-    (loop for item in attrs
+    (loop for item in (loopable attrs)
        do
 	 (cond
 	   ((or (eql (elt item 0) :any)
@@ -132,7 +132,7 @@
 	(get-species-mod character ,atr)))))
 
 (defun calculate-column (column character)
-       (loop for item in (aget :classes character)
+       (loop for item in (loopable (aget :classes character))
 	    sum
 	    (parse-integer
 		 (aget column
@@ -153,26 +153,30 @@
 (defun get-abilities-for-level (clss level)
   (when (and (> level 0)
 	     (<= level 20))
-    (let ((lvlinfo (elt (aget clss +class-hash+) (1- level))))
-      (loop for name in
-	   (or (aget :abilities lvlinfo)
-	       (aget :special lvlinfo))
-	   collect (make-ability-info :name name
-				      :from (make-fc-class :the-class clss
-							   :level level))))))
+    (let ((lvlinfo (nth (1- level) (aget clss +class-hash+))))
+      (unloopable
+       (loop for name in
+	    (or (loopable (aget :abilities lvlinfo))
+		(loopable (aget :special lvlinfo)))
+	  collect (make-ability-info :name name
+				     :from (make-fc-class :the-class clss
+							  :level level)))))))
 
 (defun get-class-abilities (character)
-  (loop for lvlinfo in (aget :classes character)
-     append
-       (loop for i from 1 to (aget :level lvlinfo)
-	  append (get-abilities-for-level (aget :the-class lvlinfo) i))))
+  (mapcan (lambda (lvlinfo)
+	    (mapcan
+	     (lambda (i)
+	       (get-abilities-for-level (aget :the-class lvlinfo) i))
+	     (range 1 (1+ (aget :level lvlinfo)))))
+	  (aget :classes character)))
 
 (defun get-specialty-abilities (character)
   (let* ((specialty-name (aget :specialty character))
 	 (specialty-data (aget specialty-name +specialty-hash+)))
     (if specialty-data
-	(loop for ability in (aget :qualities specialty-data)
-	   collect (make-ability-info :name (better-capitalize ability) :from specialty-name))
+	(mapcar (lambda (ability)
+		  (make-ability-info :name (better-capitalize ability) :from specialty-name))
+		(aget :qualities specialty-data))
 	(list))))
 
 (defun get-species-abilities (character)
@@ -187,8 +191,9 @@
 	     (aget (aget :species character)
 		   +species-hash+))))
     (if species-data
-	(loop for ability in (aget :qualities species-data)
-	   collect (make-ability-info :name (better-capitalize ability) :from species-name))
+	(mapcar (lambda (ability)
+		  (make-ability-info :name (better-capitalize ability) :from species-name))
+		(aget :qualities species-data))
 	(list))))
 
 (defun get-species-speed (character)
@@ -203,23 +208,26 @@
 	0)))
     
 (defun calculate-abilities (character)
-  (append
-   (get-class-abilities character)
-   (get-specialty-abilities character)
-   (get-species-abilities character)))
+  (let ((abilities
+	 (append
+	  (get-class-abilities character)
+	  (get-specialty-abilities character)
+	  (get-species-abilities character))))
+    #+ps(ps:new (chain *immutable (*list abilities)))
+    #-ps abilities))
 
 (defun fixup-abilities (character)
   (let ((old-abilities (aget :ability-list character))
 	(new-abilities (calculate-abilities character))
 	(result (list)))
-    (loop for item in old-abilities
+    (loop for item in (loopable old-abilities)
 	 do
 	 (when (member (aget :name item) new-abilities
 		       #-ps :test #-ps #'equalp
 		       :key (lambda (x) (aget :name x)))
 	   (setf result
-		 (append result (list item)))))
-    (loop for item in new-abilities
+		 (pappend result (list item)))))
+    (loop for item in (loopable new-abilities)
 	 do
 	 (unless
 	     (or
@@ -230,7 +238,7 @@
 		      #-ps :test #-ps #'equalp
 		      :key (lambda (x) (aget :name x))))
 	   (setf result
-		 (append result (list item)))))
+		 (pappend result (list item)))))
     result))
 
 ;;;TODO Fix the incoming parser to just use name and from as an ID for
@@ -251,7 +259,7 @@
 	     :initform "")
   (list-as :validator
 	   (lambda (&key value &allow-other-keys)
-	     (member value '(:combat :non-combat :spellcasting)))
+	     (member value (list :combat :non-combat :spellcasting)))
 	   :fixup (lambda (&key value &allow-other-keys) (to-keyword value))
 	   :initform :non-combat))
 
@@ -302,18 +310,38 @@
   (qualities :validator #'string-validator
 	     :initform ""))
 
- (defclassish feat-info
+(defclassish gear-info
     (name :initform ""
 	  :validator #'string-validator)
-   (notes :initform ""
+    (effect :initform ""
+	  :validator #'string-validator)
+    (size :initform nil
+	  :validator (lambda (&key value &allow-other-keys)
+		       (or (not value)
+			   (member value '(:n :f :d :t :s :m :l :h :g :c :e :v))))
+	  :fixup (lambda (&key value &allow-other-keys)
+		   (and value (to-keyword value))))
+    (hand :initform 0
+	  :validator #'integer-validator)
+    (weight :initform 0
+	  :validator #'integer-validator))
+    
+  
+
+(defclassish feat-info
+    (name :initform ""
+	  :validator #'string-validator)
+  (notes :initform ""
 	 :validator #'string-validator)
   (parameter :validator #'string-validator
 	     :initform "")
   (list-as :validator
 	   (lambda (&key value &allow-other-keys)
-	     (member value '(:combat :non-combat :spellcasting)))
+	     (member value (list :combat :non-combat :spellcasting)))
 	   :fixup (lambda (&key value &allow-other-keys) (to-keyword value))
 	   :initform :non-combat)) 
+
+
 #.`(defclassish fc-character
    ;(owner :type (or null string) :initform (
    (character-name :initform ""
@@ -325,11 +353,11 @@
    (strong-attr :initform :str
 		:fixup (lambda (&key value &allow-other-keys) (to-keyword value))
 		:validator (lambda (&key value &allow-other-keys)
-			     (member value '(:str :dex :con :int :wis :cha))))
+			     (member value (list :str :dex :con :int :wis :cha))))
    (weak-attr :initform :str
 		:fixup (lambda (&key value &allow-other-keys) (to-keyword value))
 	      :validator (lambda (&key value &allow-other-keys)
-		 (member value '(:str :dex :con :int :wis :cha))))
+		 (member value (list :str :dex :con :int :wis :cha))))
    (talent :initform "" :validator #'string-validator)
    (specialty :initform "" :validator #'string-validator)
    (classes :initform (list (make-fc-class))
@@ -408,11 +436,11 @@
 	       :validator (list-of #'keywordp))
    ;;TODO Better validator!!
    (fudges :initform (let ((val (amake)))
-		       (loop for item in (akeys *fields*)
+		       (loop for item in (loopable (akeys *fields*))
 			  do (setf (aget (to-keyword item) val) (list)))
 		       val)
 	   :fixup (lambda (&key value &allow-other-keys)
-		   (loop for item in (akeys *fields*)
+		   (loop for item in (loopable (akeys *fields*))
 		      do (setf (aget (to-keyword item) value)
 			       (list-fixup :value (aget (to-keyword item) value))))
 		   value)
@@ -431,7 +459,7 @@
 				(weapon-info-p value))))
    (armor-type :initform :none
 	       :validator (lambda (&key value &allow-other-keys)
-			    (member value '(:none :partial :moderate)))
+			    (member value (list :none :partial :moderate)))
 	       :fixup #'keyword-fixup)
    (armor-name :validator #'string-validator
 	       :initform "")
@@ -443,9 +471,17 @@
 			 :fixup #'list-fixup
 			 :initform (list))
    (armor-fittings :validator (lambda (&key value &allow-other-keys)
-				(member value '(:none :light :heavy)))
+				(member value (list :none :light :heavy)))
 		   :fixup #'keyword-fixup
 		   :initform :none)
+   (reputation :validator #'integer-validator
+	       :initform 0)
+   (heroic-renown :validator #'integer-validator
+		  :initform 0)
+   (military-renown :validator #'integer-validator
+		    :initform 0)
+   (noble-renown :validator #'integer-validator
+		 :initform 0)
    )
 
 #.
@@ -472,7 +508,7 @@
 
 (deffield :career-level (character)
   (let ((sum 0))
-    (loop for item in (aget :classes character)
+    (loop for item in (loopable (aget :classes character))
 	 do (incf sum (aget :level item)))
     sum))
 
@@ -501,7 +537,7 @@
 	    1)))))
 
 #.`(progn
-     ,@(loop for item in '("STR" "DEX" "CON"
+     ,@(loop for item in (list "STR" "DEX" "CON"
 			   "INT" "WIS" "CHA")
 	  collect
 	    `(deffield ,(make-keyword (format nil "REAL-~A" item))
@@ -524,7 +560,7 @@
 
 #.`(deffield :skill-points (character)
      (+
-     ,@(loop for item in '("STR" "DEX" "CON"
+     ,@(loop for item in (list "STR" "DEX" "CON"
 		      "INT" "WIS" "CHA")
      collect
        `(calculate-points
@@ -553,6 +589,7 @@
 
 (deffield :defense (character)
   (+
+   10
    (calculate-field :base-defense character)
    (calculate-field :defense-attr-mod character)
    (calculate-field :defense-size-mod character)
@@ -591,7 +628,7 @@
 
 (deffield :vitality (character)
   (let ((class-vitality
-	 (loop for item in (aget :classes character)
+	 (loop for item in (loopable (aget :classes character))
 	      sum (* (aget :vitality (aget (aget :the-class item) +class-info-hash+))
 		     (aget :level item)))))
     (+ class-vitality
@@ -714,7 +751,7 @@
 	      (let ((base-bonus
 		     (cond
 		       ((member (aget :type (aget ,(key-fmt :weapon-~d i) character))
-				'(:hurled :bows :black-powder :siege-weapons))
+				(list :hurled :bows :black-powder :siege-weapons))
 			(calculate-field :ranged-bonus character))
 		       ((eql (aget :type (aget ,(key-fmt :weapon-~d i) character)) :unarmed)
 			(calculate-field :unarmed-bonus character))
@@ -736,7 +773,7 @@
 		      ((re-match "finesse" (aget :qualities (aget ,(key-fmt :weapon-~d i)character)))
 		       (calculate-field :dex-mod character))
 		      ((member (aget :type (aget ,(key-fmt :weapon-~d i)character))
-			       '(:bows :black-powder :siege-weapons))
+			       (list :bows :black-powder :siege-weapons))
 		       0)
 		      (t
 		       (calculate-field :str-mod character))))))
@@ -771,27 +808,55 @@
 (deffield :action-trip (character)
   (calculate-field :acrobatics-bonus character))
 
+;;This is *almost* a simple formula, but they tweaked it
+;;for nicer numbers in the 21-25 range (e.g. 21 == 250 instead of 240
+(defun capacity-for-effective-str (str)
+  (cond
+    ((> str 200) ;Prevent heap exhaution or FP overflow
+     (capacity-for-effective-str 200))
+    ((< str 10)
+     (* 5 str))
+    ((<= str 20)
+     (* 2 (capacity-for-effective-str (- str 5))))
+    ((<= str 25)
+     (+ (capacity-for-effective-str 20)
+	(* 50 (- str 20))))
+    (t
+     (multiple-value-bind (val rem)
+	 (truncate (- str 20) 5)
+       (* (expt 2 val)
+	  (capacity-for-effective-str (+ rem 20)))))))
+     ;;(* 2 (capacity-for-effective-str (- str 5))))))
 
+(deffield :light-capacity (character)
+  (let ((sizemod 
+	 (case (calculate-field :size character)
+	   (:small -1)
+	   (:medium 0)
+	   (:large 1)))
+	(str (calculate-field :real-str character)))
+    (when (member :improved-stability
+		  (append
+		   (get-species-abilities character)
+		   (get-specialty-abilities character)))
+      (incf sizemod))
+    (if (> sizemod 0)
+	(capacity-for-effective-str (+ str (* sizemod 5)))
+	(capacity-for-effective-str (+ str (* sizemod 2))))))
+
+(deffield :heavy-capacity (character)
+  (* 3 (calculate-field :light-capacity character)))
+
+(deffield :lift (character)
+  (* 2 (calculate-field :heavy-capacity character)))
+
+(deffield :push/drag (character)
+  (* 2 (calculate-field :heavy-capacity character)))
+
+(deffield :legend (character)
+ (calculate-column :legend character)) 
 
 #+(or)(
-   (armor-type :type (or null (member :partial :moderate))
-	       :initform nil
-	       :accessor fc-armor-type)
-   (armor-name :type (or null string)
-	       :initform nil
-	       :accessor fc-armor-name)
-   (armor-craftsmanship :type (or string null)
-			:initform nil
-			:accessor fc-armor-construction)
-   (armor-construction :type (or string null)
-		       :initform nil
-		       :accessor fc-armor-construction)
-   (armor-customizations :type list
-			 :initform nil
-			 :accessor fc-armor-customizations)
-   (armor-fittings :type (or string null)
-		   :initform nil
-		   :accessor fc-armor-fittings)
    (reputation :type (or integer null)
 	       :initform nil
 	       :accessor fc-reputation)
@@ -1498,26 +1563,6 @@
    (fc-noble-reknown character)
    (fc-military-reknown character)))
 
-;;This is *almost* a simple formula, but they tweaked it
-;;for nicer numbers in the 21-25 range (e.g. 21 == 250 instead of 240
-(defun capacity-for-effective-str (str)
-  (cond
-    ((> str 200) ;Prevent heap exhaution or FP overflow
-     (capacity-for-effective-str 200))
-    ((< str 10)
-     (* 5 str))
-    ((<= str 20)
-     (* 2 (capacity-for-effective-str (- str 5))))
-    ((<= str 25)
-     (+ (capacity-for-effective-str 20)
-	(* 50 (- str 20))))
-    (t
-     (multiple-value-bind (val rem)
-	 (truncate (- str 20) 5)
-       (* (expt 2 val)
-	  (capacity-for-effective-str (+ rem 20)))))))
-     ;;(* 2 (capacity-for-effective-str (- str 5))))))
-
 (defun genxfdf (character)
   (let ((career-level (apply #'loose-sum (mapcar #'fc-class-level (fc-classes character)))))
     (uiop:with-temporary-file (:stream s :pathname path)
@@ -1871,15 +1916,22 @@
   (time
    (with-open-file (f (asdf:system-relative-pathname 'cl-fccs "build/in.js") :direction :output :if-exists :supersede)
      (let ((*features* (cons :ps *features*)))
-       (write-string (ps:ps-compile-file "/Users/jmiller/src/lisp/cl-fccs/src/ps-compat.lisp") f)
-       (write-string (ps:ps-compile-file "/Users/jmiller/src/lisp/cl-fccs/src/model.lisp") f)
-       (write-string (ps:ps-compile-file "/Users/jmiller/src/lisp/cl-fccs/src/view-macros.lisp") f)
-       (write-string (ps:ps-compile-file "/Users/jmiller/src/lisp/cl-fccs/src/view.lisp") f))))
-  (log:info
-   (uiop:run-program
-    (namestring (uiop:merge-pathnames* "gh/redo/redo" (user-homedir-pathname)))
-     :directory (asdf:system-relative-pathname 'cl-fccs "build/")
-     :output :string :error-output :output)))
+       (write-string (ps:ps-compile-file
+		      (asdf:system-relative-pathname 'cl-fccs "src/ps-compat.lisp")
+		      ) f)
+       (write-string (ps:ps-compile-file
+		      (asdf:system-relative-pathname 'cl-fccs "src/model.lisp")
+		      ) f)
+       (write-string (ps:ps-compile-file
+		      (asdf:system-relative-pathname 'cl-fccs "src/view-macros.lisp")
+		      ) f)
+       (write-string (ps:ps-compile-file
+		      (asdf:system-relative-pathname 'cl-fccs "src/view.lisp")
+					 ) f))))
+  (uiop:run-program
+   (namestring (uiop:merge-pathnames* "gh/redo/redo" (user-homedir-pathname)))
+   :directory (asdf:system-relative-pathname 'cl-fccs "build/")
+   :output t :error-output :output))
   ;(time
    ;(uiop:run-program
     ;'("/home/aidenn/gh/react/bin/jsx"

@@ -11,6 +11,7 @@
                #:log4cl
 	       #:cl-redis
 	       #:cl-store
+	       #:lzstring
 	       #:optima.ppcre
 	       #:dissect
 	       #:cl-json

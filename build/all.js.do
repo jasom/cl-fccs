@@ -1,11 +1,12 @@
 . ./config.sh
 SOURCES="$REACTJS
+    $IMMUTABLEJS
     ./static/js/lz-string.js
     ./out.js
     ./exports.js"
 redo-ifchange $SOURCES config.sh
 case "$OPT" in
-  DEBUG)    cat $SOURCES  > $3 ;;
+  DEBUG)    cat $SOURCES | $PRETTY > $3 ;;
   NORMAL)   java -jar "$CLOSURE" \
       $SOURCES \
       --js_output_file $3 ;;

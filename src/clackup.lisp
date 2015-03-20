@@ -95,6 +95,18 @@
 	  (,(with-html-output-to-string (s)
 					(:html (:body (:p "Error"))))))
       (match env
+	((property :path-info "/fccs2/lztest/")
+	 (let ((codes
+		(map 'list #'char-code
+		     (babel:octets-to-string body :encoding :utf-8))))
+	   (log:info "Compressed-Body-Len ~D" (length body))
+	   (log:debug codes)
+	   (lzstring::decompress body
+	    #+(or)(make-array (length codes) :element-type '(unsigned-byte 16)
+			:initial-contents codes)))
+	 `(200
+	   ()
+	   ()))
 	((property :path-info "/fccs2/")
 	 (with-db-connection
 	 `(200
@@ -103,6 +115,7 @@
 	      (s)
 	      (:script
 	       (princ "React.render(React.createElement(CharacterList, {value : " s)
+	       (princ "Immutable.fromJS(" s)
 	       (encode-classish
 		(loop for id in (get-all-character-ids)
 		   for character = (get-character id)
@@ -115,7 +128,7 @@
 			    :career-level
 			    (calculate-field :career-level character)))
 		s)
-	       (princ "}),document.body)" s)))))))
+	       (princ ")}),document.body)" s)))))))
 	#+(or)((property :path-info "/fccs2/error/")
 	       (error "hi"))
 	((and (property :request-method :POST)
@@ -130,13 +143,14 @@
 		  (:htm (:head) (:body "See Other"))))))))
 	((and (property :request-method :POST)
 	      (property :path-info (ppcre "^/fccs2/save-character/(\\d*)$" id)))
+	 (log:info "Uncompressed-Body-Len ~D" (length body))
 	 (with-db-connection
 	   (if (get-character id) ;;TODO just check if id is valid
-	       (let ((parsed-body (parse-json-body body)))
-		 (fixup-fc-character parsed-body)
-		 (when (fc-character-p parsed-body)
+	       (let* ((parsed-body (parse-json-body body))
+		     (fixed-char (fixup-fc-character parsed-body)))
+		 (when (fc-character-p fixed-char)
 		   (log:info "We have a character!")
-		   (save-character id parsed-body))
+		   (save-character id fixed-char))
 		 `(200
 		   (:content-type "text/html")))
 	       `(404
@@ -152,10 +166,10 @@
 		   (,(render-page
 		      (s)
 		      (:script
-		       (format s "React.render(React.createElement(Character, {id: ~D, defaultValue : " id)
-		       (princ "fixupFcCharacter(" s)
+		       (format s "React.render(React.createElement(CharacterMenu, {characterId: ~D, defaultValue : " id)
+		       (princ "fixupFcCharacter(Immutable.fromJS(" s)
 		       (encode-classish character s)
-		       (princ ")}),document.body)" s)))))
+		       (princ "))}),document.body)" s)))))
 		 `(404
 		   (:content-type "text/html")
 		   (,(cl-who:with-html-output-to-string (s)
@@ -195,7 +209,8 @@
 	 )))
 
 (defun stop ()
-  (clack:stop *myapp*))
+  (when *myapp*
+  (clack:stop *myapp*)))
 
 (defun restart-server ()
   (stop) (Start))

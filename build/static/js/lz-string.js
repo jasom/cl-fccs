@@ -42,6 +42,10 @@ var LZString = {
     return LZString._decompress(input.length, 32, function(index) { return LZString._getBaseValue(LZString._keyStrBase64, input.charAt(index)); });
   },
 
+  compressToUTF8 : function (uncompressed) {
+    return LZString._compress(uncompressed, 7, function(a){return String.fromCharCode(a);});
+  },
+
   compressToUTF16 : function (input) {
     if (input == null) return "";
     return LZString._compress(input, 15, function(a){return String.fromCharCode(a+32);}) + " ";

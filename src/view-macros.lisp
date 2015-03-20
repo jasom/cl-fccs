@@ -1,5 +1,15 @@
 (in-package :cl-fccs)
 
+(defmacro mlambda ((arg) &body b)
+  (let ((memo (gensym)))
+    `(let ((,memo (create)))
+       (lambda (,arg)
+	 (if (ps:in ,arg ,memo)
+	     (ps:getprop ,memo ,arg)
+	     (let ((result (funcall (tlambda (,arg) ,@b) ,arg)))
+	       (setf (ps:getprop ,memo ,arg) result)
+	       result))))))
+
 (defmacro checkbox-field (name  &key
 			       (class-name "pure-u-1 pure-u-md-1-6")
 			       (input-class "pure-checkbox")
@@ -11,14 +21,14 @@
 	      (:div
 	       :class-name ,class-name
 	       :style ({(create margin 0))
-	       (:*validating-checkbox :default-value ({ (chain this state ,name))
+	       (:*validating-checkbox :default-value ({(aget ,name (chain this state obj)))
 				   :id ({ id)
 				   :input-class ,input-class
 				   :error-style ({(create background-color "pink"
 							  padding 0))
 				   :style ({(create background-color "white"
 						    padding 0))
-				   :validator ({ (chain this (validate this ',name)))
+				   :validator ({ (chain this (validate ',name)))
 				   :on-change ({ (chain this (handle-change ',name))))
 	       ,@(when show-label
 		       `((:label :html-for ({ id)
@@ -40,7 +50,7 @@
 	(:div
 	 :class-name ,class-name
 	 :style ({(create margin 0))
-	 (:*validating-input :default-value ({ (funcall ,formatter (chain this state ,name)))
+	 (:*validating-input :default-value ({ (funcall ,formatter (aget ,name (chain this state obj))))
 			     :parser ,parser
 			     :id ({ id)
 			     :input-class ,input-class
@@ -49,7 +59,7 @@
 						    padding 0))
 			     :style ({(create background-color "white"
 					      padding 0))
-			     :validator ({ (chain this (validate this ',name)))
+			     :validator ({ (chain this (validate ',name)))
 			     :on-change ({ (chain this (handle-change ',name))))
 	 ,@(when show-label
 		 `((:label :html-for ({ id)
@@ -138,10 +148,10 @@
 	  ,@(loop for i from 1 to n
 	       collect
 		 `(:*weapon-info
-		   :default-value ({(or (chain this state ,(key-fmt :weapon-~d i)) nil))
+		   :default-value ({(aget ,(key-fmt :weapon-~d i) (chain this state obj) nil))
 					;TODO validator
 		   :on-change ({(chain this (handle-change ,(key-fmt :weapon-~d i))))
-		   :atk-bonus ({(output-field weapon-1-atk-bonus
+		   :atk-bonus ({(output-field ,(key-fmt :weapon-~d-atk-bonus i)
 					      :label-as "Atk"
 					      :class-name "pure-u-1-6 pure-u-md-1-12"))
 		   :dmg-bonus ({(output-field ,(key-fmt :weapon-~d-dmg-bonus i)
@@ -159,14 +169,14 @@
      :class-name ({ ,class-name )
      :show-label ({ ,show-label )
      :label-as ({ ,label-as )
-     :default-fudge ({ (if (listp (aget ,(make-keyword name) (chain this state fudges)))
-			  (aget ,(make-keyword name) (chain this state fudges)) 
-			  (list)))
+     :default-fudge ({ (if (listp (aget ,(make-keyword name) (aget :fudges (chain this state obj))))
+			   (aget ,(make-keyword name) (aget :fudges (chain this state obj)))
+			   (list)))
      :validate-fudge ({(chain this
 			      (validate-fudge this ,(make-keyword name))))
      :fudge-changed ({(chain this
 			     (on-fudge-change ,(make-keyword name))))
-     :value ({ (calculate-field ,(make-keyword name) (chain this state)))
+     :value ({ (calculate-field ,(make-keyword name) (chain this state obj)))
      :input-class ,input-class))
   #+(or)`({
      (tlet ((id (genid)))
@@ -188,59 +198,44 @@
 (defmacro defreact-for-classish ((react-name name &key
 					     on-change) &body b)
   `(defreact ,react-name
-    mixins (list (chain *react addons *pure-render-mixin))
-    handle-change (lambda (v)
-		    (tlambda (newval)
-		      (let ((updater (create)))
-			(setf (getprop updater v) newval)
-			(chain this (set-state updater)))
-		      ,@(when on-change
-			      `((let ((updater (create)))
-				  (setf (getprop updater v)
-					(create $set newval))
-				  (,on-change
-				   (chain *react addons (update
-							 (chain this state)
-							 updater))
-				   v))))))
-    on-fudge-change (lambda (the-fudge)
-		      (tlambda (newval)
-			(let ((updater (create)))
-			  (setf (aget the-fudge updater)
-				(create $set newval))
-			  (chain this (set-state
-				      (create fudges
-					      (chain *react addons
-						     (update (chain this state fudges)
-							     updater))))))
-			,@(when on-change
-				`((let ((updater (create fudges (create))))
-				    (setf (aget the-fudge (aget :fudges updater))
-					  (create $set newval))
-				    (,on-change
-				     (chain *react addons (update
-							   (chain this state)
-							   updater))
-				     the-fudge))))))
-    validate-fudge (lambda (ths the-fudge)
-		     (lambda (newval)
-		       (let ((updater (create fudges (create))))
-			 (setf (aget the-fudge (aget :fudges updater))
-			       (create $set newval))
-			 (,(intern (format nil "~A-P" (string name)) (symbol-package name))
-			   (chain *react addons (update
-						 (chain ths state)
-						 updater))))))
-    validate (lambda (ths v)
-	       (lambda (newval)
-		 (let ((updater (create)))
-		   (setf (getprop updater v)
-			 (create $set newval))
-		   (,(intern (format nil "~A-P" (string name)) (symbol-package name))
-		    (chain *react addons (update
-					  (chain ths state)
-					  updater))))))
-    ,@b))
+       mixins (ps:array (chain *react addons *pure-render-mixin))
+       handle-change (mlambda (v)
+		       (tlambda (newval)
+			 (let ((newstate (chain this state obj (set v newval))))
+			   (chain this (set-state (create obj newstate)))
+			   ,@(when on-change
+				   `((,on-change newstate v))))))
+       on-fudge-change (mlambda (the-fudge)
+			 (tlambda (newval)
+			   (let* ((state (chain this state obj))
+				  (new-state
+				   (chain state
+					  (set
+					   :fudges
+					   (chain
+					    (aget :fudges state)
+					    (set the-fudge newval))))))
+			     (chain this (set-state (create obj new-state)))
+			     ,@(when on-change
+				     `((,on-change new-state the-fudge))))))
+       validate-fudge (mlambda (the-fudge)
+			(tlambda (newval)
+			  (let* ((obj
+				  (chain this state obj))
+				 (newobj
+				  (chain this state obj
+					 (update-in
+					  (ps:array :fudges the-fudge)
+					  (lambda (oldval) newval)))))
+					  
+			    (,(intern (format nil "~A-P" (string name)) (symbol-package name))
+			      newobj))))
+       validate (mlambda (v)
+		  (tlambda (newval)
+		    (let ((newstate (chain this state obj (set v newval))))
+		      (,(intern (format nil "~A-P" (string name)) (symbol-package name))
+			newstate))))
+       ,@b))
 
 (defmacro choice-field (name choices &key
 				       (class-name "pure-u-1 pure-u-md-1-6")
@@ -254,8 +249,8 @@
 	      (:div
 	       :class-name ,class-name
 	       (:*validating-select
-		:default-value ({ (chain this state ,name))
-		:validator ({ (chain this (validate this ',name)))
+		:default-value ({ (aget ,name (chain this state obj)))
+		:validator ({ (chain this (validate ',name)))
 		:error-style ({(create background-color "pink"
 				       padding 0))
 		:style ({(create background-color "white"
@@ -285,8 +280,8 @@
 	  ,(better-capitalize (string name)))
 
 	 (:*validating-checkboxes
-	  :default-value ({ (chain this state ,name))
-	  :validator ({ (chain this (validate this ',name)))
+	  :default-value ({(aget ,name (chain this state obj)))
+	  :validator ({ (chain this (validate ',name)))
 	  :parser ,parser
 	  :class-name ,checkbox-class
 	  :on-change ({ (chain this (handle-change ',name)))
@@ -307,10 +302,11 @@
        ,(better-capitalize (string name))
        (:*val-list
 	:read-only ,read-only
-	:value ({ (chain this state ,name))
-	:validator ({ (chain this (validate this ',name)))
+	:value ({(aget ,name (chain this state obj)))
+	:validator ({ (chain this (validate ',name)))
 	:on-change ({ (chain this (handle-change ',name)))
 	:inner-class ,inner-class
 	:row-key ({ ,row-key)
 	:make-new ({ ,make-new)
 	:make-row ({ ,make-row))))))
+
