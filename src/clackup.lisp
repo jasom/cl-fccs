@@ -143,6 +143,20 @@
 	       (,(cl-who:with-html-output-to-string
 		  (s)
 		  (:htm (:head) (:body "See Other"))))))))
+	((property :path-info (ppcre "^/fccs2/pdf-character/(\\d*)$" id))
+	 (let ((character
+		(with-db-connection
+		  (get-character id))))
+	   (when character
+	     (let*
+		 ((pdf (fill-pdf character))
+		  (bin-pdf (make-array (length pdf)
+				       :element-type '(unsigned-byte 8))))
+	       (map-into bin-pdf #'char-code pdf)
+	       `(200
+		 (:content-length ,(length bin-pdf)
+				  :content-type "application/pdf")
+		 ,bin-pdf)))))
 	((and (property :request-method :POST)
 	      (property :path-info (ppcre "^/fccs2/save-character/(\\d*)$" id)))
 	 (log:info "Uncompressed-Body-Len ~D" (length body))

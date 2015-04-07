@@ -11,6 +11,8 @@
                #:alexandria
                #:log4cl
 	       #:cl-redis
+	       #:cl-interpol
+	       #:cl-typesetting
 	       #:cl-store
 	       #:lzstring
 	       #:optima.ppcre
@@ -30,6 +32,7 @@
 		 (:file "view-macros")
 		 ;(:file "closure-server")
 		 (:file "store")
+		 (:file "pdfout")
 		 (:file "clackup")
 		 (:file "model")))))
 
