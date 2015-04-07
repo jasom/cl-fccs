@@ -59,6 +59,10 @@
     ((notany #'digit-char-p string) 0)
     (t (parse-integer fixed :junk-allowed t)))))
       
+(defun number-validator (&key value &allow-other-keys)
+  #-ps(numberp value)
+  #+ps(= (typeof value) :number))
+      
 (defun integer-validator (&key value &allow-other-keys)
   (integerp value))
 
@@ -136,11 +140,11 @@
 	    sum
 	    (parse-integer
 		 (aget column
-		       (elt
+		       (nth
+			(1- (aget :level item))
 			(aget
 			 (to-keyword
-			  (aget :the-class item)) +class-hash+)
-			(1- (aget :level item)))))))
+			  (aget :the-class item)) +class-hash+))))))
 
 (defclassish fc-class
     (the-class :initform :assassin
@@ -297,7 +301,7 @@
 	:initform "")
   (hand :validator #'integer-validator
 	:initform 1)
-  (weight :validator #'integer-validator
+  (weight :validator #'number-validator
 	  :initform 0)
   (rng :validator (lambda (&key value &allow-other-keys)
 		    (or (not value)
@@ -315,18 +319,16 @@
 	  :validator #'string-validator)
     (effect :initform ""
 	  :validator #'string-validator)
-    (size :initform nil
+    (size :initform :s
 	  :validator (lambda (&key value &allow-other-keys)
 		       (or (not value)
 			   (member value '(:n :f :d :t :s :m :l :h :g :c :e :v))))
 	  :fixup (lambda (&key value &allow-other-keys)
 		   (and value (to-keyword value))))
-    (hand :initform 0
-	  :validator #'integer-validator)
+    (hand :initform "-"
+	  :validator #'string-validator)
     (weight :initform 0
-	  :validator #'integer-validator))
-    
-  
+	  :validator #'number-validator))
 
 (defclassish feat-info
     (name :initform ""
@@ -341,148 +343,171 @@
 	   :fixup (lambda (&key value &allow-other-keys) (to-keyword value))
 	   :initform :non-combat)) 
 
+(defclassish spell-info
+    (name :initform "" :validator #'string-validator)
+  (level :initform 0
+	 :validator
+	  (lambda (&key value &allow-other-keys)
+	    (or (not value)
+		(integerp value))))
+  (discipline :initform "" :validator #'string-validator)
+  (casting-time :initform "" :validator #'string-validator)
+  (distance :initform "" :validator #'string-validator)
+  (area :initform "" :validator #'string-validator)
+  (duration :initform "" :validator #'string-validator)
+  (saving-throw :initform "" :validator #'string-validator)
+  (preparation-cost :initform "" :validator #'string-validator)
+  (effect :initform "" :validator #'string-validator))
 
 #.`(defclassish fc-character
-   ;(owner :type (or null string) :initform (
-   (character-name :initform ""
-		   :validator #'string-validator)
-   (player-name :initform ""
-		:validator #'string-validator)
-   (species :initform ""
-	    :validator #'string-validator)
-   (strong-attr :initform :str
+					;(owner :type (or null string) :initform (
+       (character-name :initform ""
+		       :validator #'string-validator)
+     (player-name :initform ""
+		  :validator #'string-validator)
+     (species :initform ""
+	      :validator #'string-validator)
+     (strong-attr :initform :str
+		  :fixup (lambda (&key value &allow-other-keys) (to-keyword value))
+		  :validator (lambda (&key value &allow-other-keys)
+			       (member value (list :str :dex :con :int :wis :cha))))
+     (weak-attr :initform :str
 		:fixup (lambda (&key value &allow-other-keys) (to-keyword value))
 		:validator (lambda (&key value &allow-other-keys)
 			     (member value (list :str :dex :con :int :wis :cha))))
-   (weak-attr :initform :str
-		:fixup (lambda (&key value &allow-other-keys) (to-keyword value))
-	      :validator (lambda (&key value &allow-other-keys)
-		 (member value (list :str :dex :con :int :wis :cha))))
-   (talent :initform "" :validator #'string-validator)
-   (specialty :initform "" :validator #'string-validator)
-   (classes :initform (list (make-fc-class))
-	    :fixup (lambda (&key value &allow-other-keys)
-		     #+ps(unless value (setf value (list)))
-		     (mapcar #'fixup-fc-class value))
-	    :validator (list-of #'fc-class-p))
-   (xp :initform 0
-       :validator #'integer-validator)
-   (gender :initform "" :validator #'string-validator)
-   (age  :initform "" :validator #'string-validator)
-   (height :initform "" :validator #'string-validator)
-   (weight :initform "" :validator #'string-validator)
-   (eyes :initform "" :validator #'string-validator)
-   (hair :initform "" :validator #'string-validator)
-   (base-str :initform 8 :validator #'integer-validator)
-   (base-dex :initform 8 :validator #'integer-validator)
-   (base-con :initform 8 :validator #'integer-validator)
-   (base-int :initform 8 :validator #'integer-validator)
-   (base-wis :initform 8 :validator #'integer-validator)
-   (base-cha :initform 8 :validator #'integer-validator)
-   ,@(loop for skill in +skills+
+     (talent :initform "" :validator #'string-validator)
+     (specialty :initform "" :validator #'string-validator)
+     (classes :initform (list (make-fc-class))
+	      :fixup (lambda (&key value &allow-other-keys)
+		       #+ps(unless value (setf value (list)))
+		       (mapcar #'fixup-fc-class value))
+	      :validator (list-of #'fc-class-p))
+     (xp :initform 0
+	 :validator #'integer-validator)
+     (gender :initform "" :validator #'string-validator)
+     (age  :initform "" :validator #'string-validator)
+     (height :initform "" :validator #'string-validator)
+     (weight :initform "" :validator #'string-validator)
+     (eyes :initform "" :validator #'string-validator)
+     (hair :initform "" :validator #'string-validator)
+     (base-str :initform 8 :validator #'integer-validator)
+     (base-dex :initform 8 :validator #'integer-validator)
+     (base-con :initform 8 :validator #'integer-validator)
+     (base-int :initform 8 :validator #'integer-validator)
+     (base-wis :initform 8 :validator #'integer-validator)
+     (base-cha :initform 8 :validator #'integer-validator)
+     ,@(loop for skill in +skills+
 	  collect
-	  `(,(intern (format nil "~a-ORIGIN"
-			     (ssub "_" " " (string skill))) *package*)
-	     :initform #+ps false #-ps nil :validator #'bool-validator)
+	    `(,(intern (format nil "~a-ORIGIN"
+			       (ssub "_" " " (string skill))) *package*)
+	       :initform #+ps false #-ps nil :validator #'bool-validator)
 	  collect
-	  `(,(intern (format nil "~a-RANKS" (ssub "_" " " (string skill))) *package*) :initform 0 :validator #'integer-validator)
+	    `(,(intern (format nil "~a-RANKS" (ssub "_" " " (string skill))) *package*) :initform 0 :validator #'integer-validator)
 	  collect
-	  `(,(intern (format nil "~a-THREAT" (ssub "_" " " (string skill))) *package*)
-		     :initform 20 :validator #'integer-validator))
-   (crafting-foci :initform (list)
-		  :fixup #'list-fixup
-		  :validator (list-of #'stringp))
-   (ride-foci :initform (list)
-	      :fixup #'list-fixup
-	      :validator (list-of #'stringp))
-   (alignment :initform "" :validator #'string-validator)
-   (languages :initform (list)
-	      :fixup #'list-fixup
-	      :validator (list-of #'stringp))
-   (interests :initform (list)
-	      :fixup #'list-fixup
-	      :validator (list-of #'stringp))
-   (completed-subplots :initform (list)
-		       :fixup #'list-fixup
-		       :validator (list-of #'stringp))
-   (incomplete-subplots :initform (list)
-			:fixup #'list-fixup
-			:validator (list-of #'stringp))
-   (coin-in-hand :initform 0 :validator #'integer-validator)
-   (stake :initform 0 :validator #'integer-validator)
-   (panache :initform 0 :validator #'integer-validator)
-   (prudence :initform 0 :validator #'integer-validator)
-   (ability-list :initform (list)
-		 :fixup (lambda (&key value &allow-other-keys)
-			  (setf value (list-fixup :value value))
-			  (mapcar #'fixup-ability-info value))
-		 :validator (list-of #'ability-info-p))
-   (feat-list :initform (list)
-		 :fixup (lambda (&key value &allow-other-keys)
-			  (setf value (list-fixup :value value))
-			  (mapcar #'fixup-feat-info value))
-	      :validator (list-of #'feat-info-p))
-   (proficiency-list :initform (list)
-		     :fixup
-		     (lambda (&key value &allow-other-keys)
-		       (setf value (list-fixup :value value))
-		       (mapcar #'to-keyword value))
-		     :validator (list-of #'keywordp))
-   (forte-list :initform (list)
-	       :fixup
-	       (lambda (&key value &allow-other-keys)
-		 (setf value (list-fixup :value value))
-		 (mapcar #'to-keyword value))
-	       :validator (list-of #'keywordp))
-   ;;TODO Better validator!!
-   (fudges :initform (let ((val (amake)))
-		       (loop for item in (loopable (akeys *fields*))
-			  do (setf (aget (to-keyword item) val) (list)))
-		       val)
-	   :fixup (lambda (&key value &allow-other-keys)
-		   (loop for item in (loopable (akeys *fields*))
-		      do (setf (aget (to-keyword item) value)
-			       (list-fixup :value (aget (to-keyword item) value))))
-		   value)
-	   :validator (lambda (&key &allow-other-keys) t))
-   (critical-injuries :initform ""
-		      :validator #'string-validator)
-   ,@
-   (loop for i from 1 to 4
-	collect
-	`(,(intern (string (key-fmt :weapon-~d i)) *package*)
-	   :initform (make-weapon-info)
-		   :fixup
-		   (lambda (&key value &allow-other-keys)
-		     (fixup-weapon-info value))
-		   :validator (lambda (&key value &allow-other-keys)
-				(weapon-info-p value))))
-   (armor-type :initform :none
-	       :validator (lambda (&key value &allow-other-keys)
-			    (member value (list :none :partial :moderate)))
-	       :fixup #'keyword-fixup)
-   (armor-name :validator #'string-validator
-	       :initform "")
-   (armor-craftsmanship :validator #'string-validator
-			:initform "")
-   (armor-construction :validator #'string-validator
-		       :initform "")
-   (armor-customizations :validator (list-of #'stringp)
+	    `(,(intern (format nil "~a-THREAT" (ssub "_" " " (string skill))) *package*)
+	       :initform 20 :validator #'integer-validator))
+     (crafting-foci :initform (list)
+		    :fixup #'list-fixup
+		    :validator (list-of #'stringp))
+     (ride-foci :initform (list)
+		:fixup #'list-fixup
+		:validator (list-of #'stringp))
+     (alignment :initform "" :validator #'string-validator)
+     (languages :initform (list)
+		:fixup #'list-fixup
+		:validator (list-of #'stringp))
+     (studies :initform (list)
+		:fixup #'list-fixup
+		:validator (list-of #'stringp))
+     (completed-subplots :initform (list)
 			 :fixup #'list-fixup
-			 :initform (list))
-   (armor-fittings :validator (lambda (&key value &allow-other-keys)
-				(member value (list :none :light :heavy)))
-		   :fixup #'keyword-fixup
-		   :initform :none)
-   (reputation :validator #'integer-validator
+			 :validator (list-of #'stringp))
+     (incomplete-subplots :initform (list)
+			  :fixup #'list-fixup
+			  :validator (list-of #'stringp))
+     (coin-in-hand :initform 0 :validator #'integer-validator)
+     (stake :initform 0 :validator #'integer-validator)
+     (panache :initform 0 :validator #'integer-validator)
+     (prudence :initform 0 :validator #'integer-validator)
+     (ability-list :initform (list)
+		   :fixup (lambda (&key value &allow-other-keys)
+			    (setf value (list-fixup :value value))
+			    (mapcar #'fixup-ability-info value))
+		   :validator (list-of #'ability-info-p))
+     (feat-list :initform (list)
+		:fixup (lambda (&key value &allow-other-keys)
+			 (setf value (list-fixup :value value))
+			 (mapcar #'fixup-feat-info value))
+		:validator (list-of #'feat-info-p))
+     (proficiency-list :initform (list)
+		       :fixup
+		       (lambda (&key value &allow-other-keys)
+			 (setf value (list-fixup :value value))
+			 (mapcar #'to-keyword value))
+		       :validator (list-of #'keywordp))
+     (forte-list :initform (list)
+		 :fixup
+		 (lambda (&key value &allow-other-keys)
+		   (setf value (list-fixup :value value))
+		   (mapcar #'to-keyword value))
+		 :validator (list-of #'keywordp))
+     ;;TODO Better validator!!
+     (fudges :initform (let ((val (amake)))
+			 (loop for item in (loopable (akeys *fields*))
+			    do (setf (aget (to-keyword item) val) (list)))
+			 val)
+	     :fixup (lambda (&key value &allow-other-keys)
+		      (loop for item in (loopable (akeys *fields*))
+			 do (setf (aget (to-keyword item) value)
+				  (list-fixup :value (aget (to-keyword item) value))))
+		      value)
+	     :validator (lambda (&key &allow-other-keys) t))
+     (critical-injuries :initform ""
+			:validator #'string-validator)
+     ,@
+     (loop for i from 1 to 4
+	collect
+	  `(,(intern (string (key-fmt :weapon-~d i)) *package*)
+	     :initform (make-weapon-info)
+	     :fixup
+	     (lambda (&key value &allow-other-keys)
+	       (fixup-weapon-info value))
+	     :validator (lambda (&key value &allow-other-keys)
+			  (weapon-info-p value))))
+     (armor-type :initform :none
+		 :validator (lambda (&key value &allow-other-keys)
+			      (member value (list :none :partial :moderate)))
+		 :fixup #'keyword-fixup)
+     (armor-name :validator #'string-validator
+		 :initform "")
+     (armor-craftsmanship :validator #'string-validator
+			  :initform "")
+     (armor-construction :validator #'string-validator
+			 :initform "")
+     (armor-customizations :validator (list-of #'stringp)
+			   :fixup #'list-fixup
+			   :initform (list))
+     (armor-fittings :validator (lambda (&key value &allow-other-keys)
+				  (member value (list :none :light :heavy)))
+		     :fixup #'keyword-fixup
+		     :initform :none)
+     (armor-dp :validator #'integer-validator
 	       :initform 0)
-   (heroic-renown :validator #'integer-validator
-		  :initform 0)
-   (military-renown :validator #'integer-validator
-		    :initform 0)
-   (noble-renown :validator #'integer-validator
+     (reputation :validator #'integer-validator
 		 :initform 0)
-   )
+     (heroic-renown :validator #'integer-validator
+		    :initform 0)
+     (military-renown :validator #'integer-validator
+		      :initform 0)
+     (noble-renown :validator #'integer-validator
+		   :initform 0)
+     (gear :validatior (list-of #'gear-info-p)
+	   :initform (list)
+	   :fixup #'list-fixup)
+     (spells :validator (list-of #'spell-info-p)
+	     :fixup #'list-fixup
+	     :initform (list))
+     )
 
 #.
 `(progn
@@ -583,9 +608,8 @@
   #-ps(declare (ignore character))
   0)
 
-(deffield :initiative-misc-mod (character)
-  #-ps(declare (ignore character))
-  0)
+(deffield :defense-armor-mod (character)
+  (- (aget :armor-dp character)))
 
 (deffield :defense (character)
   (+
@@ -856,25 +880,13 @@
 (deffield :legend (character)
  (calculate-column :legend character)) 
 
-#+(or)(
-   (reputation :type (or integer null)
-	       :initform nil
-	       :accessor fc-reputation)
-   (heroic-reknown :type (or integer null)
-		   :initform nil
-		   :accessor fc-heroic-reknown)
-   (military-reknown :type (or integer null)
-		     :initform nil
-		     :accessor fc-military-reknown)
-   (noble-reknown :type (or integer null)
-		   :initform nil
-		   :accessor fc-noble-reknown)
-   (gear :type (satisfies gear-list-p)
-	 :initform nil
-	 :accessor fc-gear)
-   (fudges :type (satisfies fudge-list-p)
-	   :accessor fc-fudges))
+(deffield :renown (character)
+ (+ (aget :heroic-renown character) 
+    (aget :military-renown character)
+    (aget :noble-renown character)))
 
+(deffield :total-studies (character)
+  (length (aget :studies character)))
 
 #|
 (defun fc-class-equal (x y)
@@ -1200,13 +1212,6 @@
 (defun loose-sum (&rest args)
   (when (some #'identity args)
     (apply #'+ (remove nil args))))
-
-
-(defparameter *path-to-charsheet* "/home/aidenn/Downloads/Fantasy_Craft_Character_Sheets-v6-Fillable.pdf")
-
-
-
-
 
 (defun fmt-bonus (n)
   (if (> n 0)

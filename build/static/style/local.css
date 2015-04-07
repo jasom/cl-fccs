@@ -97,3 +97,12 @@ h2.heading {
 .pure-form label, .label {
     font-size: 12px;
 }
+
+li.pure-menu-selected {
+    background-color: #eee;
+}
+
+.nopad {
+    padding: 0;
+    margin: 0;
+}

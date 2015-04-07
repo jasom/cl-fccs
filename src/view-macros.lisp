@@ -2,13 +2,14 @@
 
 (defmacro mlambda ((arg) &body b)
   (let ((memo (gensym)))
-    `(let ((,memo (create)))
-       (lambda (,arg)
-	 (if (ps:in ,arg ,memo)
-	     (ps:getprop ,memo ,arg)
-	     (let ((result (funcall (tlambda (,arg) ,@b) ,arg)))
-	       (setf (ps:getprop ,memo ,arg) result)
-	       result))))))
+    `(lambda (,arg)
+       (unless (ps:in ',memo this)
+	 (setf (ps:@ this ,memo) (create)))
+       (if (ps:in ,arg (ps:@ this ,memo))
+	   (ps:getprop (ps:@ this ,memo) ,arg)
+	   (let ((result (funcall (tlambda (,arg) ,@b) ,arg)))
+	     (setf (ps:getprop (ps:@ this ,memo) ,arg) result)
+	     result)))))
 
 (defmacro checkbox-field (name  &key
 			       (class-name "pure-u-1 pure-u-md-1-6")
@@ -35,6 +36,42 @@
 				 ,(better-capitalize (string name)))))
 	       ))))))
 
+(defmacro autocomplete-input-field (name  &key
+					    (class-name "pure-u-1 pure-u-md-1-6")
+					    (input-class "pure-input-1")
+					    input-type
+					    update-completions
+					    (label-as nil)
+					    (show-label t)
+					    (formatter '(lambda (x) x))
+					    (parser '({ (lambda (x) x))))
+  (let ((name (alexandria:make-keyword (string name))))
+    `({
+       (tlet ((id (genid)))
+	     (htm
+	      (:div
+	       :class-name ,class-name
+	       :style ({(create margin 0))
+	       (:*validating-autocomplete
+		:default-value ({ (funcall ,formatter (aget ,name (chain this state obj))))
+		:parser ,parser
+		:id ({ id)
+		:input-class ,input-class
+		:type ,input-type
+		:error-style ({(create background-color "pink"
+				       padding 0))
+		:style ({(create background-color "white"
+				 padding 0))
+		:update-completions ({ ,update-completions)
+		:validator ({ (chain this (validate ',name)))
+		:on-change ({ (chain this (handle-change ',name))))
+	       ,@(when show-label
+		       `((:label :html-for ({ id)
+				 ,(if label-as
+				      label-as
+				      (better-capitalize (string name))))))
+	       ))))))
+
 (defmacro input-field (name  &key
 			       (class-name "pure-u-1 pure-u-md-1-6")
 			       (input-class "pure-input-1")
@@ -42,7 +79,8 @@
 			       (label-as nil)
 			       (show-label t)
 			       (formatter '(lambda (x) x))
-			       (parser '({ (lambda (x) x))))
+			       (parser '({ (lambda (x) x)))
+			       override-value)
   (let ((name (alexandria:make-keyword (string name))))
   `({
      (tlet ((id (genid)))
@@ -60,7 +98,10 @@
 			     :style ({(create background-color "white"
 					      padding 0))
 			     :validator ({ (chain this (validate ',name)))
-			     :on-change ({ (chain this (handle-change ',name))))
+			     :on-change ({ (chain this (handle-change ',name)))
+			     ,@(when override-value
+				     `(:override-value ,override-value)))
+
 	 ,@(when show-label
 		 `((:label :html-for ({ id)
 			   ,(if label-as
@@ -201,23 +242,13 @@
        mixins (ps:array (chain *react addons *pure-render-mixin))
        handle-change (mlambda (v)
 		       (tlambda (newval)
-			 (let ((newstate (chain this state obj (set v newval))))
-			   (chain this (set-state (create obj newstate)))
-			   ,@(when on-change
-				   `((,on-change newstate v))))))
-       on-fudge-change (mlambda (the-fudge)
-			 (tlambda (newval)
-			   (let* ((state (chain this state obj))
-				  (new-state
-				   (chain state
-					  (set
-					   :fudges
-					   (chain
-					    (aget :fudges state)
-					    (set the-fudge newval))))))
-			     (chain this (set-state (create obj new-state)))
-			     ,@(when on-change
-				     `((,on-change new-state the-fudge))))))
+			 (chain this
+				(set-state
+				 (lambda (state props context)
+				   (let ((newobj (chain state obj (set v newval))))
+				     ,@(when on-change
+					     `((,on-change newobj v)))
+				     (create obj newobj)))))))
        validate-fudge (mlambda (the-fudge)
 			(tlambda (newval)
 			  (let* ((obj
@@ -227,7 +258,6 @@
 					 (update-in
 					  (ps:array :fudges the-fudge)
 					  (lambda (oldval) newval)))))
-					  
 			    (,(intern (format nil "~A-P" (string name)) (symbol-package name))
 			      newobj))))
        validate (mlambda (v)
@@ -241,7 +271,8 @@
 				       (class-name "pure-u-1 pure-u-md-1-6")
 				       (choice-class "pure-input-1")
 				       (choice-values choices)
-				       (parser '({ (lambda (x) x) })))
+				       (parser '({ (lambda (x) x) }))
+				       override-value)
   (let ((name (alexandria:make-keyword (string name))))
     `({
        (tlet ((id (genid)))
@@ -258,6 +289,7 @@
 		:parser ,parser
 		:class-name ,choice-class
 		:id ({ id)
+		,@(when override-value (list :override-value override-value))
 		:on-change ({ (chain this (handle-change ',name)))
 		,@(loop for choice in choices
 		     for choice-value in choice-values

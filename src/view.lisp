@@ -1,4 +1,4 @@
-#-ps(in-package cl-fccs)
+(in-package cl-fccs)
 
 (defreact-for-classish (*fudge fudge
 			       :on-change (tlambda (v) (chain this props (on-change v))))
@@ -13,12 +13,14 @@
 	     (input-field notes
 			  :class-name "pure-u-1-2")))))
 
-(defun post-data (url data)
+(defun post-data (url data &optional complete-callback)
   (let ((request (new *x-m-l-http-request)))
     (chain request (open "POST" url t))
     (chain request (set-request-header "Content-Type" "application/json; charset=utf-8"))
     (let ((encoded-data (chain *json* (stringify data))))
-    (chain request (send encoded-data))
+      (chain request (send encoded-data))
+      (when complete-callback
+	(setf (chain request onload) complete-callback))
       #+(or)(chain console (log (chain encoded-data length)))
       #+(or)(chain console (log (chain *l-z-string (compress encoded-data) length) ))
       #+(or)(let ((request2 (new *x-m-l-http-request))
@@ -152,7 +154,10 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		       (setf (chain this timeout) timeout)))
 					   
     render (lambda ()
-	     (htm (:input :value ({ (chain this state value))
+	     (htm (:input :value ({ (if (and (chain this state valid)
+			     (ps:in 'override-value (chain this props)))
+			(chain this props override-value)
+			(chain this state value)))
 			  :id ({ (chain this props id))
 			  :type ({(if (chain this props type)
 				      (chain this props type)
@@ -163,6 +168,146 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 				   (if (chain this state valid) 
 				       (chain this props style)
 				       (chain this props error-style)))))))
+
+(defreact *validating-autocomplete
+    get-initial-state (lambda ()
+			(let ((val (chain this props default-value)))
+			  (create
+			   value val
+			   focused nil
+			   completions (array)
+			   selected-completion nil
+			   valid (chain this props
+					(validator
+					 (chain this props (parser val)))))))
+    completions-changed (lambda (new-completions)
+			  (chain this (set-state (create completions new-completions)))
+			  (when new-completions
+			    (chain this (set-state (create selected-completion (elt new-completions 0))))))
+    defocus (lambda ()
+	      (chain this (set-state (create focused nil))))
+    focus (lambda ()
+	    (chain this (set-state (create focused t))))
+    handle-keydown (lambda (ev)
+		     (cond
+		       ((= (chain ev key-code) 27)   ;Escape
+			(when (chain this state focused)
+			  (chain ev (prevent-default))
+			  (chain this (defocus))))
+		       ((or
+			 (= (chain ev key-code) 13)  ;Enter
+			 (and
+			  (= (chain ev key-code) 9)  ;Tab
+			  (chain this state focused)))
+			(chain ev (prevent-default))
+			(when (chain this state selected-completion)
+			   (chain this
+				  (handle-changed
+				   (create
+				    target (create
+					    value
+					    (chain this state selected-completion))))))
+			   (chain this (defocus)))
+		       ((= (chain ev key-code) 9)    ;Tab, completions not open
+			;; Do nothing
+			)
+		       ((= (chain ev key-code) 40)   ;Down
+			(chain ev (prevent-default))
+			(let ((completions
+			       (chain this state completions))
+			      (selected-completion (chain this state selected-completion)))
+			(when completions
+			  (loop for i from 0 below (length completions)
+			       when (= (elt completions i) selected-completion)
+			     do (chain this (set-state
+					     (create selected-completion
+						     (elt completions
+							  (mod (1+ i) (length completions))))))))))
+		       ;;Up
+		       ((= (chain ev key-code) 38)
+			(chain ev (prevent-default))
+			(let ((completions
+			       (chain this state completions))
+			      (selected-completion (chain this state selected-completion)))
+			  (when completions
+			    (loop for i from 0 below (length completions)
+			       when (= (elt completions i) selected-completion)
+			       do (chain this (set-state
+					       (create selected-completion
+						       (elt completions
+							    (mod (+ i (1- (length completions)))
+								 (length completions))))))))))
+		       (t
+			 (chain this (focus)))))
+    handle-changed (lambda (ev)
+		     (when (chain this timeout)
+		       (chain window (clear-timeout (chain this timeout))))
+		     (let* ((rawval (chain ev target value))
+			    (val (chain this props (parser rawval)))
+			    (fn
+			     (tlambda ()
+			       (chain this props (update-completions
+						  rawval
+						  (chain this completions-changed)))
+			       (if (chain this props (validator val))
+				   (progn
+				     (chain this props (on-change val))
+				     (chain this (set-state
+						  (create valid t))))
+				   (chain this (set-state (create valid nil)))
+				   )))
+			    (timeout (chain window (set-timeout fn 250))))
+		       (chain this (set-state (create value rawval)))
+		       (setf (chain this timeout) timeout)))
+    completion-clicked (lambda (item)
+			 (tlambda (ev)
+			   (chain ev (prevent-default))
+			   (chain this (handle-changed (create
+							target (create value item)
+							dont-focus t)))
+			   (chain this (defocus))))
+    render (lambda ()
+	     (htm
+	      (:div
+	       (:input :value ({ (chain this state value))
+		       :id ({ (chain this props id))
+		       :type ({(if (chain this props type)
+				   (chain this props type)
+				   "text"))
+		       :on-change ({ (chain this handle-changed))
+		       :on-key-down({ (chain this handle-keydown))
+		       :class-name ({ (chain this props input-class))
+		       :style ({
+				(if (chain this state valid) 
+				    (chain this props style)
+				    (chain this props error-style))))
+	       ({
+		 (when (chain this state focused)
+		   (htm
+		    (:div
+		     :style ({(create position :relative
+				      width "100%" 
+				      display :block
+				      height 0))
+		     (:div
+		      :class-name "pure-menu positioned-popup-left"
+		      (:ul :class-name "pure-menu-list"
+			   ({(loop for item in (chain this state completions)
+				collect
+				  (htm
+				   (:li
+				    :class-name
+				    ({(if (eql item (chain this state selected-completion))
+					  "pure-menu-item pure-menu-selected"
+					  "pure-menu-item"))
+				    (:a
+				     :href "#"
+				     :class-name "pure-menu-link nopad"
+				     :on-click ({ (chain this (completion-clicked item)))
+
+				     :key ({ item)
+				     ({ item))))))))))))))))
+
 (defreact *validating-checkboxes
     get-initial-state (lambda ()
 			(create value (chain this props default-value)))
@@ -198,7 +343,9 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 
 (defreact *validating-select
     get-initial-state (lambda ()
-			(create value (chain this props default-value)))
+			(create value (chain this props default-value)
+				valid (chain this props
+					     (validator (chain this props default-value)))))
     handle-changed (lambda (ev)
 		     (when (chain this timeout)
 		       (chain window (clear-timeout (chain this timeout))))
@@ -221,43 +368,45 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		       (when (chain this props (validator val))
 			 (chain this props (on-change val)))))
     render (lambda ()
-	     (htm (:select :value ({ (chain this state value))
-			   :class-name ({ (chain this props class-name))
-			   :on-change ({ (chain this handle-changed))
-			   :id ({ (chain this props id))
-			   :style ({
-				   (if (chain this props (validator
-							  (chain this state value)))
-				       (chain this props style)
-				       (chain this props error-style)))
-			   ({ (chain this props children))))))
+	     (htm (:select
+		   :value
+		   ({(if (and (chain this state valid)
+			      (ps:in 'override-value (chain this props)))
+			 (chain this props override-value)
+			 (chain this state value)))
+		   :class-name ({ (chain this props class-name))
+		   :on-change ({ (chain this handle-changed))
+		   :id ({ (chain this props id))
+		   :style ({
+			    (if (chain this props (validator
+						   (chain this state value)))
+				(chain this props style)
+				(chain this props error-style)))
+		   ({ (chain this props children))))))
 
 (defreact *val-list
     get-initial-state (lambda ()
-			(let ((ths this))
-			  (create keys
-				  (loop for item in (chain ths props value (to-array))
-				     for i from 0
-				     collect (chain ths props (row-key item i))))))
+			(create keys
+				(loop for item in (chain this props value (to-array))
+				   for i from 0
+				   collect (chain this props (row-key item i)))))
     handle-change (mlambda (v)
 		    (tlambda (newval)
 		      (let ((newarray (chain this props value (set v newval))))
 			;(chain this (set-state (create value newarray)))
 			(chain this props (on-change newarray)))))
     del (lambda (the-key)
-	  (let ((ths this))
-	    (lambda (ev)
+	  (tlambda (ev)
 	      (chain ev (prevent-default))
 	      (destructuring-bind (newitems newkeys)
-		  (loop for item in (chain ths props value (to-array))
-		     for key in (chain ths state keys)
+		  (loop for item in (loopable (chain this props value))
+		     for key in (chain this state keys)
 		     unless (eql key the-key)
 		     collect item into items and
 		     collect key into keys
-		     finally (return (list items keys)))
-		(chain ths props (on-change newitems))
-		(chain ths (set-state (create keys newkeys)))
-		))))
+		     finally (return (ps:array items keys)))
+		(chain this props (on-change (unloopable newitems)))
+		(chain this (set-state (create keys newkeys))))))
 		       
     add (lambda ()
 	  (let* ((newitem (chain this props (make-new)))
@@ -266,40 +415,37 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			 (create keys
 				 (chain this state keys
 					(concat
-					 (list
+					 (ps:array
 					  (chain
 					   this props
 					   (row-key
 					    newitem
-					    (1- (chain newarray length))))))))))
+					    (1- (chain newarray (count)))))))))))
 	    (chain this props (on-change newarray))))
     render (lambda ()
-	     (let* ((ths this)
-		    (keys
+	     (let* ((keys
 		     (if (chain this props read-only)
-			 (loop for item in (chain ths props value (to-array))
+			 (loop for item in (chain this props value (to-array))
 			    for i from 0
-			    collect (chain ths props (row-key item i)))
+			    collect (chain this props (row-key item i)))
 			 (chain this state keys)))
-		    (ths this)
 		    (items
 		     (loop
-			for item in (chain ths props value (to-array))
+			for item in (chain this props value (to-array))
 			for key in keys
 			for i from 0
 			collect
 			  (htm
 			   (:div
-			    :class-name ({ (chain ths props inner-class))
+			    :class-name ({ (chain this props inner-class))
 			    :key ({ key)
 			    (:div
 			     :class-name "pure-u-1 pure-u-md-1-12"
 			     (:button :class-name "pure-button"
 				      :style ({(create margin 0 padding "0.25em"))
-				      :on-click ({ (chain ths (del key)))
+				      :on-click ({ (chain this (del key)))
 				      (esc (string #\en_dash))))
-			    ({ (chain ths props (make-row item (chain ths (handle-change i)))))
-			    )))))
+			    ({ (chain this props (make-row item (chain this (handle-change i))))))))))
 	       (htm
 		(:fieldset
 		 ({ items)
@@ -334,7 +480,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			  :parser ({ parse-int) :class-name "pure-u-1-6 pure-u-md-1-12")
 	      (input-field weight
 			   :label-as "Wgt."
-			  :parser ({ parse-int) :class-name "pure-u-1-6 pure-u-md-1-12")
+			  :parser ({ parse-float) :class-name "pure-u-1-6 pure-u-md-1-12")
 	      (input-field rng
 			  :parser ({ (lambda (x) (when x (parse-int x))))
 			  :class-name "pure-u-1-6 pure-u-md-1-12")
@@ -343,6 +489,58 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 	      (input-field qualities :class-name "pure-u-1 pure-u-md-1-2")))))
 
 		  
+(defreact-for-classish (*gear-info gear-info
+				   :on-change (tlambda (v field)
+						(chain this props (on-change v))
+						(if (= field "name")
+						    (chain this (update-fields (aget :name v))))))
+  get-initial-state (lambda () (create obj (chain this props default-value)))
+  update-fields (lambda (name)
+		  (post-data
+		   "/fccs2/complete/gear-info"
+		   name
+		   (let ((ginfo this))
+		     (lambda ()
+		       (let ((response (chain *json* (parse (chain this response-text)))))
+			 (when (> (chain response length) 0)
+			   (setf response
+				 (loop for item in response
+				    collect (if (= item null) "" item)))
+			   (funcall (chain ginfo (handle-change :effect)) (elt response 1))
+			   (funcall (chain ginfo (handle-change :size)) (elt response 2))
+			   (funcall (chain ginfo (handle-change :hand)) (elt response 3))
+			   (funcall (chain ginfo (handle-change :weight)) (elt response 4))))))))
+  render (lambda ()
+	   (htm
+	    (:div
+	     (autocomplete-input-field
+	      name
+	      :update-completions
+	      (lambda (val fn)
+		(post-data
+		 "/fccs2/complete/gear"
+		 val
+		 (lambda ()
+		   (funcall fn
+			    (chain *json* (parse (chain this response-text))))))):class-name "pure-u-1 pure-u-md-1-3")
+	     (input-field effect
+			  :override-value ({(aget :effect (chain this state obj)))
+			  :class-name "pure-u-1 pure-u-md-1-3")
+	     (choice-field size (:n :f :d :t :s :m :l :h :g :c :e :v)
+			   :override-value ({(aget :size (chain this state obj)))
+			   :choice-values ("n" "f" "d" "t" "s" "m" "l" "h" "g" "c" "e" "v")
+			   :class-name "pure-u-1 pure-u-md-1-8")
+	     (input-field hand
+			  :override-value ({(aget :hand (chain this state obj)))
+			  :class-name "pure-u-1 pure-u-md-1-12")
+	     (input-field weight
+			  :override-value ({(aget :weight (chain this state obj)))
+			  :class-name "pure-u-1 pure-u-md-1-12"
+			  :parser ({ #'parse-int))))))
+
+
+	     
+				 
 (defreact-for-classish (*fc-class fc-class
 				  :on-change (tlambda (v) (chain this props (on-change v))))
   get-initial-state (lambda () (create obj (chain this props default-value)))
@@ -350,14 +548,95 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 	   (htm
 	    (:div
 	     :class-name "pure-u-1 pure-u-md-11-12"
-	     (input-field the-class
-			  :class-name "pure-u-1 pure-u-md-2-3"
-			  :parser ({ to-keyword))
+	     (autocomplete-input-field
+	      the-class
+	      :update-completions
+	      (lambda (val fn)
+		(post-data
+		 "/fccs2/complete/class"
+		 val
+		 (lambda ()
+		   (funcall fn
+			    (chain *json* (parse (chain this response-text)))))))
+	      :class-name "pure-u-1 pure-u-md-2-3"
+	      :parser ({ to-keyword))
 	     (input-field level
 			  :class-name "pure-u-1 pure-u-md-1-4"
 			  :input-type "number"
 			  :parser ({ parse-int))))))
-	       
+
+
+
+(defreact-for-classish (*spell-info spell-info
+				    :on-change (tlambda (v field)
+						 (chain this props (on-change v))
+						 (if (= field "name")
+						     (chain this (update-fields (aget :name v))))))
+  get-initial-state (lambda () (create obj (chain this props default-value)))
+  update-fields (lambda (name)
+		  (post-data
+		   "/fccs2/complete/spell-info"
+		   name
+		   (let ((spinfo this))
+		     (lambda ()
+		       (let ((response (chain *json* (parse (chain this response-text)))))
+			 (when (> (chain response length) 0)
+			   (setf response
+				 (loop for item in response
+				    collect (if (= item null) "" item)))
+			   (funcall (chain spinfo (handle-change :level)) (elt response 1))
+			   (funcall (chain spinfo (handle-change :discipline)) (elt response 2))
+			   (funcall (chain spinfo (handle-change :casting-time)) (elt response 3))
+			   (funcall (chain spinfo (handle-change :distance)) (elt response 4))
+			   (funcall (chain spinfo (handle-change :area)) (elt response 5))
+			   (funcall (chain spinfo (handle-change :saving-throw)) (elt response 6))
+			   (funcall (chain spinfo (handle-change :duration)) (elt response 7))
+			   (funcall (chain spinfo (handle-change :preparation-cost)) (elt response 8))
+			   (funcall (chain spinfo (handle-change :effect)) (elt response 9))))))))
+  render (lambda ()
+	   (htm
+	    (:div
+	     :class-name nil
+	     (autocomplete-input-field
+	      name
+	      :class-name "pure-u-1 pure-u-md-1-4"
+	      :update-completions
+	      (lambda (val fn)
+		(post-data
+		 "/fccs2/complete/spell"
+		 val
+		 (lambda ()
+		   (funcall fn (chain *json* (parse (chain this response-text)))))))
+	      :class-name "pure-u-1 pure-u-md-1-8")
+	     (input-field level
+			  :class-name "pure-u-1 pure-u-md-1-12"
+			  :input-type "number"
+			  :parser ({ parse-int))
+	     (input-field discipline
+			  :class-name "pure-u-1 pure-u-md-1-4"
+			  :override-value ({(aget :discipline (chain this state obj))))
+	     (input-field casting-time
+			  :class-name "pure-u-1 pure-u-md-1-4"
+			  :override-value ({(aget :casting-time (chain this state obj))))
+	     (input-field distance
+			  :class-name "pure-u-1 pure-u-md-1-4"
+			  :override-value ({(aget :distance (chain this state obj))))
+	     (input-field area
+			  :class-name "pure-u-1 pure-u-md-1-4"
+			  :override-value ({(aget :area (chain this state obj))))
+	     (input-field saving-throw
+			  :class-name "pure-u-1 pure-u-md-1-4"
+			  :override-value ({(aget :saving-throw (chain this state obj))))
+	     (input-field duration
+			  :class-name "pure-u-1 pure-u-md-1-4"
+			  :override-value ({(aget :duration (chain this state obj))))
+	     (input-field preparation-cost
+			  :class-name "pure-u-1 pure-u-md-1-4"
+			  :override-value ({(aget :preparation-cost (chain this state obj))))
+	     (input-field effect
+			  :class-name "pure-u-1 pure-u-md-1-4"
+			  :override-value ({(aget :effect (chain this state obj))))
+	     ))))
 
 (defreact-for-classish (*ability-info ability-info
 				  :on-change (tlambda (v) (chain this props (on-change v))))
@@ -425,16 +704,31 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 (defreact-for-classish (*character fc-character :on-change (tlambda (newch) (chain this (update-abilities newch))))
   get-initial-state (lambda ()
 		      (create obj (chain this props default-value)))
+  on-fudge-change (mlambda (the-fudge)
+		    (tlambda (newval)
+		      (chain this
+			     (set-state
+			      (lambda (state props context)
+				(let ((newobj (chain state obj (set-in (ps:array
+									:fudges
+									the-fudge)
+								       newval))))
+				  (chain this (update-abilities newobj))
+				  (create obj newobj)))))))
   update-abilities (lambda (newch field) 
 		     (unless (chain this upload-timer)
 		       (setf (chain this upload-timer)
 			     (chain window (set-timeout (chain this upload-data) 10000))))
 					;(post-data "/fccs2/test/" newch)
 		     (when (or t (eql field :classes))
-		       (let ((new-obj (chain this state obj (set :ability-list
-								 (fixup-abilities newch)))))
-			 (chain this (set-state
-				      (create obj new-obj))))))
+		       (chain this
+			      (set-state
+			       (lambda (state props context)
+				 (let ((new-obj (chain state obj
+						       (set :ability-list
+							    (fixup-abilities newch)))))
+				   (chain this (set-state
+						(create obj new-obj)))))))))
   upload-data (lambda ()
 		(post-data
 		 (+
@@ -495,13 +789,39 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			    :class-name "pure-u-1 pure-u-md-3-4 pure-u-xl-3-8 pure-g"
 			    (input-field character-name
 					 :class-name "pure-u-1 pure-u-md-1-4")
-			    (input-field species
+			    (autocomplete-input-field species
+				:update-completions
+			     (lambda (val fn)
+			       (post-data
+				"/fccs2/complete/species"
+				val
+				(lambda ()
+				  (funcall fn
+					   (chain *json* (parse (chain this response-text)))))))
 					 :class-name "pure-u-1 pure-u-md-1-8")
-			    (input-field talent
+			    (autocomplete-input-field
+			     talent
+				:update-completions
+			     (lambda (val fn)
+			       (post-data
+				"/fccs2/complete/talent"
+				val
+				(lambda ()
+				  (funcall fn
+					   (chain *json* (parse (chain this response-text)))))))
 					 :class-name "pure-u-1 pure-u-md-1-8"
 					 )
-			    (input-field specialty
-					 :class-name "pure-u-1 pure-u-md-1-4")
+			    (autocomplete-input-field
+			     specialty
+			     :update-completions
+			     (lambda (val fn)
+			       (post-data
+				"/fccs2/complete/specialty"
+				val
+				(lambda ()
+				  (funcall fn
+					   (chain *json* (parse (chain this response-text)))))))
+			     :class-name "pure-u-1 pure-u-md-1-4")
 			    (choice-field strong-attr
 					  (:str :dex :con :int :wis :cha)
 					  :choice-values 
@@ -705,6 +1025,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 					      margin 0
 					      background-color "#e0e0e0"))
 			     "Interests")
+			    (output-field total-studies)
 			    (input-field alignment
 					 :class-name "pure-u-1 pure-u-md-1-2")
 			    (list-field languages
@@ -719,7 +1040,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 					:class-name  nil
 					:inner-class "pure-u-1 pure-u-md-1-2"
 					:make-new (lambda () ""))
-			    (list-field interests
+			    (list-field studies
 					(lambda (data updater)
 					  (htm
 					   (:*validating-input
@@ -835,6 +1156,8 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			    (output-field defense :class-name "pure-u-1-6")
 			    (output-field base-defense :class-name "pure-u-1-6"
 					  :label-as "Base")
+			    (output-field defense-armor-mod :label-as "Def"
+					  :class-name "pure-u-1-6")
 			    (output-field defense-attr-mod :label-as "Attr"
 					  :class-name "pure-u-1-6")
 			    (output-field defense-size-mod :label-as "Size"
@@ -1003,6 +1326,9 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 					  :choice-values ("none" "partial" "moderate"))
 			    (input-field armor-name
 					 :class-name "pure-u-1 pure-u-md-1-4")
+			    (input-field armor-dp
+					 :class-name "pure-u-1 pure-u-md-1-6"
+					 :parser ({ #'parse-int))
 			    (input-field armor-craftsmanship
 					 :class-name "pure-u-1 pure-u-md-1-4")
 			    (input-field armor-construction
@@ -1043,9 +1369,55 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		     (output-field light-capacity)
 		     (output-field heavy-capacity)
 		     (output-field lift)
-		     (output-field push/drag)
-		     ))))
-		 
+		     (output-field push/drag))
+		    (:div
+		     :class-name "pure-u-1 pure-u-md-1-2 pure-u-xl-1-4 pure-g"
+		     (:h2 :class-name "heading pure-u-1"
+			  "Reputation and Renown")
+		     (output-field legend)
+		     (input-field reputation)
+		     (output-field renown)
+		     (input-field heroic-renown
+				  :parser ({ #'parse-int))
+		     (input-field military-renown
+				  :parser ({ #'parse-int))
+		     (input-field noble-renown
+				  :parser ({ #'parse-int)))
+		    (list-field gear
+				(lambda (data updater)
+				  (htm (:*gear-info
+					:default-value ({ data)
+					:on-change ({ updater))))
+				:class-name "pure-u-1 pure-g"
+					;:row-key (lambda (x) (aget :the-class x))
+				:inner-class "pure-u-1 pure-u-md-1-2 pure-u-xl-1-4 pure-g"
+				:make-new #'make-gear-info)
+		    )))
+		 ((= (chain this props section) "spell")
+		  (htm
+		   (:form
+		    :key "spell"
+		    :class-name "pure-form pure-form-stacked"
+		    (list-field spells
+				(lambda (data updater)
+				  (htm (:*spell-info
+					:default-value ({ data)
+					:on-change ({ updater))))
+				:class-name "pure-u-1 pure-g"
+					;:row-key (lambda (x) (aget :the-class x))
+				:inner-class "pure-u-1 pure-u-xl-1-2 pure-g"
+				:make-new #'make-spell-info
+				)
+		    #+(or)(autocomplete-input-field
+		     spell
+		     :update-completions
+		     (lambda (val fn)
+		       (post-data
+			"/fccs2/complete/spell"
+			val
+			(lambda ()
+			  (funcall fn
+				   (chain *json* (parse (chain this response-text)))))))))))
 		 ))))))
 
 (defreact *character-list

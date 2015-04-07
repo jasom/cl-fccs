@@ -95,6 +95,8 @@
 	  (,(with-html-output-to-string (s)
 					(:html (:body (:p "Error"))))))
       (match env
+	((property :path-info (ppcre "^/fccs2/complete/(.*)" thing))
+	 (fccs-complete thing body))
 	((property :path-info "/fccs2/lztest/")
 	 (let ((codes
 		(map 'list #'char-code
@@ -216,6 +218,69 @@
   (stop) (Start))
 
 
+(defun complete-from-list (partial list)
+  (when (>= (length partial) 1)
+    (loop for item in list
+       when (alexandria:starts-with-subseq (string-downcase partial) (string-downcase item))
+       collect item)))
+
+(defun encode-json-list-to-string (list)
+  (let ((json::*json-list-encoder-fn* #'json::encode-json-list-explicit-encoder))
+    (json:encode-json-to-string (cons :list list))))
+
+(defun fccs-complete (thing body)
+  (let ((partial (json:decode-json-from-string (babel:octets-to-string body))))
+    `(200
+      (:content-type "application/json")
+      (,(encode-json-list-to-string
+	 (cond
+	   ((equalp thing "spell-info")
+	    (assoc partial fccg::+spells+ :test #'equalp))
+	   ((equalp thing "gear")
+	    (complete-from-list partial +all-gear-names+))
+	   ((equalp thing "gear-info")
+	    (lookup-gear partial))
+	   ((equalp thing "spell")
+	    (complete-from-list partial (mapcar
+					 (compose #'better-capitalize #'car)
+					 fccg::+spells+)))
+	   ((equalp thing "species")
+	    (complete-from-list partial
+	     (hash-table-keys +species-hash+)))
+	   ((equalp thing "specialty")
+	    (complete-from-list partial
+	     (hash-table-keys +specialty-hash+)))
+	   ((equalp thing "class")
+	    (complete-from-list
+	     partial
+	     (hash-table-keys +class-hash+)))
+	   ((equalp thing "talent")
+	    (complete-from-list partial
+	     (hash-table-keys +talent-hash+)))
+	   (t nil)))))))
+
+(defun lookup-gear (name)
+  (loop for item in fccg::+gear+
+     when (member name (mapcar #'car (cddr item)) :test #'equalp)
+     do
+       (let ((info (find name (cddr item) :key #'car :test #'equalp))
+	     (effect-idx (position "Effect" (cadr item) :test #'equal))
+	     (size-idx (position "SZ/Hand" (cadr item) :test #'equal))
+	     (weight-idx (position "Weight" (cadr item) :test #'equal)))
+	 (return
+	   `(,name ,(if effect-idx
+			(elt info effect-idx)
+			"")
+		   ,@(if size-idx
+			 (destructuring-bind (size hand)
+			     (split-sequence #\/ (elt info size-idx))
+			   (list (string-downcase size) hand))
+			 '("" ""))
+		   ,(if weight-idx
+			(let ((weight-str (elt info weight-idx)))
+			  (parse-number (subseq weight-str 0
+						(position #\Space weight-str))))
+			""))))))
 
 (in-package clack.app.file)
 (defmethod serve-path
@@ -234,7 +299,6 @@
 	   (file (or gzfile file)))
       (log:info gzfile)
       (log:info (alexandria:hash-table-plist (getf env :headers)))
-
       (with-open-file (stream file
 			      :direction :input
 			      :if-does-not-exist nil)

@@ -7,6 +7,7 @@
   :depends-on (#:clack
 	       #:clack-middleware-auth-basic
                #:parenscriptx
+	       #:parse-number
                #:alexandria
                #:log4cl
 	       #:cl-redis

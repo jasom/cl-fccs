@@ -94,8 +94,17 @@
 
 (defparameter +all-gear-names+
   (loop for item in fccg::+gear+
+       when (not (member (car item) '(:armor-upgrades :weapon-upgrades :services)))
        nconc
-       (mapcar #'first (cddr item))))
+       (loop
+	    with state = :good
+	  for item in (cddr item)
+	  when (cl-ppcre:scan "([Uu]pgrade)|(Material)|Craftsmanship|Customization"
+			      (format nil "~{~A~}" item))
+	  do (setf state :bad)
+	  when (and (eql state :good)
+		    (not (every #'string= (last item 3) '("" "" ""))))
+	  collect (car item))))
 
 (defparameter +proficiencies+ '(:unarmed :blunt :edged :hurled :bows :black-powder :siege-weapons))
 

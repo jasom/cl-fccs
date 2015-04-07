@@ -6,6 +6,8 @@
       (chain table (get key def)))
 
 #+ps(defun mapcar (fun list)
+      (unless (chain *immutable *list (is-list list))
+	(setf list (ps:new (chain *immutable (*list list)))))
       (chain list (map fun)))
 
 #-ps(ps:defpsmacro list (&rest args)
