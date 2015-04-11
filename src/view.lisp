@@ -663,8 +663,8 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		  (input-field parameter
 			       :class-name "pure-u-1-4")
 		  (choice-field list-as 
-				(:combat :non-combat :spellcasting)
-				:choice-values ("combat" "non-combat" "spellcasting")
+				(:combat :non-combat :spellcasting :none)
+				:choice-values ("combat" "non-combat" "spellcasting" "none")
 			       :class-name "pure-u-5-12")))))
 
 (defreact-for-classish (*feat-info feat-info
@@ -673,8 +673,17 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
   render (lambda ()
 	   (htm
 	    (:div :class-name nil
-		  (input-field name
-			       :class-name "pure-u-2-3")
+		  (autocomplete-input-field
+		   name
+		   :update-completions
+		   (lambda (val fn)
+		     (post-data
+		      "/fccs2/complete/feat"
+		      val
+		      (lambda ()
+			(funcall fn
+				 (chain *json* (parse (chain this response-text)))))))
+		   :class-name "pure-u-2-3")
 		   (input-field parameter
 				:class-name "pure-u-1-3")
 		  (input-field notes
@@ -770,6 +779,13 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		    (:a :href "#" :class-name "pure-menu-link"
 			:on-click ({(chain this props (change-section "spell")))
 			"Spellcasting"))
+		   (:li
+		    :class-name "pure-menu-item"
+		    (:a :href ({(+ "/fccs2/pdf-character/"
+				   (chain this props character-id)))
+			:target "_blank"
+			:class-name "pure-menu-link"
+			"PDF"))
 		   (:li
 		    :class-name "pure-menu-item"
 		    (:a :href "/fccs2/" :class-name "pure-menu-link"
@@ -1174,7 +1190,8 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			    (output-field footprint :class-name "pure-u-1-3")
 			    (output-field reach :class-name "pure-u-1-3")
 			    (output-field ground-speed :class-name "pure-u-1-3")
-			    (:div :class-name "pure-u-1-3") ;TODO Insert other speed
+			    (output-field run-speed :class-name "pure-u-1-3")
+			    ;;(:div :class-name "pure-u-1-3") ;TODO Insert other speed
 			    (output-field travel-speed :class-name "pure-u-1-3")
 			    (checkboxes-field proficiency-list
 					      ({ +proficiencies+)
@@ -1326,7 +1343,22 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 					  :choice-values ("none" "partial" "moderate"))
 			    (input-field armor-name
 					 :class-name "pure-u-1 pure-u-md-1-4")
+			    (input-field armor-dr
+					 :class-name "pure-u-1 pure-u-md-1-6"
+					 :parser ({ #'parse-int))
 			    (input-field armor-dp
+					 :class-name "pure-u-1 pure-u-md-1-6"
+					 :parser ({ #'parse-int))
+			    (input-field armor-acp
+					 :class-name "pure-u-1 pure-u-md-1-6"
+					 :parser ({ #'parse-int))
+			    (input-field armor-speed
+					 :class-name "pure-u-1 pure-u-md-1-6"
+					 :parser ({ #'parse-int))
+			    (input-field armor-weight
+					 :class-name "pure-u-1 pure-u-md-1-6"
+					 :parser ({ #'parse-int))
+			    (input-field armor-disguise
 					 :class-name "pure-u-1 pure-u-md-1-6"
 					 :parser ({ #'parse-int))
 			    (input-field armor-craftsmanship
@@ -1354,6 +1386,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			    (output-field action-pummel)
 			    (output-field action-taunt)
 			    (output-field action-threaten)
+			    (output-field action-tire)
 			    (output-field action-trip)
 			    )
 			   ))))
@@ -1375,7 +1408,8 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		     (:h2 :class-name "heading pure-u-1"
 			  "Reputation and Renown")
 		     (output-field legend)
-		     (input-field reputation)
+		     (input-field reputation
+				  :parser ({ #'parse-int))
 		     (output-field renown)
 		     (input-field heroic-renown
 				  :parser ({ #'parse-int))

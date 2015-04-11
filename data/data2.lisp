@@ -120,7 +120,9 @@
 
 (defparameter +abilites-hash+
   (alexandria:alist-hash-table
-   fccg::+class-abilities+
+   (append
+    fccg::+class-abilities+
+    fccg::+ability-info+)
    :test #'equalp))
 
 (defun comma-split (str)

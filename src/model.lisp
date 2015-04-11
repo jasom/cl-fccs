@@ -263,7 +263,7 @@
 	     :initform "")
   (list-as :validator
 	   (lambda (&key value &allow-other-keys)
-	     (member value (list :combat :non-combat :spellcasting)))
+	     (member value (list :combat :non-combat :spellcasting :none)))
 	   :fixup (lambda (&key value &allow-other-keys) (to-keyword value))
 	   :initform :non-combat))
 
@@ -491,8 +491,18 @@
 				  (member value (list :none :light :heavy)))
 		     :fixup #'keyword-fixup
 		     :initform :none)
+     (armor-dr :validator #'integer-validator
+	       :initform 0)
      (armor-dp :validator #'integer-validator
 	       :initform 0)
+     (armor-acp :validator #'integer-validator
+	       :initform 0)
+     (armor-speed :validator #'integer-validator
+		  :initform 0)
+     (armor-weight :validator #'integer-validator
+		   :initform 0)
+     (armor-disguise :validator #'integer-validator
+		     :initform 0)
      (reputation :validator #'integer-validator
 		 :initform 0)
      (heroic-renown :validator #'integer-validator
@@ -617,6 +627,7 @@
    (calculate-field :base-defense character)
    (calculate-field :defense-attr-mod character)
    (calculate-field :defense-size-mod character)
+   (calculate-field :defense-armor-mod character)
    (calculate-field :defense-misc-mod character)))
 
 (deffield :base-defense (character)
@@ -764,6 +775,9 @@
 (deffield :ground-speed (character)
   (get-species-speed character))
 
+(deffield :run-speed (character)
+  (* 4 (calculate-field :ground-speed character)))
+
 (deffield :travel-speed (character)
   (ceiling (/ (calculate-field :ground-speed character) 10)))
 
@@ -828,6 +842,9 @@
 
 (deffield :action-threaten (character)
   (calculate-field :intimidate-bonus character))
+
+(deffield :action-tire (character)
+  (calculate-field :resolve-bonus character))
 
 (deffield :action-trip (character)
   (calculate-field :acrobatics-bonus character))
@@ -1246,86 +1263,9 @@
     (maybe-emit-value (format nil "SkillMiscMod~A" abbrev) misc-bonus s)
     (maybe-emit-value (format nil "SkillThreat~A" abbrev) threat s)))
 
-(defun generate-ability-table (character)
-  (tt:table (:col-widths '(90 400) :splittable-p t)
-    (tt:header-row ()
-      (tt:cell ()
-	(tt:paragraph () "Feature Name"))
-      (tt:cell ()
-	(tt:paragraph () "Description")))
-    (loop for item in (fc-feats character)
-	 do
-	 (with-accessors ((name fc-feat-name )
-			  (parameter fc-feat-parameter))
-	     item
-	   (tt:row ()
-	     (tt:cell ()
-	       (tt:paragraph (:font "times-roman")
-		 #-(or)(tt::put-string (format nil "~A~@[ (~A)~]"
-					 (string-capitalize
-					  (substitute  #\Space #\-
-						      (fix-unicode (string name))))
-					 parameter))
-		 ))
-	   (tt:cell ()
-	     (loop for paragraph in
-		  (split-sequence #\Newline
-				  (fix-unicode (third (gethash name +feat-hash+))))
-		when (and parameter
-			  (search (cl-ppcre:regex-replace " ?\\([^)]*\\)"
-							  parameter
-							  "")
-				  (subseq paragraph 0
-					  (min (length paragraph)
-					       (+ (length parameter) 3)))))
-		do (tt:paragraph (:font "times-bold")
-		     (tt:put-string paragraph))
-		else
-		do (tt:paragraph (:font "times-roman")
-		     (tt:put-string paragraph)))))))
-    (loop for item in (fc-abilities character)
-       do
-	 (with-accessors ((name fc-ability-name )
-			  (parameter fc-ability-parameter))
-	     item
-	   (tt:row ()
-	     (tt:cell ()
-	       (tt:paragraph (:font "times-roman")
-		 #-(or)(tt::put-string (format nil "~A~@[ (~A)~]"
-					       (string-capitalize
-						(substitute  #\Space #\-
-							     (fix-unicode (string name))))
-					       parameter))
-		 ))
-	     (tt:cell ()
-	       (loop for paragraph in
-		    (split-sequence #\Newline
-				    (fix-unicode (gethash name +abilites-hash+)))
-		  when
-		    (and parameter
-			 (search (cl-ppcre:regex-replace " ?\\([^)]*\\)"
-							 parameter
-							 "")
-				 (subseq paragraph 0
-					 (min (length paragraph)
-					      (+ (length parameter) 3)))))
-		  do (tt:paragraph (:font "times-bold")
-		       (tt:put-string paragraph))
-		  else
-		  do (tt:paragraph (:font "times-roman")
-		       (tt:put-string paragraph)))))))
-    ))
 
-(defun fix-unicode (x)
-    (map 'string
-	 (lambda (x)
-	   (case x
-	     (#\Right_single_quotation_mark #\')
-	     ((#\Left_double_quotation_mark
-	       #\Right_double_quotation_mark)
-	      #\")
-	     ((#\Multiplication_sign) #\x)
-	     (t x))) x))
+
+
 
 (defun calculate-size-mod (species)
   (let* ((species-info

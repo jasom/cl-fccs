@@ -268,6 +268,11 @@
 	    (complete-from-list
 	     partial
 	     (hash-table-keys +class-hash+)))
+	   ((equalp thing "feat")
+	    (complete-from-list
+	     partial
+	     (mapcar #'better-capitalize
+		     (hash-table-keys +feat-hash+))))
 	   ((equalp thing "talent")
 	    (complete-from-list partial
 	     (hash-table-keys +talent-hash+)))

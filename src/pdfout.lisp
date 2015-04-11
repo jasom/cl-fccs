@@ -79,6 +79,8 @@
 		(emit-field "HeroNextLevel" :next-xp)
 		(emit-item "HeroWeight"  :weight)
 		(emit-item "HeroEyes" :eyes)
+		(emit-item "HeroAge" :age)
+		(emit-item "HeroHeight" :height)
 		(emit-field "ActionDiceType" :action-dice-type)
 		(emit-field "ActionDiceStarting" :starting-action-dice)
 		(emit-field "AbilityStrScore" :real-str)
@@ -170,154 +172,185 @@
 		   
 		(emit-field "InitDexMod" :init-attr-modA)
 		(emit-field "InitMiscMod" :init-misc-mod)
-		(emit-field "InitTotal" :initiative))))))
-		#|
-	       (maybe-emit-value "InitMiscMod" (fc-init-misc-mod character) s)
-	       (maybe-emit-value "InitTotal"
-				 (loose-sum
-				  (fc-init-misc-mod character)
-				  (calculate-field :dex-mod character)
-				  (calculate-column character "Init"))s)
-	       (maybe-emit-value "InitClassBonus" (calculate-column character "Init")s)
-	       (maybe-emit-value "BaseAttUnarmedTotal" (calculate-column character "BAB")
-				 s
-				 (lambda (bab)
-				   (loose-sum
-				    bab
-				    (calculate-field :unarmed-misc character)
-				    (calculate-field :str-mod character))))
-	       (maybe-emit-value "BaseAttUnarmedBAB" (calculate-column character "BAB")s)
-	       (emit-fudge character "BaseAttUnarmedAttrMod" :str-mod s)
-	       (emit-fudge character "BaseAttUnarmedMiscMod" :unarmed-misc s)
-	       (maybe-emit-value "BaseAttMeleeTotal" (calculate-column character "BAB")
-				 s
-				 (lambda (bab)
-				   (loose-sum
-				    bab
-				    (calculate-field :melee-misc character)
-				    (calculate-field :str-mod character))))
-	       (maybe-emit-value "BaseAttMeleeBAB" (calculate-column character "BAB")s)
-	       (emit-fudge character "BaseAttMeleeAttrMod" :str-mod s)
-	       (emit-fudge character "BaseAttMeleeMiscMod" :melee-misc s)
-	       (maybe-emit-value "BaseAttRangedTotal" (calculate-column character "BAB")
-				 s
-				 (lambda (bab)
-				   (loose-sum
-				    bab
-				    (calculate-field :ranged-misc character)
-				    (calculate-field :dex-mod character))))
-	       (maybe-emit-value "BaseAttRangedBAB" (calculate-column character "BAB")s)
-	       (emit-fudge character "BaseAttRangedAttrMod" :str-mod s)
-	       (emit-fudge character "BaseAttRangedMiscMod" :ranged-misc s)
-	       (maybe-emit-value "SavThrFortTotal" (calculate-column character "Fort")s
-				 (lambda (sav)
-				   (loose-sum sav
-					      (calculate-field :con-mod character)
-					      (calculate-field :fortitude-save-misc character))))
-	       (maybe-emit-value "SavThrFortBase" (calculate-column character "Fort")s)
-	       (emit-fudge character "SavThrFortAttrMod" :con-mod s)
-	       (emit-fudge character "SavThrFortMiscMod" :fortitude-save-misc s)
-	       (maybe-emit-value "SavThrRefTotal" (calculate-column character "Ref")s
-				 (lambda (sav)
-				   (loose-sum sav
-					      (calculate-field :dex-mod character)
-					      (calculate-field :reflex-save-misc character))))
-	       (maybe-emit-value "SavThrRefBase" (calculate-column character "Ref")s)
-	       (emit-fudge character "SavThrRefAttrMod" :dex-mod s)
-	       (emit-fudge character "SavThrRefMiscMod" :reflex-save-misc s)
-	       (maybe-emit-value "SavThrWillTotal" (calculate-column character "Will")s
-				 (lambda (sav)
-				   (loose-sum sav
-					      (calculate-field :wis-mod character)
-					      (calculate-field :will-save-misc character))))
-	       (maybe-emit-value "SavThrWillBase" (calculate-column character "Will")s)
-	       (emit-fudge character "SavThrWillAttrMod" :wis-mod s)
-	       (emit-fudge character "SavThrWillMiscMod" :will-save-misc s)
-	       ;;TODO Arms (see Weapon1Type)
-	       (maybe-emit-value "ArmorType" (and (fc-armor-type character)
-						  (fc-armor-name character))
-				 s
-				 (lambda (name)
-				   (string-capitalize
-				    (format nil "~A ~A" (fc-armor-type character) name))))
-	       (emit-fudge character "ArmorDR" :armor-dr s)
-	       (emit-fudge character "ArmorDP" :armor-dp s)
-	       (emit-fudge character "ArmorACP" :armor-acp s)
-	       (emit-fudge character "ArmorSpd" :armor-speed s)
-	       (emit-fudge character "ArmorWgt" :armor-weight s)
-	       (emit-fudge character "ArmorDis" :armor-disguise s)
-	       (emit-fudge character "ActionStandAtt" :standard-attack s)
-	       (emit-fudge character "ActionBull" :bull-rush s)
-	       (maybe-emit-value "ActionCoup" "N/A" s)
-	       (emit-fudge character "ActionFeint" :feint s)
-	       (emit-fudge character "ActionGrap" :grapple s)
-	       (emit-fudge character "ActionPum" :pummel s)
-	       (emit-fudge character "ActionTaunt" :taunt s)
-	       (emit-fudge character "ActionThr" :threaten s)
-	       (emit-fudge character "ActionTire" :tire s)
-	       (emit-fudge character "ActionTrip" :trip s)
-	       (emit-fudge character "ActionStandMov" :standard-move s)
-	       (emit-fudge character "ActionRun" :run s)
-	       (emit-fudge character "ActionTotDef" :total-defense-move s)
-	       (loop
-		  with n = 1
-		  for (name type parameter note) in
-		    (append
-		     (mapcar (lambda (x) (list
-					  (pprint-keyword
-					   (fc-feat-name x))
-					  (fc-feat-type x)
-					  (fc-feat-parameter x)
-					  "Feat"))
-			     (fc-feats character))
-		     (mapcar (lambda (x) (list (fc-ability-name x)
-					       (fc-ability-type x)
-					       (fc-ability-parameter x)
-					       (fc-ability-from x)))
-			     (fc-abilities character)))
-		  when (eql type :non-combat)
-		  do
-		    (maybe-emit-value (format nil "NonCombatAbName~D" n)
-				      name s)
-		    (maybe-emit-value (format nil "NonCombatAbNotes~D" n)
-				      (format nil "~@[(~A) ~] ~A" parameter note) s)
-		    (incf n))
-	       (loop
-		  with n = 1
-		  for (name type parameter note) in
-		    (append
-		     (mapcar (lambda (x) (list
-					  (pprint-keyword
-					   (fc-feat-name x))
-					  (fc-feat-type x)
-					  (fc-feat-parameter x)
-					  "Feat"))
-			     (fc-feats character))
-		     (mapcar (lambda (x) (list (fc-ability-name x)
-					       (fc-ability-type x)
-					       (fc-ability-parameter x)
-					       (fc-ability-from x)))
-			     (fc-abilities character)))
-		  when (eql type :combat)
-		  do
-		    (maybe-emit-value (format nil "CombatAbName~D" n)
-				      name s)
-		    (maybe-emit-value (format nil "CombatAbNotes~D" n)
-				      (format nil "~@[(~A) ~] ~A" parameter note) s)
-		    (incf n))
-	       (emit-fudge character "CarCapHvy" :heavy-capacity s)
-	       (emit-fudge character "CarCapLight" :light-capacity s)
-	       (emit-fudge character "CarCapLift" :lift-capacity s)
-	       (emit-fudge character "CarCapPushDrag" :push-drag-capacity s)
-	       (emit-fudge character "RepRenLegend" :legend s)
-	       (maybe-emit-value (fc-reputation character) "RepRenRep" s)
-	       (emit-fudge character "RepRenRen" :total-reknown s)
-	       (maybe-emit-value (fc-heroic-reknown character) "RepRenHeroRen" s)
-	       (maybe-emit-value (fc-military-reknown character) "RepRenMilRen" s)
-	       (maybe-emit-value (fc-noble-reknown character) "RepRenNobleRen" s)
+		(emit-field "InitTotal" :initiative)
+		(emit-field "InitClassBonus" :base-init)
+		(emit-field "BaseAttUnarmedTotal" :unarmed-bonus)
+		(emit-field "BaseAttUnarmedBAB" :bab)
+		(emit-field "BaseAttUnarmedAttrMod" :unarmed-attr-mod)
+		(emit-field "BaseAttUnarmedMiscMod" :unarmed-misc-mod)
+		(emit-field "BaseAttMeleeTotal" :melee-bonus)
+		(emit-field "BaseAttMeleeBAB" :bab)
+		(emit-field "BaseAttMeleeAttrMod" :melee-attr-mod)
+		(emit-field "BaseAttMeleeMiscMod" :melee-misc-mod)
+		(emit-field  "BaseAttRangedTotal"  :ranged-bonus)
+		(emit-field "BaseAttRangedBAB" :bab)
+		(emit-field "BaseAttRangedAttrMod" :ranged-attr-mod)
+		(emit-field "BaseAttRangedMiscMod" :ranged-misc-mod)
+		(emit-field "SavThrFortTotal" :fortitude-bonus)
+		(emit-field "SavThrFortBase" :fortitude-base)
+		(emit-field "SavThrFortAttrMod" :fortitude-attr-mod)
+		(emit-field "SavThrFortMiscMod" :fortitude-misc-mod)
+		(emit-field "SavThrRefTotal" :reflex-bonus)
+		(emit-field "SavThrRefBase" :reflex-base)
+		(emit-field "SavThrRefAttrMod" :reflex-attr-mod)
+		(emit-field "SavThrRefMiscMod" :reflex-misc-mod)
+		(emit-field "SavThrWillTotal" :will-bonus)
+		(emit-field "SavThrWillBase" :will-base)
+		(emit-field "SavThrWillAttrMod" :will-attr-mod)
+		(emit-field "SavThrWillMiscMod" :will-misc-mod)
+		(emit-value "ArmorType"
+			    (format  nil "~A~@[ ~A~]"
+				     (better-capitalize (aget :armor-type character))
+				     (aget :armor-name character)))
+		;;TODO Arms (see Weapon1Type)
+		(emit-field "ArmorDR" :armor-dr)
+		(emit-field "ArmorDR" :armor-dr)
+		(emit-field "ArmorDP" :armor-dp)
+		(emit-field "ArmorACP" :armor-acp)
+		(emit-field "ArmorSpd" :armor-speed)
+		(emit-field "ArmorWgt" :armor-weight)
+		(emit-field "ArmorDis" :armor-disguise)
+		(emit-field "ActionStandAtt" :action-attack)
+		(emit-field "ActionBull" :action-bullrush)
+		(emit-field  "ActionCoup" :action-coupe-de-grace)
+		(emit-field "ActionFeint" :action-feint)
+		(emit-field "ActionGrap" :action-grapple)
+		(emit-field "ActionPum" :action-pummel)
+		(emit-field "ActionTaunt" :action-taunt)
+		(emit-field "ActionThr" :action-threaten)
+		(emit-field "ActionTire" :action-tire)
+		(emit-field "ActionTrip" :action-trip)
+		(emit-field "ActionStandMov" :ground-speed)
+		(emit-field "ActionRun" :run-speed)
+		(emit-field "ActionTotDef" :ground-speed)
+		(multiple-value-bind
+		      (nc-name nc-notes c-name c-notes s-name s-notes)
+			   (loop for item in
+				(append (aget :feat-list character)
+					(aget :ability-list character))
+			      for desc = 
+				(cond
+				  ((aget :notes item)
+				   (aget :notes item))
+				  ((stringp (aget :from item))
+				   (aget :from item))
+				  (t (fmt-class (aget :from item))))
+			      when (eql (aget :list-as item) :non-combat)
+			      collect (aget :name item) into nc-name
+			      and collect desc into nc-notes
+			      when (eql (aget :list-as item) :combat)
+			      collect (aget :name item) into c-name
+			      and collect desc into c-notes
+			      when (eql (aget :list-as item) :spellcasting)
+			      collect (aget :name item) into s-name
+			      and collect desc into s-notes
+			      finally (return (values nc-name nc-notes
+						      c-name c-notes
+						      s-name s-notes)))
+		  (emit-list "NonCombatAbName~D" nc-name)
+		  (emit-list "NonCombatAbNotes~D" nc-notes)
+		  (emit-list "CombatAbName~D" c-name)
+		  (emit-list "CombatAbNotes~D" c-notes)
+		  (emit-list "SpellAbName~D" s-name)
+		  (emit-list "SpellAbNotes~D" s-notes))
+		(emit-field "CarCapHvy" :heavy-capacity)
+		(emit-field "CarCapLight" :light-capacity)
+		(emit-field "CarCapLift" :lift)
+		(emit-field "CarCapPushDrag" :push/drag)
+		(emit-field "RepRenLegend" :legend)
+		(emit-item "RepRenRep" :reputation)
+		(emit-field "RepRenRen" :renown)
+		(emit-item "RepRenHeroRen" :heroic-renown)
+		(emit-item "RepRenMilRen" :military-renown)
+		(emit-item "RepRenNobleRen" :noble-renown)
+		(emit-list "GearName~D" (mapcar (curry #'gethash :name)
+						(aget :gear character)))
+		(emit-list "GearEffects~D" (mapcar (curry #'gethash :effect)
+						(aget :gear character)))
+		(emit-list
+		 (lambda (item n)
+		   (emit-value #?"GearSzHand${n}" #?"\u$((aget :size item))/$((aget :hand item))"))
+		 (aget :gear character))
+		(emit-list "GearWgt~D" (mapcar (curry #'gethash :weight)
+						(aget :gear character)))
+		)))))
+
+(defun fix-unicode (x)
+    (map 'string
+	 (lambda (x)
+	   (case x
+	     (#\Right_single_quotation_mark #\')
+	     ((#\Left_double_quotation_mark
+	       #\Right_double_quotation_mark)
+	      #\")
+	     ((#\Multiplication_sign) #\x)
+	     (t x))) x))
+
+(defun generate-ability-table (character)
+  (tt:table (:col-widths '(90 400) :splittable-p t)
+    (tt:header-row ()
+      (tt:cell ()
+	(tt:paragraph () "Feature Name"))
+      (tt:cell ()
+	(tt:paragraph () "Description")))
+    (loop for item in (aget :feat-list character)
+       for name = (aget :name item)
+       for parameter = (nestring (aget :parameter item))
+       do
+	 (tt:row ()
+	   (tt:cell ()
+	     (tt:paragraph (:font "times-roman")
+	       #-(or)(tt::put-string (format nil "~A~@[ (~A)~]"
+					     (better-capitalize
+					      (substitute  #\Space #\-
+							   (fix-unicode (string name))))
+					     parameter))
 	       ))
-      :close-stream
-|#
+	   (tt:cell ()
+	     (loop for paragraph in
+		  (split-sequence #\Newline
+				  (fix-unicode (third (gethash (to-keyword name) +feat-hash+))))
+		when (and parameter
+			  (search (cl-ppcre:regex-replace " ?\\([^)]*\\)"
+							  parameter
+							  "")
+				  (subseq paragraph 0
+					  (min (length paragraph)
+					       (+ (length parameter) 3)))))
+		do (tt:paragraph (:font "times-bold")
+		     (tt:put-string paragraph))
+		else
+		do (tt:paragraph (:font "times-roman")
+		     (tt:put-string paragraph))))))
+  #-(or)(loop for item in (aget :ability-list character)
+	     for name = (substitute  #\Space #\-  (aget :name item))
+	     for parameter = (nestring (aget :parameter item))
+	   ;do (log:info name)
+	   do  (tt:row ()
+		 (tt:cell ()
+		   (tt:paragraph (:font "times-roman")
+		     (tt::put-string (format nil "~A~@[ (~A)~]"
+					     (better-capitalize
+							   (fix-unicode (string name)))
+					     parameter))))
+		 (tt:cell ()
+		   (loop for paragraph in
+			#-(or)(split-sequence #\Newline
+					(fix-unicode (gethash name +abilites-hash+)))
+			#+(or)(list "p1" "p2")
+		      when
+			(and parameter
+			     (search (cl-ppcre:regex-replace " ?\\([^)]*\\)"
+							     parameter
+							     "")
+				     (subseq paragraph 0
+					     (min (length paragraph)
+						  (+ (length parameter) 3)))))
+		      do (tt:paragraph (:font "times-bold")
+			   (tt:put-string paragraph))
+		      else
+		      do (tt:paragraph (:font "times-roman")
+			   (tt:put-string paragraph))))))))
 
 (defun fill-pdf (character)
   (uiop:with-temporary-file (:stream s :pathname path)
@@ -335,17 +368,22 @@
 							  :font tt::*default-font*
 							  :font-size tt::*default-font-size*
 							  :h-align :justify))
-	       #-or()
-	       #+or(generate-ability-table character))
+	       #+or()
+	       #-or(generate-ability-table character))
 	     :margins '(36 36 36 36)
 	     :break :after))
 	  (pdf:write-document table-stream)))
       :close-stream
       (let ((filled-pdf
-	     (uiop:run-program `("pdftk" ,*path-to-charsheet* "fill_form" ,(namestring path) "output" "-")
-			       :input "" :output :string :external-format :iso-8859-1)))
-	(uiop:run-program `("pdftk" "-" ,(namestring table-pathname) "cat" "output" "-")
-			  :input (make-string-input-stream filled-pdf) :output :string :external-format :iso-8859-1)))))
+	     (handler-bind
+		 ((uiop:subprocess-error
+		   (lambda (condition)
+		     (uiop:run-program `("cp" ,(namestring path) "/home/aidenn/error.tmp")))))
+	       (uiop:run-program `("pdftk" ,*path-to-charsheet* "fill_form" ,(namestring path) "output" "-")
+				 :input "" :output :string :external-format :iso-8859-1))))
+(uiop:run-program `("pdftk" "-" ,(namestring table-pathname) "cat" "output" "-")
+			  :input (make-string-input-stream filled-pdf) :output :string :external-format :iso-8859-1 :error-output :string :ignore-error-status t)
+	  ))))
 
 
 
