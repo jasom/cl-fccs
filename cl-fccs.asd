@@ -18,6 +18,7 @@
 	       #:optima.ppcre
 	       #:dissect
 	       #:cl-json
+	       #:lambda-fiddle
                #:cl-who)
   :serial t
   :components ((:file "package")
