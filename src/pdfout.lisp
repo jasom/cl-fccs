@@ -56,6 +56,28 @@
 	       (aget :the-class cl)
 	       (aget :level cl))))
 
+(defun abbreviate-spell-info (string)
+  (setf string (cl-ppcre:regex-replace " per " string "/"))
+  (setf string (cl-ppcre:regex-replace "Casting Level" string "CL"))
+  (setf string (cl-ppcre:regex-replace "[pP]enetrating" string "pnt."))
+  (setf string (cl-ppcre:regex-replace "dismissible" string "D"))
+  (setf string (cl-ppcre:regex-replace "enduring" string "E"))
+  (setf string (cl-ppcre:regex-replace "[hH]ours?" string "hr."))
+  (setf string (cl-ppcre:regex-replace "[mM]inutes?" string "min."))
+  (setf string (cl-ppcre:regex-replace "[cC]oncentration" string "con."))
+  (setf string (cl-ppcre:regex-replace "[rR]ound" string "rnd."))
+  (setf string (cl-ppcre:regex-replace "sphere" string "sph."))
+  (setf string (cl-ppcre:regex-replace "negates" string "neg."))
+  (setf string (cl-ppcre:regex-replace "partial" string "part"))
+  (setf string (cl-ppcre:regex-replace "repeatable" string "rep."))
+  (setf string (cl-ppcre:regex-replace "terminal" string "term."))
+  (setf string (cl-ppcre:regex-replace "Reflex" string "Ref"))
+  (setf string (cl-ppcre:regex-replace "Fortitude" string "Fort"))
+  (setf string (cl-ppcre:regex-replace "disbelief" string "disb"))
+  (setf string (cl-ppcre:regex-replace "damage" string "dmg."))
+  (setf string (cl-ppcre:regex-replace " ft." string "'"))
+  )
+
 (defun genxfdf (character *out-stream*)
   (let ((*character* character))
     (cl-who:with-html-output (*out-stream* nil :prologue "<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
@@ -70,7 +92,7 @@
 			    (format nil "~A~@[/~A~]"
 				    (aget :species character)
 				    (nestring (aget :talent character))))
-		(emit-value "HeroSecondClassLevel" (second (aget :classes character)))
+		(emit-value "HeroSecondClassLevel" (fmt-class (second (aget :classes character))))
 		(emit-item "HeroCurrentXP" :xp)
 		(emit-item "HeroHair" :hair)
 		(emit-item "HeroSpeciality" :specialty)
@@ -273,6 +295,37 @@
 		 (aget :gear character))
 		(emit-list "GearWgt~D" (mapcar (curry #'gethash :weight)
 						(aget :gear character)))
+		(emit-list "SpellListNameSchool~D"
+			   (mapcar
+			    (lambda (x)
+			      (format nil "~A/~A" (aget :name x) (aget :discipline x)))
+			    (aget :spells character)))
+		(emit-list "SpellListLvl~D"
+			   (mapcar (curry #'gethash :level) (aget :spells character)))
+		(emit-list "SpellListCasting~D"
+			   (mapcar (curry #'gethash :casting-time) (aget :spells character)))
+		(emit-list "SpellListDist~D"
+			   (mapcar (curry #'gethash :distance) (aget :spells character)))
+		(emit-list "SpellListArea~D"
+			   (mapcar
+			    (compose #'abbreviate-spell-info (curry #'gethash :area))
+			     (aget :spells character)))
+		(emit-list "SpellListDur~D"
+			   (mapcar
+			    (compose #'abbreviate-spell-info (curry #'gethash :duration))
+			    (aget :spells character)))
+		(emit-list "SpellListSav~D"
+			   (mapcar
+			    (compose #'abbreviate-spell-info (curry #'gethash :saving-throw))
+			    (aget :spells character)))
+		(emit-list "SpellListPrep~D"
+			   (mapcar
+			    (compose #'abbreviate-spell-info (curry #'gethash :preparation-cost))
+			    (aget :spells character)))
+		(emit-list "SpellListEffect~D"
+			   (mapcar
+			    (compose #'abbreviate-spell-info (curry #'gethash :effect))
+			    (aget :spells character)))
 		)))))
 
 (defun fix-unicode (x)
@@ -304,16 +357,16 @@
 					     (better-capitalize
 					      (substitute  #\Space #\-
 							   (fix-unicode (string name))))
-					     parameter))
-	       ))
+					     parameter))))
 	   (tt:cell ()
 	     (loop for paragraph in
 		  (split-sequence #\Newline
 				  (fix-unicode (third (gethash (to-keyword name) +feat-hash+))))
 		when (and parameter
-			  (search (cl-ppcre:regex-replace " ?\\([^)]*\\)"
-							  parameter
-							  "")
+			  (search
+			   (cl-ppcre:regex-replace " ?\\([^)]*\\)"
+						   parameter
+						   "")
 				  (subseq paragraph 0
 					  (min (length paragraph)
 					       (+ (length parameter) 3)))))
@@ -378,6 +431,7 @@
 	     (handler-bind
 		 ((uiop:subprocess-error
 		   (lambda (condition)
+		     (declare (ignorable condition))
 		     (uiop:run-program `("cp" ,(namestring path) "/home/aidenn/error.tmp")))))
 	       (uiop:run-program `("pdftk" ,*path-to-charsheet* "fill_form" ,(namestring path) "output" "-")
 				 :input "" :output :string :external-format :iso-8859-1))))

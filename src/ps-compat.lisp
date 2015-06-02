@@ -5,6 +5,66 @@
 #+ps(defun aget (key table &optional def)
       (chain table (get key def)))
 
+#-ps(eval-when (:compile-toplevel :load-toplevel :execute)
+      (defun optimize-setf (exp)
+	(labels
+	    ((let*-to-let-helper (vars body &optional (depth 1))
+	       (when (= depth 100)
+		 (break))
+	       (if (null vars)
+		   body
+		   `((let (,(car vars))
+		       ,@(let*-to-let-helper (cdr vars) body (1+ depth))))))
+	     (let*-to-let (form)
+	       (destructuring-bind
+		     (let-star vars &body b) form
+		 (assert (eql 'let* let-star))
+		 (if (null vars)
+		     `(let () ,@b)
+		     `(let (,(car vars))
+			,@(let*-to-let-helper (cdr vars) b))
+		     ))))
+	  #+(or)exp
+	  #-(or)
+	  (cond
+	    ((not (listp exp))
+	     exp)
+	    ((eql (car exp) 'let*)
+	     (optimize-setf (let*-to-let exp)))
+	    ((not (eql (car exp) 'let))
+	     exp)
+	    (t
+	     (destructuring-bind (letter vars &body b) exp
+	       (declare (ignore letter))
+	       (loop
+		  with flat = (alexandria:flatten b)
+		  with tree = b
+		  for (var assignment) in vars
+		  when (<= (count var flat) 1)
+		  do (setf tree (subst assignment var tree))
+		  else collect (list var assignment) into new-vars
+		  finally (return
+			    (if (eql (length tree) 1)
+				`(let ,new-vars ,(optimize-setf (car tree)))
+				`(let ,new-vars ,@tree))))))))))
+
+(defmacro ps-setf (place value &rest args &environment env)
+  (multiple-value-bind (temp-vars value-forms store-vars store-form access-form)
+      (ps-get-setf-expansion place env)
+    (declare (ignorable access-form))
+    `(progn
+       ,(optimize-setf
+	`(let* (,@(loop for temp in temp-vars
+		    for value in value-forms
+		    collect (list temp value)))
+	  ;; parenscript and multiple-values is buggy
+	  #+(or)(multiple-value-bind ,store-vars ,(multiple-value-list value)
+		,store-form)
+	  #-(or)(let ((,(car store-vars) ,value))
+		,store-form)))
+       ,@(when args
+	       `((ps-setf ,@args))))))
+
 #+ps(defun mapcar (fun list)
       (unless (chain *immutable *list (is-list list))
 	(setf list (ps:new (chain *immutable (*list list)))))
@@ -146,56 +206,74 @@
 (defmacro defclassish (name &rest slots)
   "Makes something sort of class like"
   (flet ((throwaway-name (x)
-    (intern (symbol-name x) :cl-fccs/throwaway))
+	   (intern (symbol-name x) :cl-fccs/throwaway))
 	 (parse-slots (slots)
 	   (loop for item in slots
 	      collect (make-keyword (string (car item))) into names
 	      collect (or (getf (cdr item) :initform) nil) into initforms
+	      collect (or (getf (cdr item) :deep-depend) nil) into deep-depends
 	      collect (or (getf (cdr item) :validator) '(lambda (&key &allow-other-keys) t)) into validators
 	      collect (or (getf (cdr item) :fixup) '(lambda (&key value &allow-other-keys) value)) into fixups
-	      finally (return (values names initforms validators fixups)))))
-  (multiple-value-bind
-	(slot-names slot-initforms slot-validators slot-fixups)
-      (parse-slots slots)
-    (let ((pname (intern (format nil "~a-P" (symbol-name name)) *package*))
-	  (cname (intern (format nil "MAKE-~a" (symbol-name name)) *package*))
-	  (fname (intern (format nil "FIXUP-~a" (symbol-name name)) *package*)))
-      `(progn
-	 (defun ,pname
-	     (obj)
-	   (unless (classishp obj) (return-from ,pname nil))
-	   ,@(loop for item in slot-names
-		for validator in slot-validators
-		collect `(unless (and
-				  (ain ,item obj)
-				  (funcall ,validator
-					   :value (aget ,item obj)
-					   :obj obj))
-			   #-ps(log:info "~A: ~S" ,item (aget ,item obj :not-present))
-			   (return-from ,pname nil)))
-	   t)
-	 (defun ,fname
-	     (obj)
-	   (unless (classishp obj) (return-from ,fname nil))
-	   ,@(loop for item in slot-names
-		for fixup in slot-fixups
-		for initform in slot-initforms
-		collect `(if (ain ,item obj)
-			     (setf (aget ,item obj)
-				   (funcall ,fixup
-					    :value (aget ,item obj)
-					    :obj obj))
-			     (setf (aget ,item obj) ,initform)))
-	   (when (,pname obj) obj))
-	 (defun ,cname (&key ,@(loop for name in slot-names
-				 for initform in slot-initforms
-				 collect `((,name ,(throwaway-name name)) ,initform)))
-	   (let ((r (amake)))
-	     (setf
-	      ,@(loop for name in slot-names
-		   collect `(aget ,name r)
-		   collect (throwaway-name name)))
-	     r)))))))
+	      finally (return (values names initforms deep-depends validators fixups)))))
+    (multiple-value-bind
+	  (slot-names slot-initforms slot-depends slot-validators slot-fixups)
+	(parse-slots slots)
+      (let ((pname (intern (format nil "~a-P" (symbol-name name)) *package*))
+	    (cname (intern (format nil "MAKE-~a" (symbol-name name)) *package*))
+	    (fname (intern (format nil "FIXUP-~a" (symbol-name name)) *package*))
+	    (vname (intern (format nil "VALIDATE-CHANGED-~A" (symbol-name name)) *package*)))
+	`(progn
+	   (defun ,pname
+	       (obj)
+	     (unless (classishp obj) (return-from ,pname nil))
+	     ,@(loop for item in slot-names
+		  for validator in slot-validators
+		  do `(unless (and
+			       (ain ,item obj)
+			       (funcall ,validator
+					:value (aget ,item obj)
+					:obj obj))
+			#-ps(log:info "~A: ~S" ,item (aget ,item obj :not-present))
+			(return-from ,pname nil)))
+	     t)
+	   (defun ,fname
+	       (obj)
+	     (unless (classishp obj) (return-from ,fname nil))
+	     ,@(loop for item in slot-names
+		  for fixup in slot-fixups
+		  for initform in slot-initforms
+		  collect `(if (ain ,item obj)
+			       (setf (aget ,item obj)
+				     (funcall ,fixup
+					      :value (aget ,item obj)
+					      :obj obj))
+			       (setf (aget ,item obj) ,initform)))
+	     (when (,pname obj) obj))
+	   (defun ,cname (&key ,@(loop for name in slot-names
+				    for initform in slot-initforms
+				    collect `((,name ,(throwaway-name name)) ,initform)))
+	     (let ((r (amake)))
+	       (setf
+		,@(loop for name in slot-names
+		     collect `(aget ,name r)
+		     collect (throwaway-name name)))
+	       r))
+	   (defun ,vname (obj slot-name)
+	     (unless (classishp obj) (return-from ,vname nil))
+	     (cond
+	       ,@(loop for slot in slot-names
+		    for depend in slot-depends
+		    for validator in slot-validators
+		    if depend
+		    collect `((eql slot-name ,slot)
+			      (,slot (,pname obj)))
+		    else
+		    collect `((eql slot-name ,slot)
+			      (and
+			       (ain ,slot obj)
+			       (funcall ,validator
+					:value (aget ,slot obj)
+					:obj obj)))))))))))
 
 (defun pappend (list &rest lists)
   #-ps (apply #'append list lists)
@@ -218,13 +296,17 @@
       (chain (mapcar fn list)
 	     (reduce (lambda (sofar val)
 		       (chain sofar (concat val))))))
-      
 
 #+ps(defun stringp (value)
       (= (typeof value) "string"))
 
-#+ps(defun member (value list &key (key (lambda (x) x)))
-      (chain (mapcar key list) (contains value)))
+#+ps(defun member (value list &key (key (lambda (x) x)) test)
+      (if test
+	  (chain list (find (lambda (k v)
+			      (funcall test
+				       (funcall key k)
+				       value))))
+	  (chain (mapcar key list) (contains value))))
 
 #+ps(defun every (predicate list)
       (chain list (every predicate)))
@@ -295,66 +377,6 @@
 		(chain ,getter (set ,key-dummy ,store)))
 	  ,store)
        `(aget ,key-dummy ,getter ,def-dummy)))))
-
-#-ps(eval-when (:compile-toplevel :load-toplevel :execute)
-      (defun optimize-setf (exp)
-	(labels
-	    ((let*-to-let-helper (vars body &optional (depth 1))
-	       (when (= depth 100)
-		 (break))
-	       (if (null vars)
-		   body
-		   `((let (,(car vars))
-		       ,@(let*-to-let-helper (cdr vars) body (1+ depth))))))
-	     (let*-to-let (form)
-	       (destructuring-bind
-		     (let-star vars &body b) form
-		 (assert (eql 'let* let-star))
-		 (if (null vars)
-		     `(let () ,@b)
-		     `(let (,(car vars))
-			,@(let*-to-let-helper (cdr vars) b))
-		     ))))
-	  #+(or)exp
-	  #-(or)
-	  (cond
-	    ((not (listp exp))
-	     exp)
-	    ((eql (car exp) 'let*)
-	     (optimize-setf (let*-to-let exp)))
-	    ((not (eql (car exp) 'let))
-	     exp)
-	    (t
-	     (destructuring-bind (letter vars &body b) exp
-	       (declare (ignore letter))
-	       (loop
-		  with flat = (alexandria:flatten b)
-		  with tree = b
-		  for (var assignment) in vars
-		  when (<= (count var flat) 1)
-		  do (setf tree (subst assignment var tree))
-		  else collect (list var assignment) into new-vars
-		  finally (return
-			    (if (eql (length tree) 1)
-				`(let ,new-vars ,(optimize-setf (car tree)))
-				`(let ,new-vars ,@tree))))))))))
-
-(defmacro ps-setf (place value &rest args &environment env)
-  (multiple-value-bind (temp-vars value-forms store-vars store-form access-form)
-      (ps-get-setf-expansion place env)
-    (declare (ignorable access-form))
-    `(progn
-       ,(optimize-setf
-	`(let* (,@(loop for temp in temp-vars
-		    for value in value-forms
-		    collect (list temp value)))
-	  ;; parenscript and multiple-values is buggy
-	  #+(or)(multiple-value-bind ,store-vars ,(multiple-value-list value)
-		,store-form)
-	  #-(or)(let ((,(car store-vars) ,value))
-		,store-form)))
-       ,@(when args
-	       `((ps-setf ,@args))))))
 
 (defmacro ps-incf (place &optional (n 1) &environment env)
   (multiple-value-bind (temp-vars value-forms store-vars store-form access-form)

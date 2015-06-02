@@ -1432,6 +1432,23 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		   (:form
 		    :key "spell"
 		    :class-name "pure-form pure-form-stacked"
+		    (:div
+		     :class-name "pure-u-1 pure-u-xl-1-2 pure-g"
+		     (input-field casting-level
+				  :parser ({ #'parse-int))
+		     (input-field spell-points
+				  :parser ({ #'parse-int)))
+		    (:div
+		     :class-name "pure-u-1 pure-u-xl-1-2 pure-g"
+		     (output-field spellcasting-total
+				   :class-name "pure-u-1 pure-u-md-1-4 pure-u-xl-1-8")
+		     (input-field spellcasting-ranks
+				  :class-name "pure-u-1 pure-u-md-1-4 pure-u-xl-1-8"
+				  :parser ({ #'parse-int))
+		     (output-field int-mod
+				   :class-name "pure-u-1 pure-u-md-1-4 pure-u-xl-1-8")
+		     (output-field spellcasting-misc-mod
+				   :class-name "pure-u-1 pure-u-md-1-4 pure-u-xl-1-8"))
 		    (list-field spells
 				(lambda (data updater)
 				  (htm (:*spell-info
@@ -1441,17 +1458,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 					;:row-key (lambda (x) (aget :the-class x))
 				:inner-class "pure-u-1 pure-u-xl-1-2 pure-g"
 				:make-new #'make-spell-info
-				)
-		    #+(or)(autocomplete-input-field
-		     spell
-		     :update-completions
-		     (lambda (val fn)
-		       (post-data
-			"/fccs2/complete/spell"
-			val
-			(lambda ()
-			  (funcall fn
-				   (chain *json* (parse (chain this response-text)))))))))))
+				))))
 		 ))))))
 
 (defreact *character-list

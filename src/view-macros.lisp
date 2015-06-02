@@ -263,8 +263,9 @@
        validate (mlambda (v)
 		  (tlambda (newval)
 		    (let ((newstate (chain this state obj (set v newval))))
-		      (,(intern (format nil "~A-P" (string name)) (symbol-package name))
-			newstate))))
+		      (,(intern (format nil "VALIDATE-CHANGED-~A" (string name)) (symbol-package name))
+			newstate
+			v))))
        ,@b))
 
 (defmacro choice-field (name choices &key
