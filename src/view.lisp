@@ -1,5 +1,8 @@
 (in-package cl-fccs)
 
+(defmacro fixup-path (path)
+  (cl-fccs::fixup-path path))
+
 (defreact-for-classish (*fudge fudge
 			       :on-change (tlambda (v) (chain this props (on-change v))))
   get-initial-state (lambda () (create obj (chain this props default-value)))
@@ -497,7 +500,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
   get-initial-state (lambda () (create obj (chain this props default-value)))
   update-fields (lambda (name)
 		  (post-data
-		   "/fccs2/complete/gear-info"
+		   (fixup-path"/complete/gear-info")
 		   name
 		   (let ((ginfo this))
 		     (lambda ()
@@ -518,7 +521,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 	      :update-completions
 	      (lambda (val fn)
 		(post-data
-		 "/fccs2/complete/gear"
+		 (fixup-path "/complete/gear")
 		 val
 		 (lambda ()
 		   (funcall fn
@@ -553,7 +556,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 	      :update-completions
 	      (lambda (val fn)
 		(post-data
-		 "/fccs2/complete/class"
+		 (fixup-path "/complete/class")
 		 val
 		 (lambda ()
 		   (funcall fn
@@ -575,7 +578,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
   get-initial-state (lambda () (create obj (chain this props default-value)))
   update-fields (lambda (name)
 		  (post-data
-		   "/fccs2/complete/spell-info"
+		   (fixup-path "/complete/spell-info")
 		   name
 		   (let ((spinfo this))
 		     (lambda ()
@@ -603,7 +606,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 	      :update-completions
 	      (lambda (val fn)
 		(post-data
-		 "/fccs2/complete/spell"
+		 (fixup-path "/complete/spell")
 		 val
 		 (lambda ()
 		   (funcall fn (chain *json* (parse (chain this response-text)))))))
@@ -678,7 +681,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		   :update-completions
 		   (lambda (val fn)
 		     (post-data
-		      "/fccs2/complete/feat"
+		      (fixup-path "/complete/feat")
 		      val
 		      (lambda ()
 			(funcall fn
@@ -710,7 +713,9 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 	    :character-id ({(chain this props character-id))
 	    :section ({(chain this state section))))))
 
-(defreact-for-classish (*character fc-character :on-change (tlambda (newch) (chain this (update-abilities newch))))
+(defreact-for-classish (*character fc-character
+				   :on-change
+				   (tlambda (newch) (chain this (update-abilities newch))))
   get-initial-state (lambda ()
 		      (create obj (chain this props default-value)))
   on-fudge-change (mlambda (the-fudge)
@@ -728,7 +733,6 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		     (unless (chain this upload-timer)
 		       (setf (chain this upload-timer)
 			     (chain window (set-timeout (chain this upload-data) 10000))))
-					;(post-data "/fccs2/test/" newch)
 		     (when (or t (eql field :classes))
 		       (chain this
 			      (set-state
@@ -741,7 +745,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
   upload-data (lambda ()
 		(post-data
 		 (+
-		  "/fccs2/save-character/"
+		  (fixup-path "/save-character/")
 		  (chain this props character-id))
 		 (chain this state obj (to-j-s)))
 		(setf (chain this upload-timer) nil))
@@ -781,14 +785,14 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			"Spellcasting"))
 		   (:li
 		    :class-name "pure-menu-item"
-		    (:a :href ({(+ "/fccs2/pdf-character/"
+		    (:a :href ({(+ (fixup-path "/pdf-character/")
 				   (chain this props character-id)))
 			:target "_blank"
 			:class-name "pure-menu-link"
 			"PDF"))
 		   (:li
 		    :class-name "pure-menu-item"
-		    (:a :href "/fccs2/" :class-name "pure-menu-link"
+		    (:a :href (fixup-path "/") :class-name "pure-menu-link"
 			:on-click ({(tlambda ()
 				      (when
 					  (chain this upload-timer)
@@ -809,7 +813,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 				:update-completions
 			     (lambda (val fn)
 			       (post-data
-				"/fccs2/complete/species"
+				(fixup-path "/complete/species")
 				val
 				(lambda ()
 				  (funcall fn
@@ -820,7 +824,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 				:update-completions
 			     (lambda (val fn)
 			       (post-data
-				"/fccs2/complete/talent"
+				(fixup-path "/complete/talent")
 				val
 				(lambda ()
 				  (funcall fn
@@ -832,7 +836,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			     :update-completions
 			     (lambda (val fn)
 			       (post-data
-				"/fccs2/complete/specialty"
+				(fixup-path "/complete/specialty")
 				val
 				(lambda ()
 				  (funcall fn
@@ -979,8 +983,6 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			     ))
 			   (:div
 			    :class-name "pure-u-1 pure-u-md-1-4 pure-u-xl-1-8 pure-g"
-			    #+(or)(:img :src "/fccs2/pub/images/fc.png"
-					:class-name "pure-img")
 			    (output-field starting-action-dice
 					  :class-name "pure-u-1 pure-u-md-1-2")
 			    (output-field action-dice-type
@@ -1466,7 +1468,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
     edit (lambda (id)
 	   (lambda ()
 	     (setf (chain window location)
-		   (+ "/fccs2/character/" id))))
+		   (+ (fixup-path "/character/") id))))
     render (lambda ()
 	     (let ((ths this))
 	       (htm
@@ -1492,12 +1494,12 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			    (:td ({(aget :career-level item)))))))))
 		 (:form
 		  (:button
-		   :form-action "/fccs2/new-character/"
+		   :form-action (fixup-path "/new-character/")
 		   :form-method "POST"
 		   :class-name "pure-button"
 		   :on-click ({(lambda ()
 				 (setf (chain window location)
-				       "/fccs2/new-character/")))
+				       (fixup-path "/new-character/"))))
 		   "New")))))))
 		  
 

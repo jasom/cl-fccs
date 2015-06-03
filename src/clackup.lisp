@@ -1,13 +1,27 @@
 (in-package :cl-fccs)
 
-(defvar *prepend-path* "/fccs2/")
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defvar *prepend-path* "/fccs2/")
+  
+  (setf *readtable* (copy-readtable))
+  (set-dispatch-macro-character
+   #\# #\!
+   (lambda (stream c2 p)
+     (let* ((string (read stream t nil t))
+	    (position (position #\! string)))
+       (concatenate 'string
+		    (subseq string 0 position)
+		    *prepend-path*
+		    (subseq string (1+ position)))))))
 
 (defun fixup-path (path)
-  (format nil "~A~A"
-	  *prepend-path*
-	  (if (eql (char path 0) #\/)
-	      (subseq path 1)
-	      path)))
+    (format nil "~A~A"
+	    *prepend-path*
+	    (if (eql (char path 0) #\/)
+		(subseq path 1)
+		path)))
+
+
 
 (defmacro render-page ((stream-name) &body body)
   `(cl-who:with-html-output-to-string (,stream-name nil :prologue "<!DOCTYPE html>")
@@ -95,9 +109,9 @@
 	  (,(with-html-output-to-string (s)
 					(:html (:body (:p "Error"))))))
       (match env
-	((property :path-info (ppcre "^/fccs2/complete/(.*)" thing))
+	((property :path-info (ppcre #!"^!complete/(.*)" thing))
 	 (fccs-complete thing body))
-	((property :path-info "/fccs2/lztest/")
+	((property :path-info #!"!lztest/")
 	 (let ((codes
 		(map 'list #'char-code
 		     (babel:octets-to-string body :encoding :utf-8))))
@@ -109,7 +123,7 @@
 	 `(200
 	   ()
 	   ()))
-	((property :path-info "/fccs2/")
+	((property :path-info #!"!")
 	 (with-db-connection
 	 `(200
 	   (:content-type "text/html")
@@ -131,19 +145,17 @@
 			    (calculate-field :career-level character)))
 		s)
 	       (princ ")}),document.body)" s)))))))
-	#+(or)((property :path-info "/fccs2/error/")
-	       (error "hi"))
 	((and (property :request-method :POST)
-	      (property :path-info "/fccs2/new-character/"))
+	      (property :path-info #!"!new-character/"))
 	 (with-db-connection
 	   (let ((id (new-character)))
 	     `(303
-	       (:location ,(format nil "/fccs2/character/~A" id)
+	       (:location ,(format nil #!"!character/~A" id)
 			  :content-type "text/html")
 	       (,(cl-who:with-html-output-to-string
 		  (s)
 		  (:htm (:head) (:body "See Other"))))))))
-	((property :path-info (ppcre "^/fccs2/pdf-character/(\\d*)$" id))
+	((property :path-info (ppcre #!"^!pdf-character/(\\d*)$" id))
 	 (let ((character
 		(with-db-connection
 		  (get-character id))))
@@ -158,7 +170,7 @@
 				  :content-type "application/pdf")
 		 ,bin-pdf)))))
 	((and (property :request-method :POST)
-	      (property :path-info (ppcre "^/fccs2/save-character/(\\d*)$" id)))
+	      (property :path-info (ppcre #!"^!save-character/(\\d*)$" id)))
 	 (log:info "Uncompressed-Body-Len ~D" (length body))
 	 (with-db-connection
 	   (if (get-character id) ;;TODO just check if id is valid
@@ -173,7 +185,7 @@
 		 (:content-type "text/html")
 		 (cl-who:with-html-output-to-string (s)
 		   (:htm (:head) (:body "Couldn't locate character")))))))
-	((property :path-info (ppcre "^/fccs2/character/(\\d*)$" id))
+	((property :path-info (ppcre #!"^!character/(\\d*)$" id))
 	 (with-db-connection
 	   (let ((character (get-character id)))
 	     (if character
@@ -195,7 +207,7 @@
 	 `(404
 	   (:content-type "text/html")
 	   (,(cl-who:with-html-output-to-string (s)
-						(:htm (:head) (:body (:p "Not found.")))))))
+						(:htm (:head) (:body (:p "Not found")))))))
 			  
 	))))
 
@@ -221,6 +233,7 @@
 	   :root (asdf:system-relative-pathname 'cl-fccs "build/pub/"))
 	  (lambda (env) (funcall 'app env)))
 	 :server :hunchentoot
+	 :port #+dev 5001 #-dev 5000
 	 :use-default-middlewares nil
 	 )))
 
