@@ -173,7 +173,8 @@
 		(emit-item  "LifestylePru" :prudence)
 		(emit-item "LifestyleMoneySavEarn" :money-save/earned) 
 		(emit-field "DefenseMiscMod" :defense-misc-mod) 
-		(emit-field "DefenseArmMod" :defense-armor-mod)
+		(emit-value "DefenseArmMod"
+			    (-(calculate-field :defense-armor-mod character)))
 		(emit-field "DefenseSizeMod" :defense-size-mod)
 		(emit-field "DefenseClassBonus" :base-defense)
 		(emit-field "DefenseDexMod" :defense-attr-mod)
@@ -275,6 +276,64 @@
 		  (emit-list "CombatAbNotes~D" c-notes)
 		  (emit-list "SpellAbName~D" s-name)
 		  (emit-list "SpellAbNotes~D" s-notes))
+		(let ((weapons (list
+				(aget :weapon-1 character)
+				(aget :weapon-2 character)
+				(aget :weapon-3 character)
+				(aget :weapon-4 character))))
+		  (emit-list "Weapon~DType"
+			     (mapcar (curry #'gethash :name) weapons))
+		  (emit-list "Weapon~DAtk"
+			     (list
+			      (calculate-field :weapon-1-atk-bonus character)
+			      (calculate-field :weapon-2-atk-bonus character)
+			      (calculate-field :weapon-3-atk-bonus character)
+			      (calculate-field :weapon-4-atk-bonus character)))
+		  (emit-list "Weapon~DDMG"
+			      (list
+				(format nil "~A~:[+~;~]~A"
+					(aget :dmg-die (elt weapons 0))
+					(<
+					 (calculate-field :weapon-1-dmg-bonus character)
+					 0)
+					(calculate-field :weapon-1-dmg-bonus character))
+				(format nil "~A~:[+~;~]~A"
+					(aget :dmg-die (elt weapons 1))
+					(<
+					 (calculate-field :weapon-2-dmg-bonus character)
+					 0)
+					(calculate-field :weapon-2-dmg-bonus character))
+				(format nil "~A~:[+~;~]~A"
+					(aget :dmg-die (elt weapons 2))
+					(<
+					 (calculate-field :weapon-3-dmg-bonus character)
+					 0)
+					(calculate-field :weapon-3-dmg-bonus character))
+				(format nil "~A~:[+~;~]~A"
+					(aget :dmg-die (elt weapons 3))
+					(<
+					 (calculate-field :weapon-4-dmg-bonus character)
+					 0)
+					(calculate-field :weapon-4-dmg-bonus character))))
+		  (emit-list "Weapon~DThreat"
+			     (mapcar (curry #'gethash :threat) weapons))
+		  (emit-list "Weapon~DSzHand"
+			      (mapcar
+			       (lambda (x)
+				 (format nil "~A/~A"
+					 (aget :size x)
+					 (aget :hand x)))
+			       weapons))
+		  (emit-list "Weapon~DWgt"
+			     (mapcar (curry #'gethash :weight) weapons))
+		  (emit-list "Weapon~DRng"
+			     (mapcar (curry #'gethash :rng) weapons))
+		  (emit-list "Weapon~DShots"
+			     (mapcar (curry #'gethash :shots) weapons))
+		  (emit-list "Weapon~DQualUp"
+			     (mapcar (curry #'gethash :qualities) weapons))
+		  )
+		  
 		(emit-field "CarCapHvy" :heavy-capacity)
 		(emit-field "CarCapLight" :light-capacity)
 		(emit-field "CarCapLift" :lift)

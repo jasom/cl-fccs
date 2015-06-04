@@ -784,6 +784,13 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			:on-click ({(chain this props (change-section "spell")))
 			"Spellcasting"))
 		   (:li
+		    :class-name ({(+ "pure-menu-item"
+				     (if (= (chain this props  section) "bio")
+					 " pure-menu-selected" "")))
+		    (:a :href "#" :class-name "pure-menu-link"
+			:on-click ({(chain this props (change-section "bio")))
+			"Bio/Notes"))
+		   (:li
 		    :class-name "pure-menu-item"
 		    (:a :href ({(+ (fixup-path "/pdf-character/")
 				   (chain this props character-id)))
@@ -1461,6 +1468,8 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 				:inner-class "pure-u-1 pure-u-xl-1-2 pure-g"
 				:make-new #'make-spell-info
 				))))
+		 ((= (chain this props section) "spell")
+		  (htm (:p "Coming Soon...")))
 		 ))))))
 
 (defreact *character-list
