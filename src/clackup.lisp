@@ -1,18 +1,11 @@
 (in-package :cl-fccs)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defvar *prepend-path* "/fccs2/")
+(defvar *prepend-path* "/fccs2/")
   
-  (setf *readtable* (copy-readtable))
-  (set-dispatch-macro-character
-   #\# #\!
-   (lambda (stream c2 p)
-     (let* ((string (read stream t nil t))
-	    (position (position #\! string)))
-       (concatenate 'string
-		    (subseq string 0 position)
-		    *prepend-path*
-		    (subseq string (1+ position)))))))
+(defun strip-path-prefix (path)
+  (if (starts-with-subseq *prepend-path* path)
+      (subseq path (1- (length *prepend-path*)))
+      (error "Path ~A not in application" path)))
 
 (defun fixup-path (path)
     (format nil "~A~A"
@@ -91,6 +84,8 @@
 (defun app (env)
   (log4cl:log-info env)
   (log4cl:log-info "Headers: ~S" (alexandria:hash-table-plist (getf env :headers)))
+  (setf (getf env :path-info)
+	(strip-path-prefix (getf env :path-info)))
   (let ((content-length (getf env :content-length))
 	(body))
     (cond
@@ -109,9 +104,9 @@
 	  (,(with-html-output-to-string (s)
 					(:html (:body (:p "Error"))))))
       (match env
-	((property :path-info (ppcre #!"^!complete/(.*)" thing))
+	((property :path-info (ppcre "^/complete/(.*)" thing))
 	 (fccs-complete thing body))
-	((property :path-info #!"!lztest/")
+	((property :path-info "/lztest/")
 	 (let ((codes
 		(map 'list #'char-code
 		     (babel:octets-to-string body :encoding :utf-8))))
@@ -123,7 +118,7 @@
 	 `(200
 	   ()
 	   ()))
-	((property :path-info #!"!")
+	((property :path-info "/")
 	 (with-db-connection
 	 `(200
 	   (:content-type "text/html")
@@ -146,16 +141,16 @@
 		s)
 	       (princ ")}),document.body)" s)))))))
 	((and (property :request-method :POST)
-	      (property :path-info #!"!new-character/"))
+	      (property :path-info "/new-character/"))
 	 (with-db-connection
 	   (let ((id (new-character)))
 	     `(303
-	       (:location ,(format nil #!"!character/~A" id)
+	       (:location ,(format nil "/character/~A" id)
 			  :content-type "text/html")
 	       (,(cl-who:with-html-output-to-string
 		  (s)
 		  (:htm (:head) (:body "See Other"))))))))
-	((property :path-info (ppcre #!"^!pdf-character/(\\d*)$" id))
+	((property :path-info (ppcre "^/pdf-character/(\\d*)$" id))
 	 (let ((character
 		(with-db-connection
 		  (get-character id))))
@@ -170,7 +165,7 @@
 				  :content-type "application/pdf")
 		 ,bin-pdf)))))
 	((and (property :request-method :POST)
-	      (property :path-info (ppcre #!"^!save-character/(\\d*)$" id)))
+	      (property :path-info (ppcre "^/save-character/(\\d*)$" id)))
 	 (log:info "Uncompressed-Body-Len ~D" (length body))
 	 (with-db-connection
 	   (if (get-character id) ;;TODO just check if id is valid
@@ -185,7 +180,7 @@
 		 (:content-type "text/html")
 		 (cl-who:with-html-output-to-string (s)
 		   (:htm (:head) (:body "Couldn't locate character")))))))
-	((property :path-info (ppcre #!"^!character/(\\d*)$" id))
+	((property :path-info (ppcre "^/character/(\\d*)$" id))
 	 (with-db-connection
 	   (let ((character (get-character id)))
 	     (if character
