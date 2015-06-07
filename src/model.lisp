@@ -350,6 +350,25 @@
 	   :fixup (lambda (&key value &allow-other-keys) (to-keyword value))
 	   :initform :non-combat)) 
 
+(defclassish contact-info
+    (name :initform "" :validator #'string-validator)
+    (trust :initform "" :validator #'string-validator)
+    (size :initform "" :validator #'string-validator)
+    (reach :initform "" :validator #'string-validator)
+    (speed :initform "" :validator #'string-validator)
+    (attributes :initform "" :validator #'string-validator)
+    (rep-cost :initform "" :validator #'string-validator)
+    (init :initform "" :validator #'string-validator)
+    (atk :initform "" :validator #'string-validator)
+    (def :initform "" :validator #'string-validator)
+    (res :initform "" :validator #'string-validator)
+    (health :initform "" :validator #'string-validator)
+    (comp :initform "" :validator #'string-validator)
+    (skills :initform "" :validator #'string-validator)
+    (qualities :initform "" :validator #'string-validator)
+    (attacks :initform "" :validator #'string-validator)
+    (gear :initform "" :validator #'string-validator))
+
 (defclassish spell-info
     (name :initform "" :validator #'string-validator)
   (level :initform 0
@@ -521,6 +540,41 @@
      (gear :validatior (list-of #'gear-info-p)
 	   :initform (list)
 	   :fixup #'list-fixup)
+     (mount-name :validator #'string-validator
+		 :initform "")
+     (mount-size :validator #'string-validator
+		 :initform "")
+     (mount-footprint :validator #'string-validator
+		      :initform "")
+     (mount-reach :validator #'string-validator
+		  :initform "")
+     (mount-speed :validator #'string-validator
+		  :initform "")
+     (mount-travel :validator #'string-validator
+		   :initform "")
+     (mount-attributes :validator #'string-validator
+		       :initform "")
+     (mount-init :validator #'string-validator
+		 :initform "")
+     (mount-atk :validator #'string-validator
+		:initform "")
+     (mount-def :validator #'string-validator
+		:initform "")
+     (mount-res :validator #'string-validator
+		:initform "")
+     (mount-health :validator #'string-validator
+		   :initform "")
+     (mount-comp :validator #'string-validator
+		 :initform "")
+     (mount-skills :validator #'string-validator
+		   :initform "")
+     (mount-qualities :validator #'string-validator
+		      :initform "")
+     (mount-attacks :validator #'string-validator
+		    :initform "")
+     (contacts :validator (list-of #'contact-info-p)
+	       :fixup #'list-fixup
+	       :initform (list))
      (spells :validator (list-of #'spell-info-p)
 	     :fixup #'list-fixup
 	     :initform (list))

@@ -326,13 +326,14 @@
 				      make-new
 				      (row-key '(lambda (_ i) (genid)))
 				      inner-class
+				      (show-name t)
 				      read-only 
 				      (class-name "pure-u-1 pure-u-md-1-6"))
   (let ((name (alexandria:make-keyword (string name))))
     `(htm
       (:div
        :class-name ,class-name
-       ,(better-capitalize (string name))
+       ,@(when show-name (list (better-capitalize (string name))))
        (:*val-list
 	:read-only ,read-only
 	:value ({(aget ,name (chain this state obj)))

@@ -3,6 +3,41 @@
 (defmacro fixup-path (path)
   (cl-fccs::fixup-path path))
 
+(defreact-for-classish (*contact-info
+			contact-info
+			:on-change (tlambda (v) (chain this props (on-change v))))
+  get-initial-state (lambda () (create obj (chain this props default-value)))
+  render (lambda ()
+	   (htm
+	    (:div
+	     (input-field name
+			  :class-name "pure-u-md-1-2")
+	     (input-field trust
+			  :class-name "pure-u-md-1-8")
+	     (input-field size
+			  :class-name "pure-u-md-1-8")
+	     (input-field reach
+			  :class-name "pure-u-md-1-8")
+	     (input-field speed
+			  :class-name "pure-u-md-1-8")
+	     (input-field attributes
+			  :class-name "pure-u-md-5-6")
+	     (input-field rep-cost)
+	     (input-field init)
+	     (input-field atk)
+	     (input-field def)
+	     (input-field res)
+	     (input-field health)
+	     (input-field comp)
+	     (input-field skills
+			  :class-name "pure-u-1")
+	     (input-field qualities
+			  :class-name "pure-u-1")
+	     (input-field attacks
+			  :class-name "pure-u-1")
+	     (input-field gear
+			  :class-name "pure-u-1")))))
+
 (defreact-for-classish (*fudge fudge
 			       :on-change (tlambda (v) (chain this props (on-change v))))
   get-initial-state (lambda () (create obj (chain this props default-value)))
@@ -1426,15 +1461,87 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 				  :parser ({ #'parse-int))
 		     (input-field noble-renown
 				  :parser ({ #'parse-int)))
+		     (:h2 :class-name "heading pure-u-1 pure-u-xl-1-2"
+			  "Gear")
 		    (list-field gear
 				(lambda (data updater)
 				  (htm (:*gear-info
 					:default-value ({ data)
 					:on-change ({ updater))))
-				:class-name "pure-u-1 pure-g"
+				:show-name nil
+				:class-name "pure-u-1 pure-u-xl-1-2 pure-g"
 					;:row-key (lambda (x) (aget :the-class x))
-				:inner-class "pure-u-1 pure-u-md-1-2 pure-u-xl-1-4 pure-g"
+				:inner-class "pure-u-1 pure-g"
 				:make-new #'make-gear-info)
+		    (:div
+		     :class-name "pure-u-1 pure-u-xl-1-2 pure-g"
+		     (:h2 :class-name "heading pure-u-1"
+			  "Mount")
+		     (input-field mount-name
+				  :label-as "Name"
+				  :class-name "pure-u-1 pure-u-md-1-4")
+		     (input-field mount-size
+				  :label-as "Size"
+				  :class-name "pure-u-1 pure-u-md-1-12")
+		     (input-field mount-footprint
+				  :label-as "Footprint"
+				  :class-name "pure-u-1 pure-u-md-1-12")
+		     (input-field mount-reach
+				  :label-as "Reach"
+				  :class-name "pure-u-1 pure-u-md-1-12")
+		     (input-field mount-speed
+				  :label-as "Speed"
+				  :class-name "pure-u-1 pure-u-md-1-12")
+		     (input-field mount-travel
+				  :label-as "Travel"
+				  :class-name "pure-u-1 pure-u-md-1-12")
+		     (input-field mount-init
+				  :class-name "pure-u-1 pure-u-md-1-12"
+				  :label-as "Init")
+		     (input-field mount-atk
+				  :class-name "pure-u-1 pure-u-md-1-12"
+				  :label-as "Atk")
+		     (input-field mount-def
+				  :class-name "pure-u-1 pure-u-md-1-12"
+				  :label-as "Def")
+		     (input-field mount-res
+				  :class-name "pure-u-1 pure-u-md-1-12"
+				  :label-as "Res")
+		     (input-field mount-attributes
+				  :label-as "Attributes"
+				  :class-name "pure-u-1 pure-u-md-1-2")
+		     (input-field mount-health
+				  :label-as "Health"
+				  :class-name "pure-u-1 pure-u-md-1-12"
+				  )
+		     (input-field mount-comp
+				  :label-as "Comp"
+				  :class-name "pure-u-1 pure-u-md-1-12"
+				  )
+		     (input-field mount-skills
+				  :label-as "Skills"
+				  :class-name "pure-u-1")
+		     (input-field mount-qualities
+				  :label-as "Qualities"
+				  :class-name "pure-u-1")
+		     (input-field mount-attacks
+				  :label-as "Attacks"
+				  :class-name "pure-u-1")
+				  )
+		    (:div
+		     :class-name "pure-u-1 pure-u-xl-1-2 pure-g"
+		     (:h2 :class-name "heading pure-u-1"
+			  "Contacts")
+		    (list-field contacts
+				(lambda (data updater)
+				  (htm (:*contact-info
+					:default-value ({ data)
+					:on-change ({ updater))))
+				:show-name nil
+				:class-name "pure-u-1 pure-g"
+				:inner-class "pure-u-1 pure-u-md-1-2 pure-g"
+				:make-new #'make-contact-info
+				))
 		    )))
 		 ((= (chain this props section) "spell")
 		  (htm

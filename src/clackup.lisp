@@ -202,10 +202,7 @@
 	 `(404
 	   (:content-type "text/html")
 	   (,(cl-who:with-html-output-to-string (s)
-						(:htm (:head) (:body (:p "Not found")))))))
-			  
-	))))
-
+						(:htm (:head) (:body (:p "Not found")))))))))))
 
 (defvar *myapp* nil)
 
