@@ -354,6 +354,72 @@
 		 (aget :gear character))
 		(emit-list "GearWgt~D" (mapcar (curry #'gethash :weight)
 						(aget :gear character)))
+		(emit-item "MountName" :mount-name)
+		(emit-item "MountSz" :mount-size)
+		(emit-item "MountFoot" :mount-footprint)
+		(emit-item "MountReach" :mount-reach)
+		(emit-item "MountSpd" :mount-speed)
+		(emit-item "MountTrav" :mount-travel)
+		(emit-item "MountAttr" :mount-attributes)
+		(emit-item "MountInit" :mount-init)
+		(emit-item "MountAtk" :mount-atk)
+		(emit-item "MountDef" :mount-def)
+		(emit-item "MountRes" :mount-res)
+		(emit-item "MountHealth" :mount-health)
+		(emit-item "MountComp" :mount-comp)
+		(emit-item "MountSkills" :mount-skills)
+		(emit-item "MountQual" :mount-qualities)
+		(emit-item "MountAttacks" :mount-attacks)
+		(emit-list "Contact~DName"
+			   (mapcar (curry #'gethash :name)
+				   (aget :contacts character)))
+		(emit-list "Contact~DTrust"
+			   (mapcar (curry #'gethash :trust)
+				   (aget :contacts character)))
+		(emit-list "Contact~DSzReach"
+			   (mapcar 
+			    (lambda (x)
+			      (format nil "~A/~A" (aget :size x) (aget :reach x)))
+			    (aget :contacts character)))
+		(emit-list "Contact~DSpd"
+			   (mapcar (curry #'gethash :speed)
+				   (aget :contacts character)))
+		(emit-list "Contact~DAttr"
+			   (mapcar (curry #'gethash :attributes)
+				   (aget :contacts character)))
+		(emit-list "Contact~DRepCost"
+			   (mapcar (curry #'gethash :rep-cost)
+				   (aget :contacts character)))
+		(emit-list "Contact~DInit"
+			   (mapcar (curry #'gethash :init)
+				   (aget :contacts character)))
+		(emit-list "Contact~DAtk"
+			   (mapcar (curry #'gethash :atk)
+				   (aget :contacts character)))
+		(emit-list "Contact~DDef"
+			   (mapcar (curry #'gethash :Def)
+				   (aget :contacts character)))
+		(emit-list "Contact~DRes"
+			   (mapcar (curry #'gethash :Res)
+				   (aget :contacts character)))
+		(emit-list "Contact~DHealth"
+			   (mapcar (curry #'gethash :Health)
+				   (aget :contacts character)))
+		(emit-list "Contact~DComp"
+			   (mapcar (curry #'gethash :comp)
+				   (aget :contacts character)))
+		(emit-list "Contact~DSkills"
+			   (mapcar (curry #'gethash :skills)
+				   (aget :contacts character)))
+		(emit-list "Contact~DQual"
+			   (mapcar (curry #'gethash :qualities)
+				   (aget :contacts character)))
+		(emit-list "Contact~DAttacks"
+			   (mapcar (curry #'gethash :attacks)
+				   (aget :contacts character)))
+		(emit-list "Contact~DGear"
+			   (mapcar (curry #'gethash :gear)
+				   (aget :contacts character)))
 		(emit-list "SpellListNameSchool~D"
 			   (mapcar
 			    (lambda (x)
