@@ -572,6 +572,24 @@
 		      :initform "")
      (mount-attacks :validator #'string-validator
 		    :initform "")
+     (vehicle-name :validator #'string-validator
+		    :initform "")
+     (vehicle-speed :validator #'string-validator
+		    :initform "")
+     (vehicle-travel :validator #'string-validator
+		    :initform "")
+     (vehicle-size :validator #'string-validator
+		    :initform "")
+     (vehicle-def :validator #'string-validator
+		    :initform "")
+     (vehicle-occupancy :validator #'string-validator
+		    :initform "")
+     (vehicle-load :validator #'string-validator
+		    :initform "")
+     (vehicle-const :validator #'string-validator
+		    :initform "")
+     (vehicle-qualities :validator #'string-validator
+		    :initform "")
      (contacts :validator (list-of #'contact-info-p)
 	       :fixup #'list-fixup
 	       :initform (list))

@@ -370,6 +370,18 @@
 		(emit-item "MountSkills" :mount-skills)
 		(emit-item "MountQual" :mount-qualities)
 		(emit-item "MountAttacks" :mount-attacks)
+		(emit-item "VehicleName" :vehicle-name)
+		(emit-item "VehicleSpd" :vehicle-speed)
+		(emit-item "VehicleTravel" :vehicle-Travel)
+		(emit-value "VehicleSzDef" (format nil "~A/~A"
+						   (aget :vehicle-size character)
+						   (aget :vehicle-def character)))
+		(emit-value "VehicleOccLoad" (format nil "~A/~A"
+						   (aget :vehicle-occupancy character)
+						   (aget :vehicle-load character)))
+						   
+		(emit-item "VehicleConst" :vehicle-const)
+		(emit-item "VehicleQual" :vehicle-qualities)
 		(emit-list "Contact~DName"
 			   (mapcar (curry #'gethash :name)
 				   (aget :contacts character)))

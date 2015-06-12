@@ -1528,6 +1528,38 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 				  :label-as "Attacks"
 				  :class-name "pure-u-1")
 				  )
+
+		    (:div
+		     :class-name "pure-u-1 pure-u-xl-1-2 pure-g"
+		     (:h2 :class-name "heading pure-u-1"
+			  "Vehicle")
+		     (input-field vehicle-name
+				  :label-as "Name"
+				  :class-name "pure-u-1 pure-u-md-1-3")
+		     (input-field vehicle-speed
+				  :label-as "Speed"
+				  :class-name "pure-u-1 pure-u-md-1-12")
+		     (input-field vehicle-travel
+				  :label-as "Travel"
+				  :class-name "pure-u-1 pure-u-md-1-12")
+		     (input-field vehicle-size
+				  :label-as "Size"
+				  :class-name "pure-u-1 pure-u-md-1-8")
+		     (input-field vehicle-def
+				  :label-as "Def"
+				  :class-name "pure-u-1 pure-u-md-1-12")
+		     (input-field vehicle-occupancy
+				  :label-as "Occ"
+				  :class-name "pure-u-1 pure-u-md-1-12")
+		     (input-field vehicle-load
+				  :label-as "Load"
+				  :class-name "pure-u-1 pure-u-md-1-12")
+		     (input-field vehicle-const
+				  :label-as "Const"
+				  :class-name "pure-u-1 pure-u-md-1-8")
+		     (input-field vehicle-qualities
+				  :label-as "Qualities"
+				  :class-name "pure-u-1 pure-u-md-1"))
 		    (:div
 		     :class-name "pure-u-1 pure-u-xl-1-2 pure-g"
 		     (:h2 :class-name "heading pure-u-1"
