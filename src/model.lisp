@@ -987,7 +987,7 @@
     (aget :noble-renown character)))
 
 (deffield :total-studies (character)
-  (length (aget :studies character)))
+  (len (aget :studies character)))
 
 (deffield :spellcasting-total (character)
   (+ (aget :spellcasting-ranks character)

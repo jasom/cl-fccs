@@ -5,6 +5,11 @@
 #+ps(defun aget (key table &optional def)
       (chain table (get key def)))
 
+#+ps(defun len (item)
+      (@ item (count)))
+#-ps(defun len (item)
+      (length item))
+
 #-ps(eval-when (:compile-toplevel :load-toplevel :execute)
       (defun optimize-setf (exp)
 	(labels
