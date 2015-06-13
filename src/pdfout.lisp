@@ -432,6 +432,24 @@
 		(emit-list "Contact~DGear"
 			   (mapcar (curry #'gethash :gear)
 				   (aget :contacts character)))
+		(emit-list "Holding~DName"
+			   (mapcar (curry #'gethash :name)
+				   (aget :holdings character)))
+		(emit-list "Holding~DScale"
+			   (mapcar (curry #'gethash :scale)
+				   (aget :holdings character)))
+		(emit-list "Holding~DGuests"
+			   (mapcar (curry #'gethash :guests)
+				   (aget :holdings character)))
+		(emit-list "Holding~DMax"
+			   (mapcar (curry #'gethash :max-guests)
+				   (aget :holdings character)))
+		(emit-list "Holding~DUpgrades1"
+			   (mapcar (curry #'gethash :upgrades)
+				   (aget :holdings character)))
+		(emit-list "Holding~DRepCost"
+			   (mapcar (curry #'gethash :Rep-Cost)
+				   (aget :holdings character)))
 		(emit-list "SpellListNameSchool~D"
 			   (mapcar
 			    (lambda (x)

@@ -38,6 +38,26 @@
 	     (input-field gear
 			  :class-name "pure-u-1")))))
 
+
+(defreact-for-classish (*holding-info
+			holding-info
+			:on-change (tlambda (v) (chain this props (on-change v))))
+  get-initial-state (lambda () (create obj (chain this props default-value)))
+  render (lambda ()
+	   (htm
+	    (:div
+	     (input-field name
+			  :class-name "pure-u-1 pure-u-md-1-2")
+	     (input-field scale
+			  )
+	     (input-field guests
+			  )
+	     (input-field max-guests
+			  )
+	     (input-field upgrades
+			  :class-name "pure-u-1 pure-u-md-5-6")
+	     (input-field rep-cost)))))
+
 (defreact-for-classish (*fudge fudge
 			       :on-change (tlambda (v) (chain this props (on-change v))))
   get-initial-state (lambda () (create obj (chain this props default-value)))
@@ -1574,6 +1594,20 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 				:inner-class "pure-u-1 pure-u-md-1-2 pure-g"
 				:make-new #'make-contact-info
 				))
+		    (:div
+		     :class-name "pure-u-1 pure-u-xl-1-2 pure-g"
+		     (:h2 :class-name "heading pure-u-1"
+			  "Holdings")
+		     (list-field holdings
+				 (lambda (data updater)
+				   (htm (:*holding-info
+					 :default-value ({ data)
+					 :on-change ({ updater))))
+				 :show-name nil
+				 :class-name "pure-u-1 pure-g"
+				 :inner-class "pure-u-1 pure-u-md-1-2 pure-g"
+				 :make-new #'make-holding-info
+				 ))
 		    )))
 		 ((= (chain this props section) "spell")
 		  (htm

@@ -369,6 +369,15 @@
     (attacks :initform "" :validator #'string-validator)
     (gear :initform "" :validator #'string-validator))
 
+(defclassish holding-info
+    (name :initform "" :validator #'string-validator)
+    (scale :initform "" :validator #'string-validator)
+    (guests :initform "" :validator #'string-validator)
+    (max-guests :initform "" :validator #'string-validator)
+    (upgrades :initform "" :validator #'string-validator)
+    (rep-cost :initform "" :validator #'string-validator))
+  
+
 (defclassish spell-info
     (name :initform "" :validator #'string-validator)
   (level :initform 0
@@ -593,6 +602,9 @@
      (contacts :validator (list-of #'contact-info-p)
 	       :fixup #'list-fixup
 	       :initform (list))
+     (holdings :validator (list-of #'holding-info-p)
+	      :fixup #'list-fixup
+	      :initform (list))
      (spells :validator (list-of #'spell-info-p)
 	     :fixup #'list-fixup
 	     :initform (list))
