@@ -376,7 +376,13 @@
     (max-guests :initform "" :validator #'string-validator)
     (upgrades :initform "" :validator #'string-validator)
     (rep-cost :initform "" :validator #'string-validator))
-  
+
+(defclassish magic-item-info
+    (name :initform "" :validator #'string-validator)
+    (level :initform "" :validator #'string-validator)
+    (essences :initform "" :validator #'string-validator)
+    (charms :initform "" :validator #'string-validator)
+    (rep-cost :initform "" :validator #'string-validator))
 
 (defclassish spell-info
     (name :initform "" :validator #'string-validator)
@@ -605,6 +611,9 @@
      (holdings :validator (list-of #'holding-info-p)
 	      :fixup #'list-fixup
 	      :initform (list))
+     (magic-items :validator (list-of #'magic-item-info-p)
+		  :fixup #'list-fixup
+		  :initform (list))
      (spells :validator (list-of #'spell-info-p)
 	     :fixup #'list-fixup
 	     :initform (list))

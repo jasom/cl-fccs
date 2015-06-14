@@ -58,6 +58,24 @@
 			  :class-name "pure-u-1 pure-u-md-5-6")
 	     (input-field rep-cost)))))
 
+(defreact-for-classish (*magic-item-info
+			magic-item-info
+			:on-change (tlambda (v) (chain this props (on-change v))))
+  get-initial-state (lambda () (create obj (chain this props default-value)))
+  render (lambda ()
+	   (htm
+	    (:div
+	     (input-field name
+			  :class-name "pure-u-1 pure-u-md-1-4")
+	     (input-field level
+			  :class-name "pure-u-1 pure-u-md-1-8")
+	     (input-field essences
+			  :class-name "pure-u-1 pure-u-md-1-4")
+	     (input-field charms
+			  :class-name "pure-u-1 pure-u-md-1-4")
+	     (input-field rep-cost
+			  :class-name "pure-u-1 pure-u-md-1-8")))))
+
 (defreact-for-classish (*fudge fudge
 			       :on-change (tlambda (v) (chain this props (on-change v))))
   get-initial-state (lambda () (create obj (chain this props default-value)))
@@ -1607,6 +1625,20 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 				 :class-name "pure-u-1 pure-g"
 				 :inner-class "pure-u-1 pure-u-md-1-2 pure-g"
 				 :make-new #'make-holding-info
+				 ))
+		    (:div
+		     :class-name "pure-u-1 pure-u-xl-1-2 pure-g"
+		     (:h2 :class-name "heading pure-u-1"
+			  "Magic Items")
+		     (list-field magic-items
+				 (lambda (data updater)
+				   (htm (:*magic-item-info
+					 :default-value ({ data)
+					 :on-change ({ updater))))
+				 :show-name nil
+				 :class-name "pure-u-1 pure-g"
+				 :inner-class "pure-u-1 pure-g"
+				 :make-new #'make-magic-item-info
 				 ))
 		    )))
 		 ((= (chain this props section) "spell")

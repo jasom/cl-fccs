@@ -450,6 +450,21 @@
 		(emit-list "Holding~DRepCost"
 			   (mapcar (curry #'gethash :Rep-Cost)
 				   (aget :holdings character)))
+		(emit-list "MagicItemName~D"
+			   (mapcar (curry #'gethash :name)
+				   (aget :magic-items character)))
+		(emit-list "MagicItemLvl~D"
+			   (mapcar (curry #'gethash :level)
+				   (aget :magic-items character)))
+		(emit-list "MagicItemEssences~D"
+			   (mapcar (curry #'gethash :essences)
+				   (aget :magic-items character)))
+		(emit-list "MagicItemCharms~D"
+			   (mapcar (curry #'gethash :charms)
+				   (aget :magic-items character)))
+		(emit-list "MagicItemRepCost~D"
+			   (mapcar (curry #'gethash :rep-cost)
+				   (aget :magic-items character)))
 		(emit-list "SpellListNameSchool~D"
 			   (mapcar
 			    (lambda (x)
