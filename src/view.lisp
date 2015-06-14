@@ -1714,7 +1714,11 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		   :on-click ({(lambda ()
 				 (setf (chain window location)
 				       (fixup-path "/new-character/"))))
-		   "New")))))))
+		   "New"))
+		 (:p
+		  (:a :href "https://phab.jasom.org/"
+		      "Bugs/Feature requests"))
+		 )))))
 		  
 
 ;(chain *react (render (htm :*Test) (chain document body)))
