@@ -966,7 +966,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 				 :style ({(create text-align "center"))
 				 "Physical Attributes")
 				(:th
-				 (output-field skill-points :show-label nil))))
+				 (output-field attr-points :show-label nil))))
 			      (:tr
 			       (:td "Name")
 			       (:td "Base")
@@ -1663,6 +1663,23 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 				   :class-name "pure-u-1 pure-u-md-1-4 pure-u-xl-1-8")
 		     (output-field spellcasting-misc-mod
 				   :class-name "pure-u-1 pure-u-md-1-4 pure-u-xl-1-8"))
+		    (:div
+		     :class-name "pure-u-1 pure-u-xl-1-2 pure-g"
+		     (output-field spells-known
+				   :class-name "pure-u-1 pure-u-md-1-4 pure-u-xl-1-8")
+		     (output-field real-wis
+				   :class-name "pure-u-1 pure-u-md-1-4 pure-u-xl-1-8")
+		     (output-field spells-known-misc-mod
+				   :class-name "pure-u-1 pure-u-md-1-4 pure-u-xl-1-8"))
+		    (:div
+		     :class-name "pure-u-1 pure-u-xl-1-2 pure-g"
+		     (output-field save-dc
+				   :class-name "pure-u-1 pure-u-md-1-4 pure-u-xl-1-8")
+		     (output-field cha-mod
+				   :class-name "pure-u-1 pure-u-md-1-4 pure-u-xl-1-8")
+		     (input-field spellcasting-feats
+				  :class-name "pure-u-1 pure-u-md-1-4 pure-u-xl-1-8"
+				  :parser ({ #'parse-int)))
 		    (list-field spells
 				(lambda (data updater)
 				  (htm (:*spell-info
@@ -1673,7 +1690,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 				:inner-class "pure-u-1 pure-u-xl-1-2 pure-g"
 				:make-new #'make-spell-info
 				))))
-		 ((= (chain this props section) "spell")
+		 ((= (chain this props section) "bio")
 		  (htm (:p "Coming Soon...")))
 		 ))))))
 

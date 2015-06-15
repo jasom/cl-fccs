@@ -465,6 +465,19 @@
 		(emit-list "MagicItemRepCost~D"
 			   (mapcar (curry #'gethash :rep-cost)
 				   (aget :magic-items character)))
+		(emit-item "SpellPoints" :spell-points)
+		(emit-item "CastingLevel" :casting-level)
+		(emit-field "CastingBonusTotal" :spellcasting-total)
+		(emit-field "CastingMiscMod" :spellcasting-misc-mod)
+		(emit-field "CastingIntMod" :int-mod)
+		(emit-item "CastingRanks" ::spellcasting-ranks)
+		(emit-field "SpellsKnownTotal" :spells-known)
+		(emit-field "SpellsKnownWisScore" :real-wis)
+		(emit-field "SpellsKnownMiscMod" :spells-known-misc-mod)
+		(emit-item "SpellsKnownRanks" :spellcasting-ranks)
+		(emit-field "SaveDCTotal" :save-dc)
+		(emit-field "SaveDCChaMod" :cha-mod)
+		(emit-item "SaveDCFeats" :spellcasting-feats)
 		(emit-list "SpellListNameSchool~D"
 			   (mapcar
 			    (lambda (x)

@@ -622,6 +622,8 @@
      (spell-points :validator #'integer-validator
 		   :initform 0)
      (spellcasting-ranks :validator #'integer-validator
+			 :initform 0)
+     (spellcasting-feats :validator #'integer-validator
 			 :initform 0))
 
 #.
@@ -698,7 +700,7 @@
      finally (return result)))
        
 
-#.`(deffield :skill-points (character)
+#.`(deffield :attr-points (character)
      (+
      ,@(loop for item in (list "STR" "DEX" "CON"
 		      "INT" "WIS" "CHA")
@@ -1014,6 +1016,20 @@
   (+ (aget :spellcasting-ranks character)
      (calculate-field :int-mod character)
      (calculate-field :spellcasting-misc-mod  character)))
+
+(deffield :spells-known (character)
+  (+ (aget :spellcasting-ranks character)
+     (calculate-field :real-wis character)
+     (calculate-field :spells-known-misc-mod character)))
+
+(deffield :save-dc (character)
+  (+ 10
+     (calculate-field :cha-mod character)
+     (aget :spellcasting-feats character)))
+
+(deffield :spells-known-misc-mod (character)
+  #-ps(declare (ignore character))
+  0)
 
 (deffield :spellcasting-misc-mod (character)
   #-ps(declare (ignore character))
