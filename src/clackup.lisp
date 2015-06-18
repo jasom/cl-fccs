@@ -224,8 +224,11 @@
 	   :path (format nil "~apub/" *prepend-path*)
 	   :root (asdf:system-relative-pathname 'cl-fccs "build/pub/"))
 	  (lambda (env) (funcall 'app env)))
-	 :server :hunchentoot
+	 :server :mongrel2
+	 :sub-addr "tcp://192.168.0.1:9997"
+	 :pub-addr "tcp://192.168.0.1:9996"
 	 :port #+dev 5001 #-dev 5000
+	 :use-thread nil
 	 :use-default-middlewares nil
 	 )))
 

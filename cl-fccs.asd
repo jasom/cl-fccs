@@ -1,11 +1,12 @@
 ;;;; cl-fccs.asd
 
 (asdf:defsystem #:cl-fccs
-  :description "Describe cl-fccs here"
-  :author "Your Name <your.name@example.com>"
-  :license "Specify license here"
+  :description "Character Sheet manager for FC"
+  :author "Jason Miller <aidenn0@geocities.com>"
+  :license "MIT/X11"
   :depends-on (#:clack
 	       #:clack-middleware-auth-basic
+	       #:clack-handler-mongrel2
                #:parenscriptx
 	       #:parse-number
                #:alexandria
@@ -30,10 +31,13 @@
 		:serial t
 		:components
 		((:file "ps-compat")
+		 (:file "util")
 		 (:file "view-macros")
 		 ;(:file "closure-server")
 		 (:file "store")
 		 (:file "pdfout")
 		 (:file "clackup")
-		 (:file "model")))))
+		 (:file "users")
+		 (:static-file "view.lisp")
+		 (:file "model" :depends-on ("view.lisp"))))))
 
