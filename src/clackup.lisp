@@ -207,14 +207,11 @@
 (defvar *myapp* nil)
 
 (defun authenticate (user pass)
-  (or
-   (and (equal user "jeremie")
-	(equal pass "charactersforgreatjustice"))
-   #+(or)(equal user "test890")))
+  (validate-user user pass))
 
 (defun start ()
   (setf *myapp*
-	(clack:clackup
+	    (clack:clackup
 	 (clack.builder:builder
 	  ;clack.middleware.logger:<clack-middleware-logger>
 	  (clack.middleware.auth.basic:<CLACK-MIDDLEWARE-AUTH-BASIC>

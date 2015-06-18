@@ -17,6 +17,7 @@
 	       #:cl-store
 	       #:lzstring
 	       #:optima.ppcre
+	       #:crypto-shortcuts
 	       #:dissect
 	       #:cl-json
 	       #:lambda-fiddle

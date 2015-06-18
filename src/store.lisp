@@ -26,12 +26,15 @@
   (unless (redis:connected-p)
     (redis:connect)))
 
-(defun serialize (obj)
+(defgeneric serialize (obj))
+(defgeneric deserialize (obj))
+
+(defmethod serialize (obj)
   (flexi-streams:with-output-to-sequence (s :element-type 'character
 					    :transformer #'code-char)
     (cl-store:store obj s)))
 
-(defun deserialize (str)
+(defmethod deserialize (str)
   (when (stringp str)
     (flexi-streams:with-input-from-sequence (s (dumb-char-byte str))
       (cl-store:restore s))))
@@ -54,10 +57,10 @@
     (save-character id (make-fc-character))
     id))
 
-(defun username-id (username)
+(defun get-user (username)
   (ensure-connected)
-  (red:hget "usernames" username))
+  (deserialize (red:hget "users" username)))
 
-(defun get-user (id)
+(defun set-user (username obj)
   (ensure-connected)
-  (deserialize (red:get (format nil "user-~D" id))))
+  (red:hset "users" username (serialize obj)))
