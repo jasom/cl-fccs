@@ -89,14 +89,18 @@
 	     (input-field notes
 			  :class-name "pure-u-1-2")))))
 
-(defun post-data (url data &optional complete-callback)
+(defun post-data (url data &key complete-callback raw)
   (let ((request (new *x-m-l-http-request)))
     (chain request (open "POST" url t))
     (chain request (set-request-header "Content-Type" "application/json; charset=utf-8"))
-    (let ((encoded-data (chain *json* (stringify data))))
-      (chain request (send encoded-data))
-      (when complete-callback
+    (let ((encoded-data
+	   (if raw
+	       data
+	       (chain *json* (stringify data)))))
+     (when complete-callback
 	(setf (chain request onload) complete-callback))
+     (chain request (send encoded-data))
+      
       #+(or)(chain console (log (chain encoded-data length)))
       #+(or)(chain console (log (chain *l-z-string (compress encoded-data) length) ))
       #+(or)(let ((request2 (new *x-m-l-http-request))
@@ -576,6 +580,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		   (fixup-path"/complete/gear-info")
 		   name
 		   (let ((ginfo this))
+		     :complete-callback
 		     (lambda ()
 		       (let ((response (chain *json* (parse (chain this response-text)))))
 			 (when (> (chain response length) 0)
@@ -596,6 +601,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		(post-data
 		 (fixup-path "/complete/gear")
 		 val
+		 :complete-callback
 		 (lambda ()
 		   (funcall fn
 			    (chain *json* (parse (chain this response-text))))))):class-name "pure-u-1 pure-u-md-1-3")
@@ -631,6 +637,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		(post-data
 		 (fixup-path "/complete/class")
 		 val
+		 :complete-callback
 		 (lambda ()
 		   (funcall fn
 			    (chain *json* (parse (chain this response-text)))))))
@@ -653,6 +660,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		  (post-data
 		   (fixup-path "/complete/spell-info")
 		   name
+		   :complete-callback
 		   (let ((spinfo this))
 		     (lambda ()
 		       (let ((response (chain *json* (parse (chain this response-text)))))
@@ -681,6 +689,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		(post-data
 		 (fixup-path "/complete/spell")
 		 val
+		 :complete-callback
 		 (lambda ()
 		   (funcall fn (chain *json* (parse (chain this response-text)))))))
 	      :class-name "pure-u-1 pure-u-md-1-8")
@@ -756,6 +765,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		     (post-data
 		      (fixup-path "/complete/feat")
 		      val
+		      :complete-callback
 		      (lambda ()
 			(funcall fn
 				 (chain *json* (parse (chain this response-text)))))))
@@ -895,6 +905,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			       (post-data
 				(fixup-path "/complete/species")
 				val
+				:complete-callback
 				(lambda ()
 				  (funcall fn
 					   (chain *json* (parse (chain this response-text)))))))
@@ -906,6 +917,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			       (post-data
 				(fixup-path "/complete/talent")
 				val
+				:complete-callback
 				(lambda ()
 				  (funcall fn
 					   (chain *json* (parse (chain this response-text)))))))
@@ -918,6 +930,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			       (post-data
 				(fixup-path "/complete/specialty")
 				val
+				:complete-callback
 				(lambda ()
 				  (funcall fn
 					   (chain *json* (parse (chain this response-text)))))))
@@ -1694,6 +1707,65 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		  (htm (:p "Coming Soon...")))
 		 ))))))
 
+(defreact *account-settings
+    mixins (ps:array (chain *react addons *pure-render-mixin))
+    get-initial-state (lambda ()
+			(create password1 ""
+				password2 ""
+				state :initial))
+    handle-changed (lambda (fieldname)
+		     (tlambda (event)
+		       (chain event (prevent-default))
+		       (let ((updater (create)))
+			 (setf (getprop updater fieldname)
+			       (chain event target value)))
+		       (chain this (set-state updater))))
+    render (lambda ()
+	     (htm
+	      (:form
+	       :class-name "pure-form"
+	       (:fieldset
+		(:legend "Password")
+		(:label :html-for "password1" "New Password")
+		(:input :id "password1" :class-name "pure-input"
+			:type "password"
+			:value ({ (chain this state password1))
+			:on-change ({ (chain this (handle-changed "password1"))))
+		(:label :html-for "password2" "Confirm Password")
+		(:input :id "password2" :class-name "pure-input"
+			:type "password"
+			:on-change ({ (chain this (handle-changed "password2")))
+			:value ({ (chain this state password2)))
+		(:button
+		 :class-name "pure-button"
+		 :on-click ({(tlambda (event)
+			       (chain event (prevent-default))
+			       (if (= (chain this state password1)
+				      (chain this state password2))
+				   (progn
+				     (chain this (set-state (create state :sent)))
+				     (post-data (fixup-path "/set-password/")
+						(chain this state password1)
+						:raw t
+						:complete-callback
+						(tlambda ()
+						  (chain
+						   this
+						   (set-state (create state :success))))))
+				   (alert "Passwords must match")))))
+		({(cond
+		    ((eql (chain this state state) :initial) nil)
+		    ((eql (chain this state state) :sent)
+		     (htm (:p "In-progress...")))
+		    ((eql (chain this state state) :success)
+		     (htm (:p "Success!")))
+		    ;;TODO error
+		    ))
+
+		   
+		)))))
+    
+
 (defreact *character-list
     mixins (ps:array (chain *react addons *pure-render-mixin))
     edit (lambda (id)
@@ -1732,6 +1804,9 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 				 (setf (chain window location)
 				       (fixup-path "/new-character/"))))
 		   "New"))
+		 (:p
+		  (:a :href (fixup-path "/account/")
+		      "Account Settings"))
 		 (:p
 		  (:a :href "https://phab.jasom.org/"
 		      "Bugs/Feature requests"))

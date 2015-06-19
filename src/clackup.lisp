@@ -1,6 +1,7 @@
 (in-package :cl-fccs)
 
-(defvar *prepend-path* "/fccs2/")
+#-dev(defvar *prepend-path* "/fccs2/")
+#+dev(defvar *prepend-path* "/fccs2dev/")
   
 (defun strip-path-prefix (path)
   (if (starts-with-subseq *prepend-path* path)
@@ -37,7 +38,7 @@
   (let ((output (make-array n :element-type 'flexi-streams:octet))
 	(bytes-read 0))
     (loop while (< bytes-read n)
-	 do (incf bytes-read
+	 do (setf bytes-read
 	       (read-sequence output stream :start bytes-read)))
     output))
     
@@ -198,6 +199,25 @@
 		   (,(cl-who:with-html-output-to-string (s)
 							(:htm (:head)
 							      (:body (:P "Error: could-not-find character"))))))))))
+	((and
+	  (property :path-info "/account/")
+	  (property :remote-user username))
+	 (with-db-connection
+	   `(200
+	     (:content-type "text/html")
+	     (,(render-page
+		(s)
+		(:script
+		 (format s
+			 "React.render(React.createElement(AccountSettings, {user: \"~A\"}),document.body)" username)))))))
+	((and
+	  (property :path-info "/set-password/")
+	  (property :request-method :post)
+	  (property :remote-user username))
+	 (change-user-password username
+			       (flexi-streams:octets-to-string body :external-format :utf-8))
+	 `(200
+	   (:content-type "text/html")))
 	(_
 	 `(404
 	   (:content-type "text/html")

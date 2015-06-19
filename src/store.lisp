@@ -24,7 +24,7 @@
 
 (defun ensure-connected ()
   (unless (redis:connected-p)
-    (redis:connect)))
+    (error "Redis not connected")))
 
 (defgeneric serialize (obj))
 (defgeneric deserialize (obj))
@@ -64,3 +64,13 @@
 (defun set-user (username obj)
   (ensure-connected)
   (red:hset "users" username (serialize obj)))
+
+(defun set-session (sid obj)
+  (red:set (format nil "session-~A" sid) (serialize obj)))
+
+(defun get-session (sid)
+  (deserialize (red:get (format nil "session-~A" sid))))
+
+(defun expire-session (sid seconds)
+  (red:expire sid seconds))
+

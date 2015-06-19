@@ -39,4 +39,18 @@
 			      :iterations iterations)))
 	  (set-user username user)
 	  user)))))
-    
+
+(defun change-user-password (username password)
+  (with-db-connection
+    (let ((user (get-user username)))
+      (unless user (error "Invalid user: ~A" username))
+      (let* ((saltb (random-bytes 4)))
+	(multiple-value-bind 
+	      (hash salt algo iterations)
+	    (crypto-shortcuts:pbkdf2-hash password saltb :iterations *hash-iterations*)
+	  (with-slots (pw-hash pw-salt pw-algo pw-iterations) user
+	    (setf pw-hash hash
+		  pw-salt salt
+		  pw-algo algo
+		  pw-iterations iterations))))
+      (set-user username user))))
