@@ -66,11 +66,14 @@
   (red:hset "users" username (serialize obj)))
 
 (defun set-session (sid obj)
+  (ensure-connected)
   (red:set (format nil "session-~A" sid) (serialize obj)))
 
 (defun get-session (sid)
+  (ensure-connected)
   (deserialize (red:get (format nil "session-~A" sid))))
 
 (defun expire-session (sid seconds)
-  (red:expire sid seconds))
+  (ensure-connected)
+  (red:expire (format nil "session-~a" sid) seconds))
 

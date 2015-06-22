@@ -13,3 +13,11 @@
 
 (defun random-base64 (nbytes)
   (crypto-shortcuts:to-base64 (random-bytes nbytes)))
+
+(defun slurp-body (env &optional max-length)
+  (let ((content-length (getf env :content-length))
+	(body (getf env :raw-body)))
+    (when (or (null max-length)
+	      (<= content-length max-length))
+      (and body
+	   (read-bytes body content-length)))))

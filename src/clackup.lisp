@@ -15,8 +15,6 @@
 		(subseq path 1)
 		path)))
 
-
-
 (defmacro render-page ((stream-name) &body body)
   `(cl-who:with-html-output-to-string (,stream-name nil :prologue "<!DOCTYPE html>")
     (:html
@@ -32,16 +30,34 @@
       (:body #+(or)(:script :src (fixup-path "/pub/build/psx.js"))
 	     ;(:img :src (fixup-path "/pub/images/fc.png"))
 	     (:script :src (fixup-path "/pub/all.js"))
+	     (:div :hidden t
+		    :id "csrf"
+		    (esc (session-csrf-token session)))
+	      (:div :id "react-content")
 	     ,@body)))))
 
-(defun read-exactly-n (stream n)
-  (let ((output (make-array n :element-type 'flexi-streams:octet))
-	(bytes-read 0))
-    (loop while (< bytes-read n)
-	 do (setf bytes-read
-	       (read-sequence output stream :start bytes-read)))
-    output))
-    
+(defun login-page ()
+  (cl-who:with-html-output-to-string  (s)
+    (:html
+     (:head
+      (:meta :charset "utf-8"))
+     (:body
+      (:form
+       :action "."
+       :method :post
+       (:p
+	(:label :html-for "username" "Username")
+	(:input :id "username"
+		:name "username"))
+       (:p
+	(:label :html-for "password" "Password")
+	(:input :id "password"
+		:type "password"
+		:name "password"))
+       (:input
+	:type :submit
+	:value "Login"
+	:class-name "pure-button"))))))
 
 (defun parse-json-body (body)
   (let*
@@ -88,7 +104,9 @@
   (setf (getf env :path-info)
 	(strip-path-prefix (getf env :path-info)))
   (let ((content-length (getf env :content-length))
-	(body))
+	(body)
+	(session (getf env :session)))
+    (log:info content-length)
     (cond
       ((null content-length))
       ((> content-length *max-length*)
@@ -98,7 +116,7 @@
 	    (s)
 	    (htm (:html (:head) (:body "Request entity too large")))))))
       (t
-       (setf body (read-exactly-n (getf env :raw-body) content-length))))
+       (setf body (slurp-body env))))
     (with-error-logging (err)
 	`(500
 	  (:content-type "text/html")
@@ -140,13 +158,13 @@
 			    :career-level
 			    (calculate-field :career-level character)))
 		s)
-	       (princ ")}),document.body)" s)))))))
+	       (princ ")}),document.getElementById(\"react-content\"))" s)))))))
 	((and (property :request-method :POST)
 	      (property :path-info "/new-character/"))
 	 (with-db-connection
 	   (let ((id (new-character)))
 	     `(303
-	       (:location ,(format nil "/character/~A" id)
+	       (:location ,(fixup-path (format nil "/character/~A" id))
 			  :content-type "text/html")
 	       (,(cl-who:with-html-output-to-string
 		  (s)
@@ -193,7 +211,7 @@
 		       (format s "React.render(React.createElement(CharacterMenu, {characterId: ~D, defaultValue : " id)
 		       (princ "fixupFcCharacter(Immutable.fromJS(" s)
 		       (encode-classish character s)
-		       (princ "))}),document.body)" s)))))
+		       (princ "))}),document.getElementById(\"react-content\"))" s)))))
 		 `(404
 		   (:content-type "text/html")
 		   (,(cl-who:with-html-output-to-string (s)
@@ -209,7 +227,7 @@
 		(s)
 		(:script
 		 (format s
-			 "React.render(React.createElement(AccountSettings, {user: \"~A\"}),document.body)" username)))))))
+			 "React.render(React.createElement(AccountSettings, {user: \"~A\"}),document.getElementById(\"react-content\"))" username)))))))
 	((and
 	  (property :path-info "/set-password/")
 	  (property :request-method :post)
@@ -233,8 +251,21 @@
   (setf *myapp*
 	    (clack:clackup
 	 (clack.builder:builder
-	  ;clack.middleware.logger:<clack-middleware-logger>
-	  (clack.middleware.auth.basic:<CLACK-MIDDLEWARE-AUTH-BASIC>
+	  ;;clack.middleware.logger:<clack-middleware-logger>
+	  (authenticated-session
+	   :root-path *prepend-path*
+	   :after-login (lambda (env)
+			  (declare (ignorable env))
+			  `(303
+			    (:location ,*prepend-path*)
+			    ("")))
+	   :render-login
+	   (lambda (env)
+	     (declare (ignorable env))
+	     `(200
+	       (:content-type "text/html; charset=utf-8")
+	       (,(login-page))))
+	   :login-url (format nil "~Alogin/" *prepend-path*)
 	   :authenticator (lambda (user pass)
 			    (funcall 'authenticate user pass)))
 	  (clack.middleware.static:<CLACK-MIDDLEWARE-STATIC>
@@ -242,8 +273,8 @@
 	   :root (asdf:system-relative-pathname 'cl-fccs "build/pub/"))
 	  (lambda (env) (funcall 'app env)))
 	 :server :mongrel2
-	 :sub-addr "tcp://192.168.0.1:9997"
-	 :pub-addr "tcp://192.168.0.1:9996"
+	 :sub-addr "tcp://127.0.0.1:9997"
+	 :pub-addr "tcp://127.0.0.1:9996"
 	 :port #+dev 5001 #-dev 5000
 	 :use-thread nil
 	 :use-default-middlewares nil

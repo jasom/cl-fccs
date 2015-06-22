@@ -93,6 +93,8 @@
   (let ((request (new *x-m-l-http-request)))
     (chain request (open "POST" url t))
     (chain request (set-request-header "Content-Type" "application/json; charset=utf-8"))
+    (chain request (set-request-header "x-csrf-token"
+				      (chain document (get-element-by-id "csrf") inner-h-t-m-l)))
     (let ((encoded-data
 	   (if raw
 	       data
@@ -1707,6 +1709,41 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		  (htm (:p "Coming Soon...")))
 		 ))))))
 
+(defreact *login
+    mixins (ps:array (chain *react addons *pure-render-mixin))
+    get-initial-state (lambda ()
+			(create username ""
+				password ""
+				state :initial))
+    handle-changed (lambda (fieldname)
+		     (tlambda (event)
+		       (chain event (prevent-default))
+		       (let ((updater (create)))
+			 (setf (getprop updater fieldname)
+			       (chain event target value)))
+		       (chain this (set-state updater))))
+    render (lambda ()
+	     (htm
+	      (:form
+	       :action "."
+	       :method :post
+	       :class-name "pure-form"
+	       (:label :html-for "username" "Username")
+	       (:input :id "username" :class-name "pure-input"
+			:name "username"
+			:value ({ (chain this state username))
+			:on-change ({ (chain this (handle-changed "username"))))
+	       (:label :html-for "password" "Password")
+	       (:input :id "password" :class-name "pure-input"
+		       :type "password"
+		       :name "password"
+		       :on-change ({ (chain this (handle-changed "password")))
+		       :value ({ (chain this state password)))
+	       (:input
+		:type :submit
+		:value "Login"
+		:class-name "pure-button")))))
+
 (defreact *account-settings
     mixins (ps:array (chain *react addons *pure-render-mixin))
     get-initial-state (lambda ()
@@ -1796,13 +1833,17 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			    (:td ({(aget :player-name item)))
 			    (:td ({(aget :career-level item)))))))))
 		 (:form
+		  (:input
+		   :type :hidden
+		   :name "csrf-token"
+		   :value ({(chain document (get-element-by-id "csrf") inner-h-t-m-l)))
 		  (:button
 		   :form-action (fixup-path "/new-character/")
 		   :form-method "POST"
 		   :class-name "pure-button"
-		   :on-click ({(lambda ()
-				 (setf (chain window location)
-				       (fixup-path "/new-character/"))))
+		   ;;:on-click ({(lambda ()
+				 ;;(setf (chain window location)
+				       ;;(fixup-path "/new-character/"))))
 		   "New"))
 		 (:p
 		  (:a :href (fixup-path "/account/")

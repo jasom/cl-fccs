@@ -37,6 +37,7 @@
 		 ;(:file "closure-server")
 		 (:file "store")
 		 (:file "pdfout")
+		 (:file "session")
 		 (:file "clackup")
 		 (:file "users")
 		 (:static-file "view.lisp")
