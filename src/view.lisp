@@ -1297,7 +1297,26 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			    (checkboxes-field forte-list
 					      ({ +proficiencies+)
 					      :class-name "pure-u-1"
-					      :checkbox-class "pure-u-1-4"))
+					      :checkbox-class "pure-u-1-4")
+			    (:h3 :class-name "heading pure-u-1"
+				 "Tricks")
+			    (list-field tricks
+					(lambda (data updater)
+					  (htm (:*validating-input
+						:default-value ({ data)
+						:error-style ({(create background-color "pink"
+								       padding 0))
+						:style ({(create background-color "white"
+								 padding 0))
+						:validator ({ #'stringp)
+						:parser ({(lambda (x) x))
+						:on-change ({ updater))))
+					:show-name nil
+					:class-name "pure-u-1 pure-u-xl-1-2 pure-g"
+					;:row-key (lambda (x) (aget :the-class x))
+					:inner-class "pure-u-1 pure-g"
+					:make-new (lambda () "")))
+				       
 			   (:div
 			    :class-name "pure-u-1 pure-u-md-1-2 pure-u-xl-1-4 pure-g"
 			    (output-field initiative :class-name "pure-u-1-4")

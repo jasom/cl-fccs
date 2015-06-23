@@ -309,7 +309,7 @@
 	(:div
 	 :class-name ,class-name
 	 (:h3
-	  :style ({(create background-color "#eee"))
+	  :class-name "heading"
 	  ,(better-capitalize (string name)))
 
 	 (:*validating-checkboxes

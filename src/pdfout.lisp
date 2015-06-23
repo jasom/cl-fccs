@@ -250,7 +250,8 @@
 		      (nc-name nc-notes c-name c-notes s-name s-notes)
 			   (loop for item in
 				(append (aget :feat-list character)
-					(aget :ability-list character))
+					(aget :ability-list character)
+					(get-trick-abilities character))
 			      for desc = 
 				(cond
 				  ((aget :notes item)

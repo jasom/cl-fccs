@@ -200,6 +200,13 @@
 		(aget :qualities species-data))
 	(list))))
 
+(defun get-trick-abilities (character)
+  (mapcar (lambda (trick)
+	    (make-ability-info :name trick
+			       :from "Proficiency"
+			       :list-as :combat))
+	    (aget :tricks character)))
+
 (defun get-species-speed (character)
   (let ((species-data
 	 (if (equal (aget :species character) "Human")
@@ -210,7 +217,7 @@
     (if species-data
 	(aget :base-speed species-data)
 	0)))
-    
+
 (defun calculate-abilities (character)
   (let ((abilities
 	 (append
@@ -492,6 +499,9 @@
 		   (setf value (list-fixup :value value))
 		   (mapcar #'to-keyword value))
 		 :validator (list-of #'keywordp))
+     (tricks :initform (list)
+		 :fixup #'list-fixup
+		 :validator (list-of #'stringp))
      ;;TODO Better validator!!
      (fudges :initform (let ((val (amake)))
 			 (loop for item in (loopable (akeys *fields*))
