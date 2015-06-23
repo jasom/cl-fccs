@@ -273,8 +273,10 @@
 	   :root (asdf:system-relative-pathname 'cl-fccs "build/pub/"))
 	  (lambda (env) (funcall 'app env)))
 	 :server :mongrel2
-	 :sub-addr "tcp://127.0.0.1:9997"
-	 :pub-addr "tcp://127.0.0.1:9996"
+	 :sub-addr #+dev"tcp://127.0.0.1:9997"
+	           #-dev"tcp://127.0.0.1:9993"
+	 :pub-addr #+dev"tcp://127.0.0.1:9996"
+	           #-dev"tcp://127.0.0.1:9992"
 	 :port #+dev 5001 #-dev 5000
 	 :use-thread nil
 	 :use-default-middlewares nil
