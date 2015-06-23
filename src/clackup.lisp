@@ -1,7 +1,8 @@
 (in-package :cl-fccs)
 
-#-dev(defvar *prepend-path* "/fccs2/")
-#+dev(defvar *prepend-path* "/fccs2dev/")
+(defvar *prepend-path* "/")
+(defvar *clack-args* '(:port 5000))
+(defvar *myapp* nil)
   
 (defun strip-path-prefix (path)
   (if (starts-with-subseq *prepend-path* path)
@@ -15,8 +16,13 @@
 		(subseq path 1)
 		path)))
 
+(defun load-configuration ()
+  (load (asdf:system-relative-pathname :cl-fccs "config.lisp")))
+
 (defmacro render-page ((stream-name) &body body)
-  `(cl-who:with-html-output-to-string (,stream-name nil :prologue "<!DOCTYPE html>")
+  `(cl-who:with-html-output-to-string (,stream-name nil
+						    :indent t
+						    :prologue "<!DOCTYPE html>")
     (:html
      (:head
       (:meta :charset "utf-8")
@@ -30,6 +36,8 @@
       (:body #+(or)(:script :src (fixup-path "/pub/build/psx.js"))
 	     ;(:img :src (fixup-path "/pub/images/fc.png"))
 	     (:script :src (fixup-path "/pub/all.js"))
+	     (:script
+	      (format ,stream-name "var PREPENDPATH = '~a'" *prepend-path*))
 	     (:div :hidden t
 		    :id "csrf"
 		    (esc (session-csrf-token session)))
@@ -242,14 +250,14 @@
 	   (,(cl-who:with-html-output-to-string (s)
 						(:htm (:head) (:body (:p "Not found")))))))))))
 
-(defvar *myapp* nil)
 
 (defun authenticate (user pass)
   (validate-user user pass))
 
 (defun start ()
+  (load-configuration)
   (setf *myapp*
-	    (clack:clackup
+	(apply #'clack:clackup
 	 (clack.builder:builder
 	  ;;clack.middleware.logger:<clack-middleware-logger>
 	  (authenticated-session
@@ -272,19 +280,13 @@
 	   :path (format nil "~apub/" *prepend-path*)
 	   :root (asdf:system-relative-pathname 'cl-fccs "build/pub/"))
 	  (lambda (env) (funcall 'app env)))
-	 :server :mongrel2
-	 :sub-addr #+dev"tcp://127.0.0.1:9997"
-	           #-dev"tcp://127.0.0.1:9993"
-	 :pub-addr #+dev"tcp://127.0.0.1:9996"
-	           #-dev"tcp://127.0.0.1:9992"
-	 :port #+dev 5001 #-dev 5000
-	 :use-thread nil
 	 :use-default-middlewares nil
-	 )))
+	 *clack-args*)))
 
 (defun stop ()
   (when *myapp*
-  (clack:stop *myapp*)))
+    (clack:stop *myapp*)
+    (setf *myapp* nil)))
 
 (defun restart-server ()
   (stop) (Start))

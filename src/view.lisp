@@ -1,7 +1,10 @@
 (in-package cl-fccs)
 
-(defmacro fixup-path (path)
-  (cl-fccs::fixup-path path))
+(defun fixup-path (path)
+  (+ *prepend-path*
+     (if (eql (elt path 0) #\/)
+		(chain path (slice 1))
+		path)))
 
 (defreact-for-classish (*contact-info
 			contact-info
@@ -94,7 +97,7 @@
     (chain request (open "POST" url t))
     (chain request (set-request-header "Content-Type" "application/json; charset=utf-8"))
     (chain request (set-request-header "x-csrf-token"
-				      (chain document (get-element-by-id "csrf") inner-h-t-m-l)))
+				      (chain document (get-element-by-id "csrf") inner-h-t-m-l (trim))))
     (let ((encoded-data
 	   (if raw
 	       data
@@ -579,7 +582,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
   get-initial-state (lambda () (create obj (chain this props default-value)))
   update-fields (lambda (name)
 		  (post-data
-		   (fixup-path"/complete/gear-info")
+		   (fixup-path "/complete/gear-info")
 		   name
 		   (let ((ginfo this))
 		     :complete-callback
