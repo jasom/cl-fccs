@@ -1878,3 +1878,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 
 ;(chain *react (render (htm :*Test) (chain document body)))
 ;(chain *react (render (htm (:*Character)) (chain document body)))
+;; Keep session alive
+(set-interval (lambda ()
+		(post-data (fixup-path "/dummy/") ""))
+	      (* 60 60 1000))

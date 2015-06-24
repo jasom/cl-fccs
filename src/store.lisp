@@ -57,6 +57,10 @@
     (save-character id (make-fc-character))
     id))
 
+(defun delete-character (id)
+  (ensure-connected)
+  (red:hdel "characters" id))
+
 (defun get-user (username)
   (ensure-connected)
   (deserialize (red:hget "users" username)))
