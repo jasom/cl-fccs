@@ -1,5 +1,13 @@
 (in-package cl-fccs)
 
+(defun index-of (item the-array)
+  (if (not (chain *array prototype index-of))
+      (loop for i from 0
+	 for this-item in the-array
+	   when (= item this-item) return i
+	 finally (return -1))
+      (chain the-array (index-of item))))
+
 (defun fixup-path (path)
   (+ *prepend-path*
      (if (eql (elt path 0) #\/)
@@ -492,7 +500,37 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		     finally (return (ps:array items keys)))
 		(chain this props (on-change (unloopable newitems)))
 		(chain this (set-state (create keys newkeys))))))
-		       
+    move-helper (lambda (item-position)
+		  (let ((items (chain this props value))
+			(keys (chain this state keys)))
+		    (unless (<= item-position 0)
+		      (chain this props
+			     (on-change (chain
+					 (chain items (slice 0 (1- item-position)))
+					 (concat
+					  (chain items (slice item-position (1+ item-position)))
+					  (chain items (slice (1- item-position) item-position))
+					  (chain items (slice (1+ item-position)))))))
+		      (chain this (set-state
+				   (create keys
+					   (chain
+					    (chain keys (slice 0 (1- item-position)))
+					    (concat
+					     (chain keys (slice item-position (1+ item-position)))
+					     (chain keys (slice (1- item-position) item-position))
+					     (chain keys (slice (1+ item-position)))))))))))
+    down (lambda (the-key)
+	   (tlambda (ev)
+	     (chain ev (prevent-default))
+	     (let ((item-position (index-of the-key (chain this state keys))))
+	       (unless (>= item-position (1- (chain this state keys length)))
+		 (chain this (move-helper (1+ item-position)))))))
+    up (lambda (the-key)
+	 (tlambda (ev)
+	   (chain ev (prevent-default))
+	   (let ((item-position (index-of the-key (chain this state keys))))
+	     (chain this (move-helper item-position)))))
+
     add (lambda ()
 	  (let* ((newitem (chain this props (make-new)))
 		 (newarray (chain this props value (push newitem))))
@@ -524,12 +562,27 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			   (:div
 			    :class-name ({ (chain this props inner-class))
 			    :key ({ key)
-			    (:div
-			     :class-name "pure-u-1 pure-u-md-1-12"
-			     (:button :class-name "pure-button"
-				      :style ({(create margin 0 padding "0.25em"))
-				      :on-click ({ (chain this (del key)))
-				      (esc (string #\en_dash))))
+			    ({(unless (chain this props read-only)
+				(htm
+				 (:div
+				  (:div
+				   :class-name "pure-u-1 pure-u-md-1-12"
+				   (:button :class-name "pure-button"
+					    :style ({(create margin 0 padding "0.25em"))
+					    :on-click ({ (chain this (del key)))
+					    (esc (string #\en_dash))))
+				  (:div
+				   :class-name "pure-u-1 pure-u-md-1-12"
+				   (:button :class-name "pure-button"
+					    :style ({(create margin 0 padding "0.25em"))
+					    :on-click ({ (chain this (up key)))
+					    (esc (string #\upwards_arrow))))
+				  (:div
+				   :class-name "pure-u-1 pure-u-md-1-12"
+				   (:button :class-name "pure-button"
+					    :style ({(create margin 0 padding "0.25em"))
+					    :on-click ({ (chain this (down key)))
+					    (esc (string #\downwards_arrow))))))))
 			    ({ (chain this props (make-row item (chain this (handle-change i))))))))))
 	       (htm
 		(:fieldset
