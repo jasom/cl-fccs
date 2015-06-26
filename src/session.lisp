@@ -114,6 +114,10 @@
 		 "application/x-www-form-urlencoded"
 		 (gethash "content-type" (getf env :headers)))
 		(let ((body (slurp-body env)))
+		  (log:info
+		   (list
+		    (session-csrf-token session)
+		    (cdr (assoc "csrf-token" (quri:url-decode-params body) :test #'equal))))
 		  (if
 		   (equal
 		    (session-csrf-token session)

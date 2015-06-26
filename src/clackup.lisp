@@ -207,6 +207,26 @@
 		 (:content-type "text/html")
 		 (cl-who:with-html-output-to-string (s)
 		   (:htm (:head) (:body "Couldn't locate character")))))))
+	((property :path-info (ppcre "^/view-character/(\\d*)$" id))
+	 (with-db-connection
+	   (let ((character (get-character id)))
+	     (if character
+		 `(200
+		   (:content-type "text/html")
+		   (,(render-page
+		      (s)
+		      (:script
+		       (format s (ps:ps (setf *view-only* t)))
+		       (format s "React.render(React.createElement(CharacterMenu, {
+characterId: ~D, defaultValue : " id)
+		       (princ "fixupFcCharacter(Immutable.fromJS(" s)
+		       (encode-classish character s)
+		       (princ "))}),document.getElementById(\"react-content\"))" s)))))
+		 `(404
+		   (:content-type "text/html")
+		   (,(cl-who:with-html-output-to-string (s)
+							(:htm (:head)
+							      (:body (:P "Error: could-not-find character"))))))))))
 	((property :path-info (ppcre "^/character/(\\d*)$" id))
 	 (with-db-connection
 	   (let ((character (get-character id)))

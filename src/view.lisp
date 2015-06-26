@@ -1,5 +1,7 @@
 (in-package cl-fccs)
 
+(defvar *view-only* nil)
+
 (defun index-of (item the-array)
   (if (not (chain *array prototype index-of))
       (loop for i from 0
@@ -211,6 +213,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 	     (htm (:input :checked ({ (chain this state value))
 			  :id ({ (chain this props id))
 			  :type :checkbox
+			  :disabled ({ *view-only*)
 			  :on-change ({ (chain this handle-changed))
 			  :class-name ({ (chain this props input-class))
 			  :style ({
@@ -257,6 +260,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 				      "text"))
 			  :on-change ({ (chain this handle-changed))
 			  :class-name ({ (chain this props input-class))
+			  :disabled ({ *view-only*)
 			  :style ({
 				   (if (chain this state valid) 
 				       (chain this props style)
@@ -367,6 +371,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		       :type ({(if (chain this props type)
 				   (chain this props type)
 				   "text"))
+		       :disabled ({ *view-only*)
 		       :on-change ({ (chain this handle-changed))
 		       :on-key-down({ (chain this handle-keydown))
 		       :class-name ({ (chain this props input-class))
@@ -428,6 +433,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 				   :key ({ item)
 				   (:input
 				    :type :checkbox
+				    :disabled ({ *view-only*)
 				    :class-name "pure-checkbox"
 					;:label ({ item)
 				    :checked ({ (member item (chain this state value)))
@@ -462,6 +468,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			 (chain this props (on-change val)))))
     render (lambda ()
 	     (htm (:select
+		   :disabled ({ *view-only*)
 		   :value
 		   ({(if (and (chain this state valid)
 			      (ps:in 'override-value (chain this props)))
@@ -547,7 +554,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 	    (chain this props (on-change newarray))))
     render (lambda ()
 	     (let* ((keys
-		     (if (chain this props read-only)
+		     (if (or (chain this props read-only) *view-only*)
 			 (loop for item in (chain this props value (to-array))
 			    for i from 0
 			    collect (chain this props (row-key item i)))
@@ -562,7 +569,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			   (:div
 			    :class-name ({ (chain this props inner-class))
 			    :key ({ key)
-			    ({(unless (chain this props read-only)
+			    ({(unless (or (chain this props read-only) *view-only*)
 				(htm
 				 (:div
 				  (:div
@@ -588,7 +595,9 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		(:fieldset
 		 ({ items)
 		 ({
-		   (if (chain this props make-new)
+		   (if (and
+			(chain this props make-new)
+			(not *view-only*))
 		       (htm
 			(:button :class-name "pure-button"
 				 :on-click ({ (chain
@@ -1911,7 +1920,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		  (:input
 		   :type :hidden
 		   :name "csrf-token"
-		   :value ({(chain document (get-element-by-id "csrf") inner-h-t-m-l)))
+		   :value ({(chain document (get-element-by-id "csrf") inner-h-t-m-l (trim))))
 		  (:button
 		   :form-action (fixup-path "/new-character/")
 		   :form-method "POST"
