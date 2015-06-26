@@ -53,7 +53,7 @@
 (defun fmt-class (cl)
   (and cl
        (format nil "~A/~A"
-	       (aget :the-class cl)
+	       (better-capitalize (aget :the-class cl))
 	       (aget :level cl))))
 
 (defun abbreviate-spell-info (string)
@@ -222,17 +222,23 @@
 		(emit-field "SavThrWillAttrMod" :will-attr-mod)
 		(emit-field "SavThrWillMiscMod" :will-misc-mod)
 		(emit-value "ArmorType"
-			    (format  nil "~A~@[ ~A~]"
-				     (better-capitalize (aget :armor-type character))
+			    (format  nil "~@[~A ~]~A~@[ ~A~]"
+				     (aget :armor-craftsmanship character)
+				     (char
+				      (better-capitalize (aget :armor-type character))
+				      0)
 				     (aget :armor-name character)))
 		;;TODO Arms (see Weapon1Type)
-		(emit-field "ArmorDR" :armor-dr)
-		(emit-field "ArmorDR" :armor-dr)
-		(emit-field "ArmorDP" :armor-dp)
-		(emit-field "ArmorACP" :armor-acp)
-		(emit-field "ArmorSpd" :armor-speed)
-		(emit-field "ArmorWgt" :armor-weight)
-		(emit-field "ArmorDis" :armor-disguise)
+		(emit-item "ArmorDR" :armor-dr)
+		(emit-item "ArmorDR" :armor-dr)
+		(emit-item "ArmorDP" :armor-dp)
+		(emit-item "ArmorACP" :armor-acp)
+		(emit-item "ArmorSpd" :armor-speed)
+		(emit-item "ArmorWgt" :armor-weight)
+		(emit-item "ArmorDis" :armor-disguise)
+		(emit-value "ArmorUp"
+			    (format nil "~{~a~^, ~}"
+				    (aget :armor-customizations character)))
 		(emit-field "ActionStandAtt" :action-attack)
 		(emit-field "ActionBull" :action-bullrush)
 		(emit-field  "ActionCoup" :action-coupe-de-grace)
