@@ -77,6 +77,10 @@
   (ensure-connected)
   (deserialize (red:get (format nil "session-~A" sid))))
 
+(defun del-session (sid)
+  (ensure-connected)
+  (red:del (format nil "session-~A" sid)))
+
 (defun expire-session (sid seconds)
   (ensure-connected)
   (red:expire (format nil "session-~a" sid) seconds))

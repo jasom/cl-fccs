@@ -246,6 +246,13 @@ characterId: ~D, defaultValue : " id)
 							(:htm (:head)
 							      (:body (:P "Error: could-not-find character"))))))))))
 	((and
+	  (property :path-info "/logout/")
+	  (property :session session))
+	 (invalidate-session session)
+	 `(303
+	   (:location ,(fixup-path "/"))
+	   (())))
+	((and
 	  (property :path-info "/account/")
 	  (property :remote-user username))
 	 (with-db-connection

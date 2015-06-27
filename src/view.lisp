@@ -1830,6 +1830,33 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 
 (defreact *account-settings
     mixins (ps:array (chain *react addons *pure-render-mixin))
+    render (lambda ()
+	     (htm
+	      (:div
+	       (:*logout)
+	       (:*change-password)))))
+
+(defreact *logout
+    mixins (ps:array (chain *react addons *pure-render-mixin))
+    render (lambda ()
+	     (htm
+	      (:form
+	       :action ({(fixup-path "/logout/"))
+	       :method :post
+	       :class-name "pure-form"
+	       (:input
+		:type :hidden
+		:name "csrf-token"
+		:value ({(chain document (get-element-by-id "csrf") inner-h-t-m-l (trim))))
+	       (:input
+		:type "submit"
+		:class-name "pure-button"
+		:value "Logout")))))
+
+    
+
+(defreact *change-password
+    mixins (ps:array (chain *react addons *pure-render-mixin))
     get-initial-state (lambda ()
 			(create password1 ""
 				password2 ""
@@ -1845,7 +1872,6 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 	     (htm
 	      (:form
 	       :class-name "pure-form"
-	       (:fieldset
 		(:legend "Password")
 		(:label :html-for "password1" "New Password")
 		(:input :id "password1" :class-name "pure-input"
@@ -1881,11 +1907,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		    ((eql (chain this state state) :success)
 		     (htm (:p "Success!")))
 		    ;;TODO error
-		    ))
-
-		   
-		)))))
-    
+		    ))))))
 
 (defreact *character-list
     mixins (ps:array (chain *react addons *pure-render-mixin))
@@ -1925,18 +1947,13 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		   :form-action (fixup-path "/new-character/")
 		   :form-method "POST"
 		   :class-name "pure-button"
-		   ;;:on-click ({(lambda ()
-				 ;;(setf (chain window location)
-				       ;;(fixup-path "/new-character/"))))
 		   "New"))
 		 (:p
 		  (:a :href (fixup-path "/account/")
 		      "Account Settings"))
 		 (:p
 		  (:a :href "https://phab.jasom.org/"
-		      "Bugs/Feature requests"))
-		 )))))
-		  
+		      "Bugs/Feature requests")))))))
 
 ;(chain *react (render (htm :*Test) (chain document body)))
 ;(chain *react (render (htm (:*Character)) (chain document body)))

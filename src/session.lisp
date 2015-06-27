@@ -42,6 +42,10 @@
     (set-session (session-id session) session)
     (expire-session (session-id session) *session-expiry-time*)))
 
+(defun invalidate-session (session)
+  (with-db-connection
+    (del-session (session-id session))))
+  
 (defun validate-session (env)
   (with-db-connection
     (let ((cookies (split-sequence #\; (gethash "cookie" (getf env :headers)))))
