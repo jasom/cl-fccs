@@ -841,7 +841,6 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 				:class-name "pure-u-1-3")
 		  (input-field notes
 			       :class-name "pure-u-7-12")
-		  
 		  (choice-field list-as 
 				(:combat :non-combat :spellcasting)
 				:choice-values ("combat" "non-combat" "spellcasting")

@@ -1,4 +1,5 @@
 (in-package :cl-fccs)
+
 (defclass user ()
   ((username :type string :initarg :name)
    (pw-hash :type string :initarg :hash)

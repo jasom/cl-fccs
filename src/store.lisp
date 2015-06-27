@@ -51,10 +51,11 @@
   (ensure-connected)
   (red:hset "characters" id (serialize character)))
 
-(defun new-character ()
+(defun new-character (owner)
   (ensure-connected)
   (let ((id (red:incr "character-id")))
     (save-character id (make-fc-character))
+    (add-user-to-character id owner)
     id))
 
 (defun delete-character (id)
@@ -85,3 +86,9 @@
   (ensure-connected)
   (red:expire (format nil "session-~a" sid) seconds))
 
+(defun user-can-edit-character-p (character-id username)
+  (red:sismember (format nil "character-users-~d" character-id) username))
+
+(defun add-user-to-character (character-id username)
+  (red:sadd (format nil "character-users-~d" character-id) username))
+  

@@ -168,9 +168,10 @@
 		s)
 	       (princ ")}),document.getElementById(\"react-content\"))" s)))))))
 	((and (property :request-method :POST)
+	      (property :remote-user username)
 	      (property :path-info "/new-character/"))
 	 (with-db-connection
-	   (let ((id (new-character)))
+	   (let ((id (new-character username)))
 	     `(303
 	       (:location ,(fixup-path (format nil "/character/~A" id))
 			  :content-type "text/html")
@@ -192,21 +193,29 @@
 				  :content-type "application/pdf")
 		 ,bin-pdf)))))
 	((and (property :request-method :POST)
-	      (property :path-info (ppcre "^/save-character/(\\d*)$" id)))
+	      (property :path-info (ppcre "^/save-character/(\\d*)$" id))
+	      (property :remote-user username))
 	 (log:info "Uncompressed-Body-Len ~D" (length body))
 	 (with-db-connection
-	   (if (get-character id) ;;TODO just check if id is valid
-	       (let* ((parsed-body (parse-json-body body))
+	   (cond
+	     ((null (get-character id))
+	      `(404			; No such character
+		(:content-type "text/html")
+		(cl-who:with-html-output-to-string (s)
+		  (:htm (:head) (:body "Couldn't locate character")))))
+	     ((not (user-can-edit-character-p id username))
+	      `(403			;Wrong Permissions
+		(:content-type "text/html")
+		(cl-who:with-html-output-to-string (s)
+		  (:htm (:head) (:body "Forbidden")))))
+	     (t				; Chaacter exists and We have permisison to edit it
+	      (let* ((parsed-body (parse-json-body body))
 		     (fixed-char (fixup-fc-character parsed-body)))
-		 (when (fc-character-p fixed-char)
-		   (log:info "We have a character!")
-		   (save-character id fixed-char))
-		 `(200
-		   (:content-type "text/html")))
-	       `(404
-		 (:content-type "text/html")
-		 (cl-who:with-html-output-to-string (s)
-		   (:htm (:head) (:body "Couldn't locate character")))))))
+		(when (fc-character-p fixed-char)
+		  (log:info "We have a character!")
+		  (save-character id fixed-char))
+		`(200
+		  (:content-type "text/html")))))))
 	((property :path-info (ppcre "^/view-character/(\\d*)$" id))
 	 (with-db-connection
 	   (let ((character (get-character id)))
@@ -227,24 +236,30 @@ characterId: ~D, defaultValue : " id)
 		   (,(cl-who:with-html-output-to-string (s)
 							(:htm (:head)
 							      (:body (:P "Error: could-not-find character"))))))))))
-	((property :path-info (ppcre "^/character/(\\d*)$" id))
+	((and
+	  (property :path-info (ppcre "^/character/(\\d*)$" id))
+	  (property :remote-user username))
 	 (with-db-connection
-	   (let ((character (get-character id)))
-	     (if character
-		 `(200
-		   (:content-type "text/html")
-		   (,(render-page
-		      (s)
-		      (:script
-		       (format s "React.render(React.createElement(CharacterMenu, {characterId: ~D, defaultValue : " id)
-		       (princ "fixupFcCharacter(Immutable.fromJS(" s)
-		       (encode-classish character s)
-		       (princ "))}),document.getElementById(\"react-content\"))" s)))))
-		 `(404
-		   (:content-type "text/html")
-		   (,(cl-who:with-html-output-to-string (s)
-							(:htm (:head)
-							      (:body (:P "Error: could-not-find character"))))))))))
+	   (if (user-can-edit-character-p id username)
+	       (let ((character (get-character id)))
+		 (if character
+		     `(200
+		       (:content-type "text/html")
+		       (,(render-page
+			  (s)
+			  (:script
+			   (format s "React.render(React.createElement(CharacterMenu, {characterId: ~D, defaultValue : " id)
+			   (princ "fixupFcCharacter(Immutable.fromJS(" s)
+			   (encode-classish character s)
+			   (princ "))}),document.getElementById(\"react-content\"))" s)))))
+		     `(404
+		       (:content-type "text/html")
+		       (,(cl-who:with-html-output-to-string (s)
+							    (:htm (:head)
+								  (:body (:P "Error: could-not-find character"))))))))
+	       `(303
+		 (:location ,(fixup-path (format nil "/view-character/~d" id)))
+		 (())))))
 	((and
 	  (property :path-info "/logout/")
 	  (property :session session))
