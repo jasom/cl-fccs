@@ -529,6 +529,18 @@
 	     ((#\Multiplication_sign) #\x)
 	     (t x))) x))
 
+(defun generate-bio-notes (character)
+  (tt:with-style (:font "times-bold")
+    (tt:paragraph () "Biography"))
+    (loop for p in (split-sequence #\Newline (aget :biography character))
+	 do (tt:paragraph ()
+	   (tt:put-string p)))
+  (tt:with-style (:font "times-bold")
+    (tt:paragraph () "Notes"))
+    (loop for p in (split-sequence #\Newline (aget :notes character))
+	 do (tt:paragraph ()
+	   (tt:put-string p))))
+
 (defun generate-spell-table (character)
   (tt:table (:col-widths '(90 400) :splittable-p t)
     (tt:header-row ()
@@ -587,6 +599,8 @@
 		 
 	   
 (defun generate-ability-table (character)
+  (tt:with-style (:font "times-bold")
+    (tt:paragraph () "Abilities & Feats"))
   (tt:table (:col-widths '(90 400) :splittable-p t)
     (tt:header-row ()
       (tt:cell ()
@@ -668,8 +682,8 @@
 							  :font tt::*default-font*
 							  :font-size tt::*default-font-size*
 							  :h-align :justify))
-	       #+or()
-	       #-or(generate-ability-table character)
+	       (generate-bio-notes character)
+	       (generate-ability-table character)
 	       (when (aget :spells character)
 		 (generate-spell-table character)))
 	     :margins '(36 36 36 36)

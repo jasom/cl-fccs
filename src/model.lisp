@@ -243,7 +243,6 @@
 (defun fixup-abilities (character)
   (let ((old-abilities (aget :ability-list character))
 	(new-abilities (calculate-abilities character))
-	(really-new-abilities (list))
 	(result (list)))
     (loop for item in (loopable old-abilities)
 	 do
@@ -634,7 +633,11 @@
      (spellcasting-ranks :validator #'integer-validator
 			 :initform 0)
      (spellcasting-feats :validator #'integer-validator
-			 :initform 0))
+			 :initform 0)
+     (biography :validator #'string-validator
+		:initform "")
+     (notes :validator #'string-validator
+		:initform ""))
 
 #.
 `(progn

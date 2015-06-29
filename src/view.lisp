@@ -1789,7 +1789,28 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 				:make-new #'make-spell-info
 				))))
 		 ((= (chain this props section) "bio")
-		  (htm (:p "Coming Soon...")))
+		  (htm (:form
+			:class-name "pure-form pure-g"
+			(:h2 :class-name "heading pure-u-1"
+			     "Biography")
+			(:div :class-name "pure-u-1-12")
+			(:div
+			 :class-name "pure-u-5-6"
+			 (textarea-field
+			  biography
+			  :rows 30
+			  :class-name "pure-input-1"))
+			(:div :class-name "pure-u-1-12")
+			(:h2 :class-name "heading pure-u-1"
+			     "Notes")
+			(:div :class-name "pure-u-1-12")
+			(:div
+			 :class-name "pure-u-5-6"
+			 (textarea-field
+			  notes
+			  :rows 30
+			  :class-name "pure-input-1"))
+			(:div :class-name "pure-u-1-12"))))
 		 ))))))
 
 (defreact *login

@@ -72,6 +72,24 @@
 				      (better-capitalize (string name))))))
 	       ))))))
 
+(defmacro textarea-field (name &key
+				 (class-name "pure-u-1 pure-u-md-1-6")
+				 (formatter '(lambda (x) x))
+				 (rows))
+  (let ((name (alexandria:make-keyword (string name))))
+    `({
+       (tlet ((id (genid)))
+	     (htm
+	      (:textarea
+	       :default-value ({(funcall ,formatter (aget ,name (chain this state obj))))
+	       :id ({ id)
+	       :class-name ,class-name
+	       :rows ,rows
+	       :style ({(create background-color "white" padding 0))
+	       :on-change ({(let ((fn (chain this (handle-change ',name))))
+			      (lambda (ev)
+				(funcall fn (chain ev target value)))))))))))
+
 (defmacro input-field (name  &key
 			       (class-name "pure-u-1 pure-u-md-1-6")
 			       (input-class "pure-input-1")
