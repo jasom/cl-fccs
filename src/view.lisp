@@ -1341,8 +1341,9 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 					  :class-name "pure-u-1-6")
 			    (output-field defense-misc-mod :label-as "Misc"
 					  :class-name "pure-u-1-6")
-			    (output-field vitality :class-name "pure-u-1-2")
-			    (output-field wounds :class-name "pure-u-1-2")
+			    (output-field vitality :class-name "pure-u-1-3")
+			    (output-field wounds :class-name "pure-u-1-3")
+			    (output-field dr :class-name "pure-u-1-3")
 			    (input-field critical-injuries :class-name "pure-u-1")
 			    (:h2
 			     :class-name "heading pure-u-1"

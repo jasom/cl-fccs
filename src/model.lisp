@@ -799,6 +799,9 @@
 	(floor wounds)
 	(ceiling wounds))))
 
+(deffield :dr (character)
+  (aget :armor-dr character))
+
 (deffield :bab (character)
   (calculate-column :bab character))
 
