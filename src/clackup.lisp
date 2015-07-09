@@ -115,7 +115,8 @@
        (defun ,name ,(append '(env body) vars)
 	 (declare (ignorable env body))
 	 ,@b)
-       (setf (gethash ',name *app-rules*) ',pattern))))
+       (eval-when (:compile-toplevel :load-toplevel :execute)
+	 (setf (gethash ',name *app-rules*) ',pattern)))))
 
 (defmacro expand-app-rules (env body &body default-rule)
   (once-only (env body)

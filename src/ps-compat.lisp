@@ -53,22 +53,7 @@
 				`(let ,new-vars ,(optimize-setf (car tree)))
 				`(let ,new-vars ,@tree))))))))))
 
-(defmacro ps-setf (place value &rest args &environment env)
-  (multiple-value-bind (temp-vars value-forms store-vars store-form access-form)
-      (ps-get-setf-expansion place env)
-    (declare (ignorable access-form))
-    `(progn
-       ,(optimize-setf
-	`(let* (,@(loop for temp in temp-vars
-		    for value in value-forms
-		    collect (list temp value)))
-	  ;; parenscript and multiple-values is buggy
-	  #+(or)(multiple-value-bind ,store-vars ,(multiple-value-list value)
-		,store-form)
-	  #-(or)(let ((,(car store-vars) ,value))
-		,store-form)))
-       ,@(when args
-	       `((ps-setf ,@args))))))
+
 
 #+ps(defun mapcar (fun list)
       (unless (chain *immutable *list (is-list list))
@@ -383,7 +368,7 @@
 	  ,store)
        `(aget ,key-dummy ,getter ,def-dummy)))))
 
-(defmacro ps-incf (place &optional (n 1) &environment env)
+#-ps(ps:defmacro+ps ps-incf (place &optional (n 1) &environment env)
   (multiple-value-bind (temp-vars value-forms store-vars store-form access-form)
       (ps-get-setf-expansion place env)
     (let ((nsym (gensym)))
@@ -394,6 +379,23 @@
 		    collect (list temp value)))
 	  (let ((,(car store-vars) (+ ,access-form ,nsym)))
 	    ,store-form))))))
+
+#-ps(ps:defmacro+ps ps-setf (place value &rest args &environment env)
+      (multiple-value-bind (temp-vars value-forms store-vars store-form access-form)
+	  (ps-get-setf-expansion place env)
+	(declare (ignorable access-form))
+	`(progn
+	   ,(optimize-setf
+	     `(let* (,@(loop for temp in temp-vars
+			  for value in value-forms
+			  collect (list temp value)))
+		;; parenscript and multiple-values is buggy
+		#+(or)(multiple-value-bind ,store-vars ,(multiple-value-list value)
+			,store-form)
+		#-(or)(let ((,(car store-vars) ,value))
+			,store-form)))
+	   ,@(when args
+		   `((ps-setf ,@args))))))
 
 #-ps(ps:defpsmacro setf (&rest args)
       `(ps-setf ,@args))
