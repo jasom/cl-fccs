@@ -15,12 +15,18 @@
       (setf (aref v i) (char-code (aref s i))))))
 
 (defmacro with-db-connection (&body b)
-  `(let ((redis::*connection*))
-     (unwind-protect
-	  (progn
-	    (redis:connect)
-	    ,@b)
-       (redis:disconnect))))
+  `(let ((redis::*connection* redis::*connection*))
+     (if (redis::connected-p)
+	 (progn
+	   ,@b)
+	 (unwind-protect
+	      (progn
+		(redis:connect)
+		,@b)
+	   (redis:disconnect)))))
+
+(unless (member 'redis::*connection* bt:*default-special-bindings* :key #'car)
+  (push '(redis::*connection*) bt:*default-special-bindings*))
 
 (defun ensure-connected ()
   (unless (redis:connected-p)
