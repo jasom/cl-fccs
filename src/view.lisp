@@ -948,7 +948,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			"PDF"))
 		   (:li
 		    :class-name "pure-menu-item"
-		    (:a :href (fixup-path "/") :class-name "pure-menu-link"
+		    (:a :href ({(fixup-path "/")) :class-name "pure-menu-link"
 			:on-click ({(tlambda ()
 				      (when
 					  (chain this upload-timer)
@@ -1965,12 +1965,12 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		   :name "csrf-token"
 		   :value ({(chain document (get-element-by-id "csrf") inner-h-t-m-l (trim))))
 		  (:button
-		   :form-action (fixup-path "/new-character/")
+		   :form-action ({(fixup-path "/new-character/"))
 		   :form-method "POST"
 		   :class-name "pure-button"
 		   "New"))
 		 (:p
-		  (:a :href (fixup-path "/account/")
+		  (:a :href ({(fixup-path "/account/"))
 		      "Account Settings"))
 		 (:p
 		  (:a :href "https://phab.jasom.org/"
