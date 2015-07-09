@@ -136,7 +136,7 @@
   (let ((codes
 	 (map 'list #'char-code
 	      (babel:octets-to-string body :encoding :utf-8))))
-    (log:info "Compressed-Body-Len ~D" (length body))
+    (log:debug "Compressed-Body-Len ~D" (length body))
     (log:debug codes)
     (lzstring::decompress body))
   `(200
@@ -197,7 +197,7 @@
 (defapprule save-char-rule (and (property :request-method :POST)
 				(property :path-info (ppcre "^/save-character/(\\d*)$" id))
 				(property :remote-user username))
-  (log:info "Uncompressed-Body-Len ~D" (length body))
+  (log:debug "Uncompressed-Body-Len ~D" (length body))
   (with-db-connection
     (cond
       ((null (get-character id))
@@ -214,7 +214,7 @@
        (let* ((parsed-body (parse-json-body body))
 	      (fixed-char (fixup-fc-character parsed-body)))
 	 (when (fc-character-p fixed-char)
-	   (log:info "We have a character!")
+	   (log:debug "We have a character!")
 	   (save-character id fixed-char))
 	 `(200
 	   (:content-type "text/html")))))))
@@ -297,12 +297,13 @@ characterId: ~D, defaultValue : " id)
     (:content-type "text/html")))
 
 (defun app (env)
-  (log4cl:log-info env)
-  (log4cl:log-info "Headers: ~S" (alexandria:hash-table-plist (getf env :headers)))
+  (log:debug env)
+  (log:debug "Headers: ~S" (alexandria:hash-table-plist (getf env :headers)))
+  (log:info "Request to ~S from ~A" (getf env :request-uri) (getf env :remote-addr))
   (setf (getf env :path-info)
 	(strip-path-prefix (getf env :path-info)))
   (let ((content-length (getf env :content-length)) (body))
-    (log:info content-length)
+    (log:debug content-length)
     (cond
       ((null content-length))
       ((> content-length *max-length*)
@@ -450,8 +451,8 @@ characterId: ~D, defaultValue : " id)
 	     (cl-ppcre:scan "gzip" (gethash "accept-encoding" (getf env :headers)))
 	     (probe-file (pathname (format nil "~A.gz" (namestring file))))))
 	   (file (or gzfile file)))
-      (log:info gzfile)
-      (log:info (alexandria:hash-table-plist (getf env :headers)))
+      (log:debug gzfile)
+      (log:debug (alexandria:hash-table-plist (getf env :headers)))
       (with-open-file (stream file
 			      :direction :input
 			      :if-does-not-exist nil)

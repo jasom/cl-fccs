@@ -49,9 +49,9 @@
 (defun validate-session (env)
   (with-db-connection
     (let ((cookies (split-sequence #\; (gethash "cookie" (getf env :headers)))))
-      ;(log:info env)
-      ;(log:info (alexandria:hash-table-plist (getf env :headers)))
-      ;(log:info cookies)
+      ;(log:debug env)
+      ;(log:debug (alexandria:hash-table-plist (getf env :headers)))
+      ;(log:debug cookies)
       (when cookies
 	(let ((sid
 	       (loop for cookie in cookies
@@ -97,12 +97,12 @@
   (:documentation "Clack Middleware to authenticate."))
 
 (defmethod clack:call ((this authenticated-session) env)
-  (log:info (validate-session env))
+  (log:debug (validate-session env))
   (let ((session (or (validate-session env) (make-session))))
-    (log:info (session-username session))
+    (log:debug (session-username session))
     (with-slots (render-login login-url authenticator after-login root-path) this
-      (log:info (getf env :request-method))
-      (log:info (getf env :request-uri))
+      (log:debug (getf env :request-method))
+      (log:debug (getf env :request-uri))
       (cond
 	((session-username session)
 	 (setf (getf env :remote-user) (session-username session)
@@ -112,13 +112,13 @@
 	     (cond
 	       ((equal (session-csrf-token session)
 		       (gethash "x-csrf-token" (getf env :headers)))
-		(log:info "CSRF Token Header Match")
+		(log:debug "CSRF Token Header Match")
 		(clack:call-next this env))
 	       ((equal 
 		 "application/x-www-form-urlencoded"
 		 (gethash "content-type" (getf env :headers)))
 		(let ((body (slurp-body env)))
-		  (log:info
+		  (log:debug
 		   (list
 		    (session-csrf-token session)
 		    (cdr (assoc "csrf-token" (quri:url-decode-params body) :test #'equal))))
