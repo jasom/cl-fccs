@@ -4,9 +4,7 @@
   :description "Character Sheet manager for FC"
   :author "Jason Miller <aidenn0@geocities.com>"
   :license "MIT/X11"
-  :depends-on (#:clack
-	       #:clack-middleware-auth-basic
-	       #:clack-handler-mongrel2
+  :depends-on (#:clack-v1-compat
                #:parenscriptx
 	       #:parse-number
                #:alexandria
