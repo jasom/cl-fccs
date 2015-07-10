@@ -1,4 +1,5 @@
 (in-package :cl-fccs)
+(defparameter *session-unauthenticated-expiry-time* (* 60 60)) ;; 1 hou
 (defparameter *session-expiry-time* (* 60 60 24) ;; 1 day
   "Session Expiration time in seconds") 
 
@@ -25,7 +26,7 @@
   (with-db-connection
     (let ((session (make-instance 'session :username username)))
       (set-session (session-id session) session)
-      (expire-session (session-id session) *session-expiry-time*)
+      (expire-session (session-id session) *session-unauthenticated-expiry-time*)
       session)))
 
 (defmethod (setf session-username) :around (new-value object) 
@@ -40,7 +41,10 @@
 (defun update-session (session)
   (with-db-connection
     (set-session (session-id session) session)
-    (expire-session (session-id session) *session-expiry-time*)))
+    (expire-session (session-id session)
+		    (if (session-username session)
+			*session-expiry-time*
+			*session-unauthenticated-expiry-time*))))
 
 (defun invalidate-session (session)
   (with-db-connection
