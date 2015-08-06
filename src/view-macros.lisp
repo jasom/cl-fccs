@@ -290,7 +290,7 @@
 				       (class-name "pure-u-1 pure-u-md-1-6")
 				       (choice-class "pure-input-1")
 				       (choice-values choices)
-				       (parser '({ (lambda (x) x) }))
+				       (parser '({ (lambda (x) x)))
 				       override-value)
   (let ((name (alexandria:make-keyword (string name))))
     `({
@@ -313,14 +313,14 @@
 		,@(loop for choice in choices
 		     for choice-value in choice-values
 		     collect `(:option :value ,choice-value
-				       (esc (better-capitalize (string ,choice))))))
+				       (esc ,(better-capitalize (string choice))))))
 	       (:label :html-for ({ id) ,(better-capitalize(string name)))))))))
 
 
 (defmacro checkboxes-field (name choices &key
 					 (class-name "pure-u-1 pure-u-md-1-6")
 					 (checkbox-class nil)
-					 (parser '({ (lambda (x) x) })))
+					 (parser '({ (lambda (x) x))))
   (let ((name (alexandria:make-keyword (string name))))
     `({
        (htm

@@ -2,7 +2,7 @@
 SOURCES="$REACTJS
     $IMMUTABLEJS
     ./static/js/lz-string.js
-    ./out.js
+    ./in.js
     ./exports.js"
 redo-ifchange $SOURCES config.sh
 case "$OPT" in
