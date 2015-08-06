@@ -1061,7 +1061,9 @@
   (defvar *deploy* t "Set to nil for development")
   (time
    (with-open-file (f (asdf:system-relative-pathname 'cl-fccs "build/in.js") :direction :output :if-exists :supersede)
-     (let ((*features* (cons :ps *features*)))
+     (let ((*features* (cons :ps *features*))
+	   (ps:*ps-print-pretty* t)
+	   (ps:*indent-num-spaces* 2))
        (write-string (ps:ps-compile-file
 		      (asdf:system-relative-pathname 'cl-fccs "src/ps-compat.lisp")
 		      ) f)
