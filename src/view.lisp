@@ -1963,6 +1963,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		  (:input
 		   :type :hidden
 		   :name "csrf-token"
+		   :read-only t
 		   :value ({(chain document (get-element-by-id "csrf") inner-h-t-m-l (trim))))
 		  (:button
 		   :form-action ({(fixup-path "/new-character/"))
