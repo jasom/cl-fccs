@@ -156,50 +156,50 @@
        (:div :class-name "pure-u-1-8"
 	     :style ({(create font-size "75%"))
 	     "Threat")
-       (progn
-	 ,@(loop for item in skills
-	      for fitem = (ssub "_" " " (string item))
-	      collect
-		`(htm
-		  (:div :class-name "pure-u-1-12"
-			(checkbox-field ,(make-keyword (format nil "~A-ORIGIN" fitem))
-					:class-name nil
-					:show-label nil))
-		  (:div :class-name "pure-u-1-6"
-			(esc ,(string-capitalize
-			       (let ((it (string item)))
-				 (if (> (length it) 11)
-				     (subseq it 0 11)
-				     it)))))
-		  (:div :class-name "pure-u-1-8"
-			(esc ,(subseq (string (get-skill-attr item)) 0 3)))
-		  (:div :class-name "pure-u-1-8"
-			(output-field ,(make-keyword (format nil "~A-BONUS" fitem))
-				      :show-label nil
-				      :class-name nil
-				      :input-class "pure-input-1"))
-		  (:div :class-name "pure-u-1-8"
-			(input-field ,(make-keyword (format nil "~a-RANKS" fitem))
+       ,@(loop for item in skills
+	    for fitem = (ssub "_" " " (string item))
+	    collect
+	      `(htm
+		(:div
+		 (:div :class-name "pure-u-1-12"
+		       (checkbox-field ,(make-keyword (format nil "~A-ORIGIN" fitem))
+				       :class-name nil
+				       :show-label nil))
+		 (:div :class-name "pure-u-1-6"
+		       (esc ,(string-capitalize
+			      (let ((it (string item)))
+				(if (> (length it) 11)
+				    (subseq it 0 11)
+				    it)))))
+		 (:div :class-name "pure-u-1-8"
+		       (esc ,(subseq (string (get-skill-attr item)) 0 3)))
+		 (:div :class-name "pure-u-1-8"
+		       (output-field ,(make-keyword (format nil "~A-BONUS" fitem))
 				     :show-label nil
 				     :class-name nil
-				     :input-class "pure-input-1"
-				     :parser ({ parse-int)))
-		  (:div :class-name "pure-u-1-8"
-			(output-field ,(make-keyword (format nil "~a-ATTR-BONUS" fitem))
-				      :show-label nil
-				      :class-name nil
-				      :input-class "pure-input-1"))
-		  (:div :class-name "pure-u-1-8"
-			(output-field ,(make-keyword (format nil "~a-MISC-BONUS" fitem))
-				      :show-label nil
-				      :class-name nil
-				      :input-class "pure-input-1"))
-		  (:div :class-name "pure-u-1-8"
-			(input-field ,(make-keyword (format nil "~a-THREAT" fitem))
+				     :input-class "pure-input-1"))
+		 (:div :class-name "pure-u-1-8"
+		       (input-field ,(make-keyword (format nil "~a-RANKS" fitem))
+				    :show-label nil
+				    :class-name nil
+				    :input-class "pure-input-1"
+				    :parser ({ parse-int)))
+		 (:div :class-name "pure-u-1-8"
+		       (output-field ,(make-keyword (format nil "~a-ATTR-BONUS" fitem))
 				     :show-label nil
 				     :class-name nil
-				     :input-class "pure-input-1"
-				     :parser ({ parse-int)))))))))
+				     :input-class "pure-input-1"))
+		 (:div :class-name "pure-u-1-8"
+		       (output-field ,(make-keyword (format nil "~a-MISC-BONUS" fitem))
+				     :show-label nil
+				     :class-name nil
+				     :input-class "pure-input-1"))
+		 (:div :class-name "pure-u-1-8"
+		       (input-field ,(make-keyword (format nil "~a-THREAT" fitem))
+				    :show-label nil
+				    :class-name nil
+				    :input-class "pure-input-1"
+				    :parser ({ parse-int)))))))))
 
 (defmacro weapon-table (n)
   `(htm
