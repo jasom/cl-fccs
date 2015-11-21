@@ -1937,45 +1937,48 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 	     (setf (chain window location)
 		   (+ (fixup-path "/character/") id))))
     render (lambda ()
-	     (let ((ths this))
-	       (htm
-		(:div
-		 (:table
-		  :class-name "pure-table"
-		  (:thead
-		   (:tr
-		    (:th "ID")
-		    (:th "Character Name")
-		    (:th "Player Name")
-		    (:th "Level")))
-		  (:tbody
-		   ({(loop for item in (loopable (chain ths props value))
-			collect
-			  (htm
-			   (:tr
-			    :on-click ({(chain ths (edit (aget :id item))))
-			    :key ({(aget :id item))
-			    (:td ({(aget :id item)))
-			    (:td ({(aget :char-name item)))
-			    (:td ({(aget :player-name item)))
-			    (:td ({(aget :career-level item)))))))))
-		 (:form
-		  (:input
-		   :type :hidden
-		   :name "csrf-token"
-		   :read-only t
-		   :value ({(chain document (get-element-by-id "csrf") inner-h-t-m-l (trim))))
-		  (:button
-		   :form-action ({(fixup-path "/new-character/"))
-		   :form-method "POST"
-		   :class-name "pure-button"
-		   "New"))
-		 (:p
-		  (:a :href ({(fixup-path "/account/"))
-		      "Account Settings"))
-		 (:p
-		  (:a :href "https://phab.jasom.org/"
-		      "Bugs/Feature requests")))))))
+	     (htm
+	      (:div
+	       (:table
+		   :class-name "pure-table"
+		   (:thead
+		    (:tr
+		     (:th "ID")
+		     (:th "Character Name")
+		     (:th "Player Name")
+		     (:th "Level")))
+		   (:tbody
+		    ({(loop for item in (loopable (chain this props value))
+			 collect
+			   (htm
+			    (:tr
+			     :on-click ({(chain this (edit (aget :id item))))
+			     :key ({(aget :id item))
+			     (:td ({(aget :id item)))
+			     (:td ({(aget :char-name item)))
+			     (:td ({(aget :player-name item)))
+			     (:td ({(aget :career-level item)))))))))
+	       (:form
+		(:input
+		 :type :hidden
+		 :name "csrf-token"
+		 :read-only t
+		 :value ({(chain document (get-element-by-id "csrf") inner-h-t-m-l (trim))))
+		(:button
+		 :form-action ({(fixup-path "/new-character/"))
+		 :form-method "POST"
+		 :class-name "pure-button"
+		 "New"))
+	       (:p
+		(:a :href ({(fixup-path "/account/"))
+		    "Account Settings"))
+	       (:p
+		(:a :href "https://phab.jasom.org/"
+		    "Bugs/Feature requests"))))))
+
+
+
+
 
 ;(chain *react (render (htm :*Test) (chain document body)))
 ;(chain *react (render (htm (:*Character)) (chain document body)))
