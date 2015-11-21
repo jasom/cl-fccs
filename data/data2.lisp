@@ -67,7 +67,7 @@
    (mapcar (lambda (x)
 	     (cons (car x)
 		   (let ((keys (mapcar (lambda (y) (make-keyword (string-upcase y))) (cadr x))))
-		     (print keys)
+		     ;(print keys)
 		     (loop for item in (cddr x)
 			for ht = (make-hash-table)
 			do (mapcar (lambda (k v)
