@@ -8,7 +8,7 @@
 	:sub-addr "tcp://127.0.0.1:9997"
 	:pub-addr "tcp://127.0.0.1:9996"
 	:worker-entry redis:connect
-	:worker-entry redis:disconnect
+	:worker-exit redis:disconnect
 	:use-thread nil))
 
 ;;; Hunchentoot Configuration
