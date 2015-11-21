@@ -197,7 +197,7 @@
 (defapprule save-char-rule (and (property :request-method :POST)
 				(property :path-info (ppcre "^/save-character/(\\d*)$" id))
 				(property :remote-user username))
-  (log:debug "Uncompressed-Body-Len ~D" (length body))
+  (log:info "Uncompressed-Body-Len ~D" (length body))
   (with-db-connection
     (cond
       ((null (get-character id))
@@ -234,6 +234,20 @@ characterId: ~D, defaultValue : " id)
 		(princ "fixupFcCharacter(Immutable.fromJS(" s)
 		(encode-classish character s)
 		(princ "))}),document.getElementById(\"react-content\"))" s)))))
+	  `(404
+	    (:content-type "text/html")
+	    (,(cl-who:with-html-output-to-string (s)
+						 (:htm (:head)
+						       (:body (:P "Error: could-not-find character"))))))))))
+
+
+(defapprule roll20-export-rule (property :path-info (ppcre "^/roll20-export/(\\d*)$" id))
+  (with-db-connection
+    (let ((character (get-character id)))
+      (if character
+	  `(200
+	    (:content-type "text/plain; charset=utf-8")
+	    ,(babel:string-to-octets (cl-fccs-r20::generate-json character)))
 	  `(404
 	    (:content-type "text/html")
 	    (,(cl-who:with-html-output-to-string (s)
