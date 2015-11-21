@@ -36,6 +36,7 @@
 		 (:file "store")
 		 (:file "pdfout")
 		 (:file "session")
+		 (:file "r20out")
 		 (:file "clackup")
 		 (:file "users")
 		 (:static-file "view.lisp")
