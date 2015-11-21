@@ -40,5 +40,6 @@
 		 (:file "clackup")
 		 (:file "users")
 		 (:static-file "view.lisp")
-		 (:file "model" :depends-on ("view.lisp"))))))
+		 (:file "model" :depends-on ("view.lisp"))
+		 (:file "genparenscript")))))
 
