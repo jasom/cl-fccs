@@ -335,7 +335,7 @@
 	    (ll
 	     (lambda-fiddle:remove-whole-part 
 	      (lambda-fiddle:remove-environment-part lambda-list))))
-	;;(print ll)
+	(print ll)
 	(setf (gethash access-fn *ps-setf-expanders*)
 	      (eval
 		 `(lambda (,wv ,ev)
@@ -368,9 +368,9 @@
 	  ,store)
        `(aget ,key-dummy ,getter ,def-dummy)))))
 
-#-ps(ps:defmacro+ps ps-incf (place &optional (n 1) &environment env)
+#-ps(ps:defmacro+ps ps-incf (place &optional (n 1))
   (multiple-value-bind (temp-vars value-forms store-vars store-form access-form)
-      (ps-get-setf-expansion place env)
+      (ps-get-setf-expansion place)
     (let ((nsym (gensym)))
       (optimize-setf
        `(let* ((,nsym ,n)
@@ -380,9 +380,9 @@
 	  (let ((,(car store-vars) (+ ,access-form ,nsym)))
 	    ,store-form))))))
 
-#-ps(ps:defmacro+ps ps-setf (place value &rest args &environment env)
+#-ps(ps:defmacro+ps ps-setf (place value &rest args)
       (multiple-value-bind (temp-vars value-forms store-vars store-form access-form)
-	  (ps-get-setf-expansion place env)
+	  (ps-get-setf-expansion place)
 	(declare (ignorable access-form))
 	`(progn
 	   ,(optimize-setf
