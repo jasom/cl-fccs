@@ -97,7 +97,7 @@
 	    (:div
 	     :class-name "pure-u-1"
 	     (input-field value
-			  :parser ({ parse-int)
+			  :parser  parse-int
 			  :class-name "pure-u-1-2")
 	     (input-field notes
 			  :class-name "pure-u-1-2")))))
@@ -152,54 +152,54 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
     render (lambda ()
 	 (htm
 	  (:div
-	   :class-name ({(chain this props class-name))
-	   :style ({(create margin 0))
+	   :class-name (chain this props class-name)
+	   :style (create margin 0)
 	       (:div
-		:style ({(create padding 0))
-		:on-click ({(chain this handle-click))
-		:class-name ({(chain this props input-class))
-		({(chain this props value))
-		({(when (chain this state popup)
+		:style (create padding 0)
+		:on-click (chain this handle-click)
+		:class-name (chain this props input-class)
+		(chain this props value)
+		(when (chain this state popup)
 		    (htm
 		     (:div
-		      :style ({(create position :relative
+		      :style (create position :relative
 				       width "100%" 
 				       display :block
-				       height 0))
+				       height 0)
 		      (:div
 		       :class-name
-		       ({(if (eql (chain this state popup) :left)
+		       (if (eql (chain this state popup) :left)
 			     "positioned-popup-left"
-			     "positioned-popup-right"))
+			     "positioned-popup-right")
 		       (:*val-list
-			:value ({(chain this props default-fudge))
-			:validator ({(chain this props validate-fudge))
-			:on-change ({(chain this props fudge-changed))
-			:row-key ({(lambda () (genid)))
-			:make-row ({(lambda (data updater)
+			:value (chain this props default-fudge)
+			:validator (chain this props validate-fudge)
+			:on-change (chain this props fudge-changed)
+			:row-key (lambda () (genid))
+			:make-row (lambda (data updater)
 				      (htm (:*fudge
-					    :default-value ({ data)
-					    :on-change ({ updater)))))
-			:make-new ({(chain
+					    :default-value  data
+					    :on-change  updater)))
+			:make-new (chain
 				     (lambda ()
 				       (make-fudge :field
 						   (to-keyword
 						   (chain this props name))))
-				     (bind this))))
+				     (bind this)))
 			  
 		       (:button
 			:class-name "pure-button"
-			:on-click ({(chain
+			:on-click (chain
 				     (lambda (event)
 				       (chain event (prevent-default))
 				       (chain this (set-state (create popup nil))))
-				     (bind this))) "Close")
+				     (bind this)) "Close")
 				
-		       ))))))
-	       ({ (when (chain this props show-label)
-		 (htm (:label ({(better-capitalize
+		       )))))
+	        (when (chain this props show-label)
+		 (htm (:label (better-capitalize
 				 (or (chain this props label-as)
-				     (chain this props name))))))))))))
+				     (chain this props name))))))))))
 
 (defreact *validating-checkbox
     get-initial-state (lambda ()
@@ -210,19 +210,19 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		       (when (chain this props (validator val))
 			 (chain this props (on-change val)))))
     render (lambda ()
-	     (htm (:input :checked ({ (chain this state value))
-			  :id ({ (chain this props id))
+	     (htm (:input :checked  (chain this state value)
+			  :id  (chain this props id)
 			  :type :checkbox
-			  :disabled ({ *view-only*)
-			  :on-change ({ (chain this handle-changed))
-			  :class-name ({ (chain this props input-class))
-			  :style ({
+			  :disabled  *view-only*
+			  :on-change  (chain this handle-changed)
+			  :class-name  (chain this props input-class)
+			  :style 
 				   (if (chain this
 					      props
 					      (validator
 						      (chain this state value)))
 				       (chain this props style)
-				       (chain this props error-style)))))))
+				       (chain this props error-style))))))
 
 (defreact *validating-input
     get-initial-state (lambda ()
@@ -250,21 +250,21 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		       (setf (chain this timeout) timeout)))
 					   
     render (lambda ()
-	     (htm (:input :value ({ (if (and (chain this state valid)
+	     (htm (:input :value  (if (and (chain this state valid)
 			     (ps:in 'override-value (chain this props)))
 			(chain this props override-value)
-			(chain this state value)))
-			  :id ({ (chain this props id))
-			  :type ({(if (chain this props type)
+			(chain this state value))
+			  :id  (chain this props id)
+			  :type (if (chain this props type)
 				      (chain this props type)
-				      "text"))
-			  :on-change ({ (chain this handle-changed))
-			  :class-name ({ (chain this props input-class))
-			  :disabled ({ *view-only*)
-			  :style ({
+				      "text")
+			  :on-change  (chain this handle-changed)
+			  :class-name  (chain this props input-class)
+			  :disabled  *view-only*
+			  :style 
 				   (if (chain this state valid) 
 				       (chain this props style)
-				       (chain this props error-style)))))))
+				       (chain this props error-style))))))
 
 (defreact *validating-autocomplete
     get-initial-state (lambda ()
@@ -366,45 +366,45 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
     render (lambda ()
 	     (htm
 	      (:div
-	       (:input :value ({ (chain this state value))
-		       :id ({ (chain this props id))
-		       :type ({(if (chain this props type)
+	       (:input :value  (chain this state value)
+		       :id  (chain this props id)
+		       :type (if (chain this props type)
 				   (chain this props type)
-				   "text"))
-		       :disabled ({ *view-only*)
-		       :on-change ({ (chain this handle-changed))
-		       :on-key-down({ (chain this handle-keydown))
-		       :class-name ({ (chain this props input-class))
-		       :style ({
+				   "text")
+		       :disabled  *view-only*
+		       :on-change  (chain this handle-changed)
+		       :on-key-down (chain this handle-keydown)
+		       :class-name  (chain this props input-class)
+		       :style 
 				(if (chain this state valid) 
 				    (chain this props style)
-				    (chain this props error-style))))
-	       ({
+				    (chain this props error-style)))
+	       
 		 (when (chain this state focused)
 		   (htm
 		    (:div
-		     :style ({(create position :relative
+		     :style (create position :relative
 				      width "100%" 
 				      display :block
-				      height 0))
+				      height 0)
 		     (:div
 		      :class-name "pure-menu positioned-popup-left"
 		      (:ul :class-name "pure-menu-list"
-			   ({(loop for item in (chain this state completions)
+			   (loop for item in (chain this state completions)
 				collect
 				  (htm
 				   (:li
 				    :class-name
-				    ({(if (eql item (chain this state selected-completion))
+				    (if (eql item (chain this state selected-completion))
 					  "pure-menu-item pure-menu-selected"
-					  "pure-menu-item"))
+					  "pure-menu-item")
 				    (:a
 				     :href "#"
 				     :class-name "pure-menu-link nopad"
-				     :on-click ({ (chain this (completion-clicked item)))
+				     :on-click  (chain this (completion-clicked item))
 
-				     :key ({ item)
-				     ({ item))))))))))))))))
+				     :key  item
+				      item)))))))))))))
 
 (defreact *validating-checkboxes
     get-initial-state (lambda ()
@@ -426,19 +426,19 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
     render (lambda ()
 	     (htm
 	      (:fieldset
-					;:class-name ({ (chain this props class-name))
-	       ({(loop for item in (loopable (chain this props choices))
+					;:class-name  (chain this props class-name)
+	       (loop for item in (loopable (chain this props choices))
 		    collect (htm
-			     (:div :class-name ({(chain this props class-name))
-				   :key ({ item)
+			     (:div :class-name (chain this props class-name)
+				   :key  item
 				   (:input
 				    :type :checkbox
-				    :disabled ({ *view-only*)
+				    :disabled  *view-only*
 				    :class-name "pure-checkbox"
-					;:label ({ item)
-				    :checked ({ (member item (chain this state value)))
-				    :on-change ({ (chain this (handle-changed item))))
-				   (:label ({ item))))))))))
+					;:label  item
+				    :checked  (member item (chain this state value))
+				    :on-change  (chain this (handle-changed item)))
+				   (:label  item))))))))
 
 (defreact *validating-select
     get-initial-state (lambda ()
@@ -468,21 +468,21 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			 (chain this props (on-change val)))))
     render (lambda ()
 	     (htm (:select
-		   :disabled ({ *view-only*)
+		   :disabled  *view-only*
 		   :value
-		   ({(if (and (chain this state valid)
+		   (if (and (chain this state valid)
 			      (ps:in 'override-value (chain this props)))
 			 (chain this props override-value)
-			 (chain this state value)))
-		   :class-name ({ (chain this props class-name))
-		   :on-change ({ (chain this handle-changed))
-		   :id ({ (chain this props id))
-		   :style ({
+			 (chain this state value))
+		   :class-name  (chain this props class-name)
+		   :on-change  (chain this handle-changed)
+		   :id  (chain this props id)
+		   :style 
 			    (if (chain this props (validator
 						   (chain this state value)))
 				(chain this props style)
-				(chain this props error-style)))
-		   ({ (chain this props children))))))
+				(chain this props error-style))
+		    (chain this props children)))))
 
 (defreact *val-list
     get-initial-state (lambda ()
@@ -567,44 +567,44 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			collect
 			  (htm
 			   (:div
-			    :class-name ({ (chain this props inner-class))
-			    :key ({ key)
-			    ({(unless (or (chain this props read-only) *view-only*)
+			    :class-name  (chain this props inner-class)
+			    :key  key
+			    (unless (or (chain this props read-only) *view-only*)
 				(htm
 				 (:div
 				  (:div
 				   :class-name "pure-u-1 pure-u-md-1-12"
 				   (:button :class-name "pure-button"
-					    :style ({(create margin 0 padding "0.25em"))
-					    :on-click ({ (chain this (del key)))
+					    :style (create margin 0 padding "0.25em")
+					    :on-click  (chain this (del key))
 					    (esc (string #\en_dash))))
 				  (:div
 				   :class-name "pure-u-1 pure-u-md-1-12"
 				   (:button :class-name "pure-button"
-					    :style ({(create margin 0 padding "0.25em"))
-					    :on-click ({ (chain this (up key)))
+					    :style (create margin 0 padding "0.25em")
+					    :on-click  (chain this (up key))
 					    (esc (string #\upwards_arrow))))
 				  (:div
 				   :class-name "pure-u-1 pure-u-md-1-12"
 				   (:button :class-name "pure-button"
-					    :style ({(create margin 0 padding "0.25em"))
-					    :on-click ({ (chain this (down key)))
-					    (esc (string #\downwards_arrow))))))))
-			    ({ (chain this props (make-row item (chain this (handle-change i))))))))))
+					    :style (create margin 0 padding "0.25em")
+					    :on-click  (chain this (down key))
+					    (esc (string #\downwards_arrow)))))))
+			     (chain this props (make-row item (chain this (handle-change i)))))))))
 	       (htm
 		(:fieldset
-		 ({ items)
-		 ({
+		  items
+		 
 		   (if (and
 			(chain this props make-new)
 			(not *view-only*))
 		       (htm
 			(:button :class-name "pure-button"
-				 :on-click ({ (chain
+				 :on-click  (chain
 					       (lambda (event)
 						 (chain event (prevent-default))
-						 (chain this (add))) (bind this)))
-				 "+")))))))))
+						 (chain this (add))) (bind this))
+				 "+"))))))))
 
 (defreact-for-classish (*weapon-info weapon-info
 			       :on-change (tlambda (v) (chain this props (on-change v))))
@@ -617,22 +617,22 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			    :choice-values #.(mapcar (lambda (x) (string-downcase (string x))) cl-fccs::+proficiencies+)
 			    :class-name "pure-u-1 pure-u-md-1-3")
 	      (input-field dmg-die :class-name "pure-u-1-6 pure-u-md-1-12")
-	      (:div :style ({(create text-align :center)) :class-name "pure-u-1-24" "+")
-	      ({(chain this props dmg-bonus))
-	      ({(chain this props atk-bonus))
+	      (:div :style (create text-align :center) :class-name "pure-u-1-24" "+")
+	      (chain this props dmg-bonus)
+	      (chain this props atk-bonus)
 	      (input-field threat
-			  :parser ({ parse-int) :class-name "pure-u-1-6 pure-u-md-1-12")
+			  :parser  parse-int :class-name "pure-u-1-6 pure-u-md-1-12")
 	      (input-field size :class-name "pure-u-1-6 pure-u-md-1-12")
 	      (input-field hand
-			  :parser ({ parse-int) :class-name "pure-u-1-6 pure-u-md-1-12")
+			  :parser  parse-int :class-name "pure-u-1-6 pure-u-md-1-12")
 	      (input-field weight
 			   :label-as "Wgt."
-			  :parser ({ parse-float) :class-name "pure-u-1-6 pure-u-md-1-12")
+			  :parser  parse-float :class-name "pure-u-1-6 pure-u-md-1-12")
 	      (input-field rng
-			  :parser ({ (lambda (x) (when x (parse-int x))))
+			  :parser  (lambda (x) (when x (parse-int x)))
 			  :class-name "pure-u-1-6 pure-u-md-1-12")
 	      (input-field shots
-			  :parser ({ parse-int) :class-name "pure-u-1-6 pure-u-md-1-12")
+			  :parser  parse-int :class-name "pure-u-1-6 pure-u-md-1-12")
 	      (input-field qualities :class-name "pure-u-1 pure-u-md-1-2")))))
 
 		  
@@ -673,19 +673,19 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		   (funcall fn
 			    (chain *json* (parse (chain this response-text))))))):class-name "pure-u-1 pure-u-md-1-3")
 	     (input-field effect
-			  :override-value ({(aget :effect (chain this state obj)))
+			  :override-value (aget :effect (chain this state obj))
 			  :class-name "pure-u-1 pure-u-md-1-3")
 	     (choice-field size (:n :f :d :t :s :m :l :h :g :c :e :v)
-			   :override-value ({(aget :size (chain this state obj)))
+			   :override-value (aget :size (chain this state obj))
 			   :choice-values ("n" "f" "d" "t" "s" "m" "l" "h" "g" "c" "e" "v")
 			   :class-name "pure-u-1 pure-u-md-1-8")
 	     (input-field hand
-			  :override-value ({(aget :hand (chain this state obj)))
+			  :override-value (aget :hand (chain this state obj))
 			  :class-name "pure-u-1 pure-u-md-1-12")
 	     (input-field weight
-			  :override-value ({(aget :weight (chain this state obj)))
+			  :override-value (aget :weight (chain this state obj))
 			  :class-name "pure-u-1 pure-u-md-1-12"
-			  :parser ({ #'parse-int))))))
+			  :parser  #'parse-int)))))
 
 
 	     
@@ -709,11 +709,11 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		   (funcall fn
 			    (chain *json* (parse (chain this response-text)))))))
 	      :class-name "pure-u-1 pure-u-md-2-3"
-	      :parser ({ to-keyword))
+	      :parser  to-keyword)
 	     (input-field level
 			  :class-name "pure-u-1 pure-u-md-1-4"
 			  :input-type "number"
-			  :parser ({ parse-int))))))
+			  :parser  parse-int)))))
 
 
 
@@ -763,32 +763,32 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 	     (input-field level
 			  :class-name "pure-u-1 pure-u-md-1-12"
 			  :input-type "number"
-			  :override-value ({(aget :level (chain this state obj)))
-			  :parser ({ parse-int))
+			  :override-value (aget :level (chain this state obj))
+			  :parser  parse-int)
 	     (input-field discipline
 			  :class-name "pure-u-1 pure-u-md-1-4"
-			  :override-value ({(aget :discipline (chain this state obj))))
+			  :override-value (aget :discipline (chain this state obj)))
 	     (input-field casting-time
 			  :class-name "pure-u-1 pure-u-md-1-4"
-			  :override-value ({(aget :casting-time (chain this state obj))))
+			  :override-value (aget :casting-time (chain this state obj)))
 	     (input-field distance
 			  :class-name "pure-u-1 pure-u-md-1-4"
-			  :override-value ({(aget :distance (chain this state obj))))
+			  :override-value (aget :distance (chain this state obj)))
 	     (input-field area
 			  :class-name "pure-u-1 pure-u-md-1-4"
-			  :override-value ({(aget :area (chain this state obj))))
+			  :override-value (aget :area (chain this state obj)))
 	     (input-field saving-throw
 			  :class-name "pure-u-1 pure-u-md-1-4"
-			  :override-value ({(aget :saving-throw (chain this state obj))))
+			  :override-value (aget :saving-throw (chain this state obj)))
 	     (input-field duration
 			  :class-name "pure-u-1 pure-u-md-1-4"
-			  :override-value ({(aget :duration (chain this state obj))))
+			  :override-value (aget :duration (chain this state obj)))
 	     (input-field preparation-cost
 			  :class-name "pure-u-1 pure-u-md-1-4"
-			  :override-value ({(aget :preparation-cost (chain this state obj))))
+			  :override-value (aget :preparation-cost (chain this state obj)))
 	     (input-field effect
 			  :class-name "pure-u-1 pure-u-md-1-4"
-			  :override-value ({(aget :effect (chain this state obj))))
+			  :override-value (aget :effect (chain this state obj)))
 	     ))))
 
 (defreact-for-classish (*ability-info ability-info
@@ -799,7 +799,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 	    (:div :class-name nil
 		  (:div
 		   :class-name "pure-u-1-3"
-		  ({ (+
+		   (+
 		      (aget :name (chain this state obj))
 		      " ("
 		      (if (fc-class-p (aget :from (chain this state obj)))
@@ -810,7 +810,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			   (aget :level (aget :from
 					      (chain this state obj))))
 			  (aget :from (chain this state obj)))
-		      ")")))
+		      ")"))
 		  #+(or)(input-field name
 			       :class-name "pure-u-1-4")
 		  (input-field parameter
@@ -858,10 +858,10 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
     render
     (lambda ()
       (htm (:*character
-	    :default-value ({(chain this props default-value))
-	    :change-section ({ (chain this change-section))
-	    :character-id ({(chain this props character-id))
-	    :section ({(chain this state section))))))
+	    :default-value (chain this props default-value)
+	    :change-section  (chain this change-section)
+	    :character-id (chain this props character-id)
+	    :section (chain this state section)))))
 
 (defreact-for-classish (*character fc-character
 				   :on-change
@@ -906,56 +906,56 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 	      :class-name "pure-menu-horizontal"
 	      (:ul :class-name "pure-menu-list"
 		   (:li
-		    :class-name ({(+ "pure-menu-item"
+		    :class-name (+ "pure-menu-item"
 				     (if (= (chain this props section) "basics")
-					 " pure-menu-selected" "")))
+					 " pure-menu-selected" ""))
 		    (:a :href "#" :class-name "pure-menu-link"
-			:on-click ({(chain this props (change-section "basics")))
+			:on-click (chain this props (change-section "basics"))
 			"Basics"))
 		   (:li
-		    :class-name ({(+ "pure-menu-item"
+		    :class-name (+ "pure-menu-item"
 				     (if (= (chain this props  section) "combat")
-					 " pure-menu-selected" "")))
+					 " pure-menu-selected" ""))
 		    (:a :href "#" :class-name "pure-menu-link"
-			:on-click ({(chain this props (change-section "combat")))
+			:on-click (chain this props (change-section "combat"))
 			"Combat"))
 		   (:li
-		    :class-name ({(+ "pure-menu-item"
+		    :class-name (+ "pure-menu-item"
 				     (if (= (chain this props  section) "gear")
-					 " pure-menu-selected" "")))
+					 " pure-menu-selected" ""))
 		    (:a :href "#" :class-name "pure-menu-link"
-			:on-click ({(chain this props (change-section "gear")))
+			:on-click (chain this props (change-section "gear"))
 			"Gear"))
 		   (:li
-		    :class-name ({(+ "pure-menu-item"
+		    :class-name (+ "pure-menu-item"
 				     (if (= (chain this props  section) "spell")
-					 " pure-menu-selected" "")))
+					 " pure-menu-selected" ""))
 		    (:a :href "#" :class-name "pure-menu-link"
-			:on-click ({(chain this props (change-section "spell")))
+			:on-click (chain this props (change-section "spell"))
 			"Spellcasting"))
 		   (:li
-		    :class-name ({(+ "pure-menu-item"
+		    :class-name (+ "pure-menu-item"
 				     (if (= (chain this props  section) "bio")
-					 " pure-menu-selected" "")))
+					 " pure-menu-selected" ""))
 		    (:a :href "#" :class-name "pure-menu-link"
-			:on-click ({(chain this props (change-section "bio")))
+			:on-click (chain this props (change-section "bio"))
 			"Bio/Notes"))
 		   (:li
 		    :class-name "pure-menu-item"
-		    (:a :href ({(+ (fixup-path "/pdf-character/")
-				   (chain this props character-id)))
+		    (:a :href (+ (fixup-path "/pdf-character/")
+				   (chain this props character-id))
 			:target "_blank"
 			:class-name "pure-menu-link"
 			"PDF"))
 		   (:li
 		    :class-name "pure-menu-item"
-		    (:a :href ({(fixup-path "/")) :class-name "pure-menu-link"
-			:on-click ({(tlambda ()
+		    (:a :href (fixup-path "/") :class-name "pure-menu-link"
+			:on-click (tlambda ()
 				      (when
 					  (chain this upload-timer)
-					(chain this (upload-data)))))
+					(chain this (upload-data))))
 			"Save & Exit")))) 
-	     ({(cond
+	     (cond
 		 ((= (chain this props section) "basics")
 		  (htm
 		   (:form :key "basics"
@@ -1015,8 +1015,8 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			    (list-field classes
 					(lambda (data updater)
 					  (htm (:*fc-class
-						:default-value ({ data)
-						:on-change ({ updater))))
+						:default-value  data
+						:on-change  updater)))
 					:class-name "pure-u-1 pure-g"
 					;:row-key (lambda (x) (aget :the-class x))
 					:inner-class "pure-u-1-3 pure-g"
@@ -1025,7 +1025,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			    (input-field player-name
 					 :class-name "pure-u-1 pure-u-md-1-3")
 			    (input-field xp 
-					 :parser ({ parse-int)
+					 :parser  parse-int
 					 :class-name "pure-u-1 pure-u-md-1-3")
 			    (cl-fccs::output-field next-xp
 						   :class-name "pure-u-1 pure-u-md-1-3")
@@ -1043,7 +1043,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			       (:tr
 				(:th
 				 :col-span 3
-				 :style ({(create text-align "center"))
+				 :style (create text-align "center")
 				 "Physical Attributes")
 				(:th
 				 (output-field attr-points :show-label nil))))
@@ -1057,7 +1057,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			       (:td (input-field base-str :class-name nil 
 						 :input-class "pure-input-1"
 						 :show-label nil
-						 :parser ({ parse-int)))
+						 :parser  parse-int))
 			       (:td (output-field real-str :class-name nil
 						  :show-label nil
 						  :input-class "pure-input-1"))
@@ -1069,7 +1069,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			       (:td (input-field base-dex :class-name nil 
 						 :show-label nil
 						 :input-class "pure-input-1"
-						 :parser ({ parse-int)))
+						 :parser  parse-int))
 			       (:td (output-field real-dex :class-name nil
 						  :show-label nil
 						  :input-class "pure-input-1"))
@@ -1081,7 +1081,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			       (:td (input-field base-con :class-name nil 
 						 :input-class "pure-input-1"
 						 :show-label nil
-						 :parser ({ parse-int)))
+						 :parser  parse-int))
 			       (:td (output-field real-con :class-name nil
 						  :show-label nil
 						  :input-class "pure-input-1"))
@@ -1096,7 +1096,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			       (:tr
 				(:th
 				 :col-span 4
-				 :style ({(create text-align "center"))
+				 :style (create text-align "center")
 				 "Mental Attributes")))
 			      (:tr
 			       (:td "Name")
@@ -1108,7 +1108,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			       (:td (input-field base-int :class-name nil 
 						 :input-class "pure-input-1"
 						 :show-label nil
-						 :parser ({ parse-int)))
+						 :parser  parse-int))
 			       (:td (output-field real-int :class-name nil
 						  :show-label nil
 						  :input-class "pure-input-1"))
@@ -1120,7 +1120,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			       (:td (input-field base-wis :class-name nil 
 						 :show-label nil
 						 :input-class "pure-input-1"
-						 :parser ({ parse-int)))
+						 :parser  parse-int))
 			       (:td (output-field real-wis :class-name nil
 						  :show-label nil
 						  :input-class "pure-input-1"))
@@ -1132,7 +1132,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			       (:td (input-field base-cha :class-name nil 
 						 :input-class "pure-input-1"
 						 :show-label nil
-						 :parser ({ parse-int)))
+						 :parser  parse-int))
 			       (:td (output-field real-cha :class-name nil
 						  :show-label nil
 						  :input-class "pure-input-1"))
@@ -1151,9 +1151,9 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			    :class-name "pure-u-1 pure-u-xl-1-2"
 			    (:h2
 			     :class-name "pure-u-3-4"
-			     :style ({(create text-align "center"
+			     :style (create text-align "center"
 					      margin 0
-					      background-color "#e0e0e0"))
+					      background-color "#e0e0e0")
 			     "Skills")
 			    (output-field total-ranks
 					  :class-name "pure-u-1-4")
@@ -1162,9 +1162,9 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			   (:div
 			    :class-name "pure-u-1 pure-u-md-1-2 pure-u-xl-1-4 pure-g"
 			    (:h2
-			     :style ({(create text-align "center"
+			     :style (create text-align "center"
 					      margin 0
-					      background-color "#e0e0e0"))
+					      background-color "#e0e0e0")
 			     "Focuses")
 			    (list-field crafting-foci
 					(lambda (data updater)
@@ -1172,12 +1172,12 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 					   (:div
 					    :class-name "pure-u-11-12"
 					    (:*validating-input
-					     :default-value ({ data)
-					     :parser ({ (lambda (x) x))
-					     :style ({(create padding 0))
+					     :default-value  data
+					     :parser  (lambda (x) x)
+					     :style (create padding 0)
 					     :input-class "pure-input-1"
-					     :validator ({ (lambda () t))
-					     :on-change ({ updater)))))
+					     :validator  (lambda () t)
+					     :on-change  updater))))
 					:class-name "pure-u-1 pure-u-md-1-2 pure-g"
 					:inner-class nil
 					:make-new (lambda () ""))
@@ -1187,21 +1187,21 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 					   (:div
 					    :class-name "pure-u-11-12"
 					    (:*validating-input
-					     :default-value ({ data)
-					     :parser ({ (lambda (x) x))
+					     :default-value  data
+					     :parser  (lambda (x) x)
 					     :input-class "pure-input-1"
-					     :style ({(create padding 0))
-					     :validator ({ (lambda () t))
-					     :on-change ({ updater)))))
+					     :style (create padding 0)
+					     :validator  (lambda () t)
+					     :on-change  updater))))
 					:class-name "pure-u-1 pure-u-md-1-2 pure-g"
 					:inner-class nil
 					:make-new (lambda () "")))
 			   (:div
 			    :class-name "pure-u-1 pure-u-md-1-2 pure-u-xl-1-4 pure-g"
 			    (:h2
-			     :style ({(create text-align "center"
+			     :style (create text-align "center"
 					      margin 0
-					      background-color "#e0e0e0"))
+					      background-color "#e0e0e0")
 			     "Interests")
 			    (output-field total-studies)
 			    (input-field alignment
@@ -1210,11 +1210,11 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 					(lambda (data updater)
 					  (htm
 					   (:*validating-input
-					    :default-value ({ data)
-					    :parser ({ (lambda (x) x))
+					    :default-value  data
+					    :parser  (lambda (x) x)
 					    :input-class "pure-input-1"
-					    :validator ({ (lambda () t))
-					    :on-change ({ updater))))
+					    :validator  (lambda () t)
+					    :on-change  updater)))
 					:class-name  nil
 					:inner-class "pure-u-1 pure-u-md-1-2"
 					:make-new (lambda () ""))
@@ -1222,30 +1222,30 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 					(lambda (data updater)
 					  (htm
 					   (:*validating-input
-					    :default-value ({ data)
-					    :parser ({ (lambda (x) x))
+					    :default-value  data
+					    :parser  (lambda (x) x)
 					    :input-class "pure-input-1"
-					    :validator ({ (lambda () t))
-					    :on-change ({ updater))))
+					    :validator  (lambda () t)
+					    :on-change  updater)))
 					:class-name  nil
 					:inner-class "pure-u-1 pure-u-md-1-2"
 					:make-new (lambda () "")))
 			   (:div
 			    :class-name "pure-u-1 pure-u-xl-1-2"
 			    (:h2
-			     :style ({(create text-align "center"
+			     :style (create text-align "center"
 					      margin 0
-					      background-color "#e0e0e0"))
+					      background-color "#e0e0e0")
 			     "Subplots")
 			    (list-field completed-subplots
 					(lambda (data updater)
 					  (htm
 					   (:*validating-input
-					    :default-value ({ data)
-					    :parser ({ (lambda (x) x))
+					    :default-value  data
+					    :parser  (lambda (x) x)
 					    :input-class "pure-input-1"
-					    :validator ({ (lambda () t))
-					    :on-change ({ updater))))
+					    :validator  (lambda () t)
+					    :on-change  updater)))
 					:class-name  nil
 					:inner-class "pure-u-1 pure-u-md-1-4"
 					:make-new (lambda () ""))
@@ -1253,45 +1253,45 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 					(lambda (data updater)
 					  (htm
 					   (:*validating-input
-					    :default-value ({ data)
-					    :parser ({ (lambda (x) x))
+					    :default-value  data
+					    :parser  (lambda (x) x)
 					    :input-class "pure-input-1"
-					    :validator ({ (lambda () t))
-					    :on-change ({ updater))))
+					    :validator  (lambda () t)
+					    :on-change  updater)))
 					:class-name  nil
 					:inner-class "pure-u-1 pure-u-md-1-4"
 					:make-new (lambda () "")))
 			   (:div
 			    :class-name "pure-u-1 pure-u-md-1-2 pure-u-xl-1-4 pure-g"
 			    (:h2
-			     :style ({(create text-align "center"
+			     :style (create text-align "center"
 					      margin 0
-					      background-color "#e0e0e0"))
+					      background-color "#e0e0e0")
 			     "Coin")
 			    (input-field coin-in-hand
-					 :parser ({ parse-int)
+					 :parser  parse-int
 					 :class-name "pure-u-1")
 			    (input-field stake
-					 :parser ({ parse-int)
+					 :parser  parse-int
 					 :class-name "pure-u-1"))
 			   (:div
 			    :class-name "pure-u-1 pure-u-md-1-2 pure-u-xl-1-4 pure-g"
 			    (:div
 			     :class-name "pure-u-1 pure-u-md-7-8"
-			     :style ({(create margin 0 padding 0))
+			     :style (create margin 0 padding 0)
 			     (:h2
-			      :style ({(create text-align "center"
+			      :style (create text-align "center"
 					       margin 0
-					       background-color "#e0e0e0"))
+					       background-color "#e0e0e0")
 			      "Lifestyle"))
 			    (output-field lifestyle
 					  :class-name "pure-u-1 pure-u-md-1-8"
 					  :show-label nil)
 			    (input-field panache
-					 :parser ({ parse-int)
+					 :parser  parse-int
 					 :class-name "pure-u-1 pure-u-md-1-2")
 			    (input-field prudence
-					 :parser ({ parse-int)
+					 :parser  parse-int
 					 :class-name "pure-u-1 pure-u-md-1-2")
 			    (output-field appearance-bonus
 					  :class-name "pure-u-1 pure-u-md-1-2")
@@ -1304,8 +1304,8 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			   (list-field ability-list
 				       (lambda (data updater)
 					 (htm (:*ability-info
-					       :default-value ({ data)
-					       :on-change ({ updater))))
+					       :default-value  data
+					       :on-change  updater)))
 				       :read-only t
 				       :class-name "pure-u-1 pure-u-xl-1-2 pure-g"
 				       :row-key (lambda (x) (+ (aget :name x)
@@ -1314,8 +1314,8 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			   (list-field feat-list
 				       (lambda (data updater)
 					 (htm (:*feat-info
-					       :default-value ({ data)
-					       :on-change ({ updater))))
+					       :default-value  data
+					       :on-change  updater)))
 				       :class-name "pure-u-1 pure-u-xl-1-2 pure-g"
 					;:row-key (lambda (x) (+ (aget :name x)
 					;(aget :parameter x)
@@ -1357,11 +1357,11 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			    ;;(:div :class-name "pure-u-1-3") ;TODO Insert other speed
 			    (output-field travel-speed :class-name "pure-u-1-3")
 			    (checkboxes-field proficiency-list
-					      ({ +proficiencies+)
+					       +proficiencies+
 					      :class-name "pure-u-1"
 					      :checkbox-class "pure-u-1-4")
 			    (checkboxes-field forte-list
-					      ({ +proficiencies+)
+					       +proficiencies+
 					      :class-name "pure-u-1"
 					      :checkbox-class "pure-u-1-4")
 			    (:h3 :class-name "heading pure-u-1"
@@ -1369,14 +1369,14 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			    (list-field tricks
 					(lambda (data updater)
 					  (htm (:*validating-input
-						:default-value ({ data)
-						:error-style ({(create background-color "pink"
-								       padding 0))
-						:style ({(create background-color "white"
-								 padding 0))
-						:validator ({ #'stringp)
-						:parser ({(lambda (x) x))
-						:on-change ({ updater))))
+						:default-value  data
+						:error-style (create background-color "pink"
+								       padding 0)
+						:style (create background-color "white"
+								 padding 0)
+						:validator  #'stringp
+						:parser (lambda (x) x)
+						:on-change  updater)))
 					:show-name nil
 					:class-name "pure-u-1 pure-u-xl-1-2 pure-g"
 					;:row-key (lambda (x) (aget :the-class x))
@@ -1527,22 +1527,22 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 					 :class-name "pure-u-1 pure-u-md-1-4")
 			    (input-field armor-dr
 					 :class-name "pure-u-1 pure-u-md-1-6"
-					 :parser ({ #'parse-int))
+					 :parser  #'parse-int)
 			    (input-field armor-dp
 					 :class-name "pure-u-1 pure-u-md-1-6"
-					 :parser ({ #'parse-int))
+					 :parser  #'parse-int)
 			    (input-field armor-acp
 					 :class-name "pure-u-1 pure-u-md-1-6"
-					 :parser ({ #'parse-int))
+					 :parser  #'parse-int)
 			    (input-field armor-speed
 					 :class-name "pure-u-1 pure-u-md-1-6"
-					 :parser ({ #'parse-int))
+					 :parser  #'parse-int)
 			    (input-field armor-weight
 					 :class-name "pure-u-1 pure-u-md-1-6"
-					 :parser ({ #'parse-int))
+					 :parser  #'parse-int)
 			    (input-field armor-disguise
 					 :class-name "pure-u-1 pure-u-md-1-6"
-					 :parser ({ #'parse-int))
+					 :parser  #'parse-int)
 			    (input-field armor-craftsmanship
 					 :class-name "pure-u-1 pure-u-md-1-4")
 			    (input-field armor-construction
@@ -1551,9 +1551,9 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 					 :class-name "pure-u-1 pure-u-md-5-6"
 					 :formatter (lambda (x)
 						      (chain x (join ", ")))
-					 :parser ({(lambda (x)
+					 :parser (lambda (x)
 						     (unloopable
-						     (chain x (split (ps:new (*reg-exp ", *"))))))))
+						     (chain x (split (ps:new (*reg-exp ", *")))))))
 			    (choice-field armor-fittings
 					  ("none" "light" "heavy"))
 			    )
@@ -1591,21 +1591,21 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			  "Reputation and Renown")
 		     (output-field legend)
 		     (input-field reputation
-				  :parser ({ #'parse-int))
+				  :parser  #'parse-int)
 		     (output-field renown)
 		     (input-field heroic-renown
-				  :parser ({ #'parse-int))
+				  :parser  #'parse-int)
 		     (input-field military-renown
-				  :parser ({ #'parse-int))
+				  :parser  #'parse-int)
 		     (input-field noble-renown
-				  :parser ({ #'parse-int)))
+				  :parser  #'parse-int))
 		     (:h2 :class-name "heading pure-u-1 pure-u-xl-1-2"
 			  "Gear")
 		    (list-field gear
 				(lambda (data updater)
 				  (htm (:*gear-info
-					:default-value ({ data)
-					:on-change ({ updater))))
+					:default-value  data
+					:on-change  updater)))
 				:show-name nil
 				:class-name "pure-u-1 pure-u-xl-1-2 pure-g"
 					;:row-key (lambda (x) (aget :the-class x))
@@ -1705,8 +1705,8 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		    (list-field contacts
 				(lambda (data updater)
 				  (htm (:*contact-info
-					:default-value ({ data)
-					:on-change ({ updater))))
+					:default-value  data
+					:on-change  updater)))
 				:show-name nil
 				:class-name "pure-u-1 pure-g"
 				:inner-class "pure-u-1 pure-u-md-1-2 pure-g"
@@ -1719,8 +1719,8 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		     (list-field holdings
 				 (lambda (data updater)
 				   (htm (:*holding-info
-					 :default-value ({ data)
-					 :on-change ({ updater))))
+					 :default-value  data
+					 :on-change  updater)))
 				 :show-name nil
 				 :class-name "pure-u-1 pure-g"
 				 :inner-class "pure-u-1 pure-u-md-1-2 pure-g"
@@ -1733,8 +1733,8 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		     (list-field magic-items
 				 (lambda (data updater)
 				   (htm (:*magic-item-info
-					 :default-value ({ data)
-					 :on-change ({ updater))))
+					 :default-value  data
+					 :on-change  updater)))
 				 :show-name nil
 				 :class-name "pure-u-1 pure-g"
 				 :inner-class "pure-u-1 pure-g"
@@ -1749,16 +1749,16 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		    (:div
 		     :class-name "pure-u-1 pure-u-xl-1-2 pure-g"
 		     (input-field casting-level
-				  :parser ({ #'parse-int))
+				  :parser  #'parse-int)
 		     (input-field spell-points
-				  :parser ({ #'parse-int)))
+				  :parser  #'parse-int))
 		    (:div
 		     :class-name "pure-u-1 pure-u-xl-1-2 pure-g"
 		     (output-field spellcasting-total
 				   :class-name "pure-u-1 pure-u-md-1-4 pure-u-xl-1-8")
 		     (input-field spellcasting-ranks
 				  :class-name "pure-u-1 pure-u-md-1-4 pure-u-xl-1-8"
-				  :parser ({ #'parse-int))
+				  :parser  #'parse-int)
 		     (output-field int-mod
 				   :class-name "pure-u-1 pure-u-md-1-4 pure-u-xl-1-8")
 		     (output-field spellcasting-misc-mod
@@ -1779,12 +1779,12 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 				   :class-name "pure-u-1 pure-u-md-1-4 pure-u-xl-1-8")
 		     (input-field spellcasting-feats
 				  :class-name "pure-u-1 pure-u-md-1-4 pure-u-xl-1-8"
-				  :parser ({ #'parse-int)))
+				  :parser  #'parse-int))
 		    (list-field spells
 				(lambda (data updater)
 				  (htm (:*spell-info
-					:default-value ({ data)
-					:on-change ({ updater))))
+					:default-value  data
+					:on-change  updater)))
 				:class-name "pure-u-1 pure-g"
 					;:row-key (lambda (x) (aget :the-class x))
 				:inner-class "pure-u-1 pure-u-xl-1-2 pure-g"
@@ -1813,7 +1813,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			  :rows 30
 			  :class-name "pure-input-1"))
 			(:div :class-name "pure-u-1-12"))))
-		 ))))))
+		 )))))
 
 (defreact *login
     mixins (ps:array (chain *react addons *pure-render-mixin))
@@ -1837,14 +1837,14 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 	       (:label :html-for "username" "Username")
 	       (:input :id "username" :class-name "pure-input"
 			:name "username"
-			:value ({ (chain this state username))
-			:on-change ({ (chain this (handle-changed "username"))))
+			:value  (chain this state username)
+			:on-change  (chain this (handle-changed "username")))
 	       (:label :html-for "password" "Password")
 	       (:input :id "password" :class-name "pure-input"
 		       :type "password"
 		       :name "password"
-		       :on-change ({ (chain this (handle-changed "password")))
-		       :value ({ (chain this state password)))
+		       :on-change  (chain this (handle-changed "password"))
+		       :value  (chain this state password))
 	       (:input
 		:type :submit
 		:value "Login"
@@ -1863,13 +1863,13 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
     render (lambda ()
 	     (htm
 	      (:form
-	       :action ({(fixup-path "/logout/"))
+	       :action (fixup-path "/logout/")
 	       :method :post
 	       :class-name "pure-form"
 	       (:input
 		:type :hidden
 		:name "csrf-token"
-		:value ({(chain document (get-element-by-id "csrf") inner-h-t-m-l (trim))))
+		:value (chain document (get-element-by-id "csrf") inner-h-t-m-l (trim)))
 	       (:input
 		:type "submit"
 		:class-name "pure-button"
@@ -1898,16 +1898,16 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		(:label :html-for "password1" "New Password")
 		(:input :id "password1" :class-name "pure-input"
 			:type "password"
-			:value ({ (chain this state password1))
-			:on-change ({ (chain this (handle-changed "password1"))))
+			:value  (chain this state password1)
+			:on-change  (chain this (handle-changed "password1")))
 		(:label :html-for "password2" "Confirm Password")
 		(:input :id "password2" :class-name "pure-input"
 			:type "password"
-			:on-change ({ (chain this (handle-changed "password2")))
-			:value ({ (chain this state password2)))
+			:on-change  (chain this (handle-changed "password2"))
+			:value  (chain this state password2))
 		(:button
 		 :class-name "pure-button"
-		 :on-click ({(tlambda (event)
+		 :on-click (tlambda (event)
 			       (chain event (prevent-default))
 			       (if (= (chain this state password1)
 				      (chain this state password2))
@@ -1921,15 +1921,15 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 						  (chain
 						   this
 						   (set-state (create state :success))))))
-				   (alert "Passwords must match")))))
-		({(cond
+				   (alert "Passwords must match"))))
+		(cond
 		    ((eql (chain this state state) :initial) nil)
 		    ((eql (chain this state state) :sent)
 		     (htm (:p "In-progress...")))
 		    ((eql (chain this state state) :success)
 		     (htm (:p "Success!")))
 		    ;;TODO error
-		    ))))))
+		    )))))
 
 (defreact *character-list
     mixins (ps:array (chain *react addons *pure-render-mixin))
@@ -1949,29 +1949,29 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		     (:th "Player Name")
 		     (:th "Level")))
 		   (:tbody
-		    ({(loop for item in (loopable (chain this props value))
+		    (loop for item in (loopable (chain this props value))
 			 collect
 			   (htm
 			    (:tr
-			     :on-click ({(chain this (edit (aget :id item))))
-			     :key ({(aget :id item))
-			     (:td ({(aget :id item)))
-			     (:td ({(aget :char-name item)))
-			     (:td ({(aget :player-name item)))
-			     (:td ({(aget :career-level item)))))))))
+			     :on-click (chain this (edit (aget :id item)))
+			     :key (aget :id item)
+			     (:td (aget :id item))
+			     (:td (aget :char-name item))
+			     (:td (aget :player-name item))
+			     (:td (aget :career-level item)))))))
 	       (:form
 		(:input
 		 :type :hidden
 		 :name "csrf-token"
 		 :read-only t
-		 :value ({(chain document (get-element-by-id "csrf") inner-h-t-m-l (trim))))
+		 :value (chain document (get-element-by-id "csrf") inner-h-t-m-l (trim)))
 		(:button
-		 :form-action ({(fixup-path "/new-character/"))
+		 :form-action (fixup-path "/new-character/")
 		 :form-method "POST"
 		 :class-name "pure-button"
 		 "New"))
 	       (:p
-		(:a :href ({(fixup-path "/account/"))
+		(:a :href (fixup-path "/account/")
 		    "Account Settings"))
 	       (:p
 		(:a :href "https://phab.jasom.org/"
