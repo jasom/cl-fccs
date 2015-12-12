@@ -150,10 +150,10 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 				    :right
 				    :left))))))
     render (lambda ()
-	     (htm
-	      (:div
-	       :class-name ({(chain this props class-name))
-	       :style ({(create margin 0))
+	 (htm
+	  (:div
+	   :class-name ({(chain this props class-name))
+	   :style ({(create margin 0))
 	       (:div
 		:style ({(create padding 0))
 		:on-click ({(chain this handle-click))
@@ -763,6 +763,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 	     (input-field level
 			  :class-name "pure-u-1 pure-u-md-1-12"
 			  :input-type "number"
+			  :override-value ({(aget :level (chain this state obj)))
 			  :parser ({ parse-int))
 	     (input-field discipline
 			  :class-name "pure-u-1 pure-u-md-1-4"

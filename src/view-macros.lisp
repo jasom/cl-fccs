@@ -12,83 +12,82 @@
 	     result)))))
 
 (defmacro checkbox-field (name  &key
-			       (class-name "pure-u-1 pure-u-md-1-6")
-			       (input-class "pure-checkbox")
-			       (show-label t))
+				  (class-name "pure-u-1 pure-u-md-1-6")
+				  (id (string (gensym)))
+				  (input-class "pure-checkbox")
+				  (show-label t))
   (let ((name (alexandria:make-keyword (string name))))
-    `({
-       (tlet ((id (genid)))
+    `(tlet ((id ,id))
 	     (htm
 	      (:div
 	       :class-name ,class-name
-	       :style ({(create margin 0))
-	       (:*validating-checkbox :default-value ({(aget ,name (chain this state obj)))
-				   :id ({ id)
+	       :style (create margin 0)
+	       (:*validating-checkbox :default-value (aget ,name (chain this state obj))
+				   :id id
 				   :input-class ,input-class
-				   :error-style ({(create background-color "pink"
-							  padding 0))
-				   :style ({(create background-color "white"
-						    padding 0))
-				   :validator ({ (chain this (validate ',name)))
-				   :on-change ({ (chain this (handle-change ',name))))
+				   :error-style (create background-color "pink"
+							  padding 0)
+				   :style (create background-color "white"
+						    padding 0)
+				   :validator (chain this (validate ',name))
+				   :on-change (chain this (handle-change ',name)))
 	       ,@(when show-label
-		       `((:label :html-for ({ id)
+		       `((:label :html-for id
 				 ,(better-capitalize (string name)))))
-	       ))))))
+	       )))))
 
 (defmacro autocomplete-input-field (name  &key
 					    (class-name "pure-u-1 pure-u-md-1-6")
 					    (input-class "pure-input-1")
 					    input-type
 					    update-completions
+					    (id (string (Gensym)))
 					    (label-as nil)
 					    (show-label t)
 					    (formatter '(lambda (x) x))
-					    (parser '({ (lambda (x) x))))
+					    (parser '(lambda (x) x)))
   (let ((name (alexandria:make-keyword (string name))))
-    `({
-       (tlet ((id (genid)))
+    `(tlet ((id ,id))
 	     (htm
 	      (:div
 	       :class-name ,class-name
-	       :style ({(create margin 0))
+	       :style (create margin 0)
 	       (:*validating-autocomplete
-		:default-value ({ (funcall ,formatter (aget ,name (chain this state obj))))
+		:default-value (funcall ,formatter (aget ,name (chain this state obj)))
 		:parser ,parser
-		:id ({ id)
+		:id id
 		:input-class ,input-class
 		:type ,input-type
-		:error-style ({(create background-color "pink"
-				       padding 0))
-		:style ({(create background-color "white"
-				 padding 0))
-		:update-completions ({ ,update-completions)
-		:validator ({ (chain this (validate ',name)))
-		:on-change ({ (chain this (handle-change ',name))))
+		:error-style (create background-color "pink"
+				       padding 0)
+		:style (create background-color "white"
+				 padding 0)
+		:update-completions ,update-completions
+		:validator (chain this (validate ',name))
+		:on-change (chain this (handle-change ',name)))
 	       ,@(when show-label
-		       `((:label :html-for ({ id)
+		       `((:label :html-for id
 				 ,(if label-as
 				      label-as
 				      (better-capitalize (string name))))))
-	       ))))))
+	       )))))
 
 (defmacro textarea-field (name &key
 				 (class-name "pure-u-1 pure-u-md-1-6")
 				 (formatter '(lambda (x) x))
 				 (rows))
   (let ((name (alexandria:make-keyword (string name))))
-    `({
-       (tlet ((id (genid)))
+    `(tlet ((id (genid)))
 	     (htm
 	      (:textarea
-	       :default-value ({(funcall ,formatter (aget ,name (chain this state obj))))
-	       :id ({ id)
+	       :default-value (funcall ,formatter (aget ,name (chain this state obj)))
+	       :id id
 	       :class-name ,class-name
 	       :rows ,rows
-	       :style ({(create background-color "white" padding 0))
-	       :on-change ({(let ((fn (chain this (handle-change ',name))))
+	       :style (create background-color "white" padding 0)
+	       :on-change (let ((fn (chain this (handle-change ',name))))
 			      (lambda (ev)
-				(funcall fn (chain ev target value)))))))))))
+				(funcall fn (chain ev target value)))))))))
 
 (defmacro input-field (name  &key
 			       (class-name "pure-u-1 pure-u-md-1-6")
@@ -96,65 +95,65 @@
 			       input-type
 			       (label-as nil)
 			       (show-label t)
+			       (id (string (gensym)))
 			       (formatter '(lambda (x) x))
-			       (parser '({ (lambda (x) x)))
+			       (parser '(lambda (x) x))
 			       override-value)
   (let ((name (alexandria:make-keyword (string name))))
-  `({
-     (tlet ((id (genid)))
+  `(tlet ((id ,id))
        (htm
 	(:div
 	 :class-name ,class-name
-	 :style ({(create margin 0))
-	 (:*validating-input :default-value ({ (funcall ,formatter (aget ,name (chain this state obj))))
+	 :style (create margin 0)
+	 (:*validating-input :default-value (funcall ,formatter (aget ,name (chain this state obj)))
 			     :parser ,parser
-			     :id ({ id)
+			     :id id
 			     :input-class ,input-class
 			     :type ,input-type
-			     :error-style ({(create background-color "pink"
-						    padding 0))
-			     :style ({(create background-color "white"
-					      padding 0))
-			     :validator ({ (chain this (validate ',name)))
-			     :on-change ({ (chain this (handle-change ',name)))
+			     :error-style (create background-color "pink"
+						    padding 0)
+			     :style (create background-color "white"
+					      padding 0)
+			     :validator (chain this (validate ',name))
+			     :on-change (chain this (handle-change ',name))
 			     ,@(when override-value
 				     `(:override-value ,override-value)))
 
 	 ,@(when show-label
-		 `((:label :html-for ({ id)
+		 `((:label :html-for id
 			   ,(if label-as
 				label-as
 				(better-capitalize (string name))))))
-	 ))))))
+	 )))))
 
 (defmacro skill-table (skills)
     `(htm
       (:div
        :class-name "pure-u-1 pure-u-md-1-2 pure-g"
-       :style ({(create font-size "75%"))
+       :style (create font-size "75%")
        :text-align "center"
        (:div :class-name "pure-u-1-12"
 	     "OS")
        (:div :class-name "pure-u-1-6"
-	     :style ({(create font-size "75%"))
+	     :style (create font-size "75%")
 	     "Skill Name")
        (:div :class-name "pure-u-1-8"
-	     :style ({(create font-size "75%"))
+	     :style (create font-size "75%")
 	     "Attr.")
        (:div :class-name "pure-u-1-8"
-	     :style ({(create font-size "75%"))
+	     :style (create font-size "75%")
 	     "Skill Bonus")
        (:div :class-name "pure-u-1-8"
-	     :style ({(create font-size "75%"))
+	     :style (create font-size "75%")
 	     "Ranks")
        (:div :class-name "pure-u-1-8"
-	     :style ({(create font-size "75%"))
+	     :style (create font-size "75%")
 	     "Attr Mod.")
        (:div :class-name "pure-u-1-8"
-	     :style ({(create font-size "75%"))
+	     :style (create font-size "75%")
 	     "Misc Mod.")
        (:div :class-name "pure-u-1-8"
-	     :style ({(create font-size "75%"))
+	     :style (create font-size "75%")
 	     "Threat")
        ,@(loop for item in skills
 	    for fitem = (ssub "_" " " (string item))
@@ -183,7 +182,7 @@
 				    :show-label nil
 				    :class-name nil
 				    :input-class "pure-input-1"
-				    :parser ({ parse-int)))
+				    :parser parse-int))
 		 (:div :class-name "pure-u-1-8"
 		       (output-field ,(make-keyword (format nil "~a-ATTR-BONUS" fitem))
 				     :show-label nil
@@ -199,7 +198,7 @@
 				    :show-label nil
 				    :class-name nil
 				    :input-class "pure-input-1"
-				    :parser ({ parse-int)))))))))
+				    :parser parse-int))))))))
 
 (defmacro weapon-table (n)
   `(htm
@@ -207,15 +206,15 @@
 	  ,@(loop for i from 1 to n
 	       collect
 		 `(:*weapon-info
-		   :default-value ({(aget ,(key-fmt :weapon-~d i) (chain this state obj) nil))
+		   :default-value (aget ,(key-fmt :weapon-~d i) (chain this state obj) nil)
 					;TODO validator
-		   :on-change ({(chain this (handle-change ,(key-fmt :weapon-~d i))))
-		   :atk-bonus ({(output-field ,(key-fmt :weapon-~d-atk-bonus i)
+		   :on-change (chain this (handle-change ,(key-fmt :weapon-~d i)))
+		   :atk-bonus (output-field ,(key-fmt :weapon-~d-atk-bonus i)
 					      :label-as "Atk"
-					      :class-name "pure-u-1-6 pure-u-md-1-12"))
-		   :dmg-bonus ({(output-field ,(key-fmt :weapon-~d-dmg-bonus i)
+					      :class-name "pure-u-1-6 pure-u-md-1-12")
+		   :dmg-bonus (output-field ,(key-fmt :weapon-~d-dmg-bonus i)
 					      :label-as "Dmg. Bonus"
-					      :class-name "pure-u-1-6 pure-u-md-1-12")))))))
+					      :class-name "pure-u-1-6 pure-u-md-1-12"))))))
 
 (defmacro output-field (name &key
 			       (class-name nil)
@@ -225,34 +224,18 @@
   `(htm
     (:*fudgable-field
      :name ,(make-keyword name)
-     :class-name ({ ,class-name )
-     :show-label ({ ,show-label )
-     :label-as ({ ,label-as )
-     :default-fudge ({ (if (listp (aget ,(make-keyword name) (aget :fudges (chain this state obj))))
+     :class-name ,class-name
+     :show-label ,show-label
+     :label-as ,label-as
+     :default-fudge (if (listp (aget ,(make-keyword name) (aget :fudges (chain this state obj))))
 			   (aget ,(make-keyword name) (aget :fudges (chain this state obj)))
-			   (list)))
-     :validate-fudge ({(chain this
-			      (validate-fudge this ,(make-keyword name))))
-     :fudge-changed ({(chain this
-			     (on-fudge-change ,(make-keyword name))))
-     :value ({ (calculate-field ,(make-keyword name) (chain this state obj)))
-     :input-class ,input-class))
-  #+(or)`({
-     (tlet ((id (genid)))
-	   (htm
-	    (:div
-	     :class-name ,class-name
-	     :style ({(create margin 0))
-	     (:div
-	      :style ({(create padding 0))
-	      :class-name ,input-class
-	      ({ (calculate-field
-		  ,(make-keyword (string name))
-		  (chain this state))))
-	     ,@(when show-label
-		     `(
-		       (:label 
-			,(better-capitalize(string name))))))))))
+			   (list))
+     :validate-fudge (chain this
+			      (validate-fudge this ,(make-keyword name)))
+     :fudge-changed (chain this
+			     (on-fudge-change ,(make-keyword name)))
+     :value (calculate-field ,(make-keyword name) (chain this state obj))
+     :input-class ,input-class)))
 
 (defmacro defreact-for-classish ((react-name name &key
 					     on-change) &body b)
@@ -290,40 +273,39 @@
 				       (class-name "pure-u-1 pure-u-md-1-6")
 				       (choice-class "pure-input-1")
 				       (choice-values choices)
-				       (parser '({ (lambda (x) x)))
+				       (id (string (gensym)))
+				       (parser '(lambda (x) x))
 				       override-value)
   (let ((name (alexandria:make-keyword (string name))))
-    `({
-       (tlet ((id (genid)))
+    `(tlet ((id ,id))
 	     (htm
 	      (:div
 	       :class-name ,class-name
 	       (:*validating-select
-		:default-value ({ (aget ,name (chain this state obj)))
-		:validator ({ (chain this (validate ',name)))
-		:error-style ({(create background-color "pink"
-				       padding 0))
-		:style ({(create background-color "white"
-				 padding 0))
+		:default-value (aget ,name (chain this state obj))
+		:validator (chain this (validate ',name))
+		:error-style (create background-color "pink"
+				       padding 0)
+		:style (create background-color "white"
+				 padding 0)
 		:parser ,parser
 		:class-name ,choice-class
-		:id ({ id)
+		:id id
 		,@(when override-value (list :override-value override-value))
-		:on-change ({ (chain this (handle-change ',name)))
+		:on-change (chain this (handle-change ',name))
 		,@(loop for choice in choices
 		     for choice-value in choice-values
 		     collect `(:option :value ,choice-value
 				       (esc ,(better-capitalize (string choice))))))
-	       (:label :html-for ({ id) ,(better-capitalize(string name)))))))))
+	       (:label :html-for id ,(better-capitalize(string name))))))))
 
 
 (defmacro checkboxes-field (name choices &key
 					 (class-name "pure-u-1 pure-u-md-1-6")
 					 (checkbox-class nil)
-					 (parser '({ (lambda (x) x))))
+					 (parser '(lambda (x) x)))
   (let ((name (alexandria:make-keyword (string name))))
-    `({
-       (htm
+    `(htm
 	(:div
 	 :class-name ,class-name
 	 (:h3
@@ -331,12 +313,12 @@
 	  ,(better-capitalize (string name)))
 
 	 (:*validating-checkboxes
-	  :default-value ({(aget ,name (chain this state obj)))
-	  :validator ({ (chain this (validate ',name)))
+	  :default-value (aget ,name (chain this state obj))
+	  :validator (chain this (validate ',name))
 	  :parser ,parser
 	  :class-name ,checkbox-class
-	  :on-change ({ (chain this (handle-change ',name)))
-	  :choices ,choices))))))
+	  :on-change (chain this (handle-change ',name))
+	  :choices ,choices)))))
 
 #+ps(defvar *row-keyn* 0)
 
@@ -354,11 +336,13 @@
        ,@(when show-name (list (better-capitalize (string name))))
        (:*val-list
 	:read-only ,read-only
-	:value ({(aget ,name (chain this state obj)))
-	:validator ({ (chain this (validate ',name)))
-	:on-change ({ (chain this (handle-change ',name)))
+	:value (aget ,name (chain this state obj))
+	:validator (chain this (validate ',name))
+	:on-change (chain this (handle-change ',name))
 	:inner-class ,inner-class
-	:row-key ({ ,row-key)
-	:make-new ({ ,make-new)
-	:make-row ({ ,make-row))))))
+	:row-key ,row-key
+	:make-new ,make-new
+	:make-row ,make-row)))))
+
+(defmacro ^ (&rest r) `(chain ,@r))
 

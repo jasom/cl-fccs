@@ -217,7 +217,8 @@
 	   (log:debug "We have a character!")
 	   (save-character id fixed-char))
 	 `(200
-	   (:content-type "text/html")))))))
+	   (:content-type "text/plain")
+	   ("")))))))
 
 (defapprule view-char-rule (property :path-info (ppcre "^/view-character/(\\d*)$" id))
   (with-db-connection
@@ -294,7 +295,7 @@ characterId: ~D, defaultValue : " id)
 			  (property :remote-user username))
   (with-db-connection
     `(200
-      (:content-type "text/html")
+      (:content-type "text/html; charset=UTF-8")
       (,(render-page
 	 (s)
 	 (:script
@@ -308,7 +309,8 @@ characterId: ~D, defaultValue : " id)
   (change-user-password username
 			(flexi-streams:octets-to-string body :external-format :utf-8))
   `(200
-    (:content-type "text/html")))
+    (:content-type "text/plain")
+    ("")))
 
 (defun app (env)
   (log:debug env)
@@ -442,7 +444,11 @@ characterId: ~D, defaultValue : " id)
 		   ,@(if size-idx
 			 (destructuring-bind (size hand)
 			     (split-sequence #\/ (elt info size-idx))
-			   (list (string-downcase size) hand))
+			   (list
+			    (if (> (length size) 1)
+				"m"
+				(string-downcase size))
+			    hand))
 			 '("" ""))
 		   ,(if weight-idx
 			(let ((weight-str (elt info weight-idx)))
