@@ -1,5 +1,9 @@
 (in-package :cl-fccs)
 
+(defvar *redis-index* 0)
+
+(defvar *current-schema-verison* 1)
+
 (defun dumb-byte-char (v)
   (declare (type (simple-array (unsigned-byte 8) (*)) v))
   "This is a dumb way to convert a byte-vector to a string.
@@ -14,6 +18,12 @@
     (dotimes (i (length s) v)
       (setf (aref v i) (char-code (aref s i))))))
 
+(defun db-connect ()
+  (redis:connect)
+  (red:select *redis-index*)
+  (unless (= (get-schema-version) *current-schema-verison*)
+    (error "Schema version mismatch")))
+
 (defmacro with-db-connection (&body b)
   `(let ((redis::*connection* redis::*connection*))
      (if (redis::connected-p)
@@ -21,7 +31,7 @@
 	   ,@b)
 	 (unwind-protect
 	      (progn
-		(redis:connect)
+		(db-connect)
 		,@b)
 	   (redis:disconnect)))))
 
@@ -97,4 +107,3 @@
 
 (defun add-user-to-character (character-id username)
   (red:sadd (format nil "character-users-~d" character-id) username))
-  

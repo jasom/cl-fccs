@@ -1,4 +1,5 @@
 (in-package :cl-fccs)
+(declaim (optimize (speed 0) (debug 3)))
 (cl-interpol:enable-interpol-syntax)
 
 (defparameter *path-to-charsheet* "/home/aidenn/Downloads/Fantasy_Craft_Character_Sheets-v6-Fillable.pdf")
@@ -29,7 +30,7 @@
    (emit-list (lambda (item n)
 		(emit-value (format nil outputter n) item))
 	      list)
-   (loop for item in list
+   (loop for item across list
       for n from 1
 	do (funcall outputter item n))))
 
@@ -84,7 +85,7 @@
 	(:xfdf :|XML:SPACE| "preserve"
 	       (:fields
 		(emit-value "HeroFirstClassLevel"
-			    (fmt-class (first (aget :classes character))))
+			    (fmt-class (elt (aget :classes character) 0)))
 		(emit-item "HeroCharacterName" :character-name)
 		(emit-item "HeroPlayerName" :player-name)
 		(emit-item "HeroGender" :gender)
@@ -92,12 +93,12 @@
 			    (format nil "~A~@[/~A~]"
 				    (aget :species character)
 				    (nestring (aget :talent character))))
-		(emit-value "HeroSecondClassLevel" (fmt-class (second (aget :classes character))))
+		(emit-value "HeroSecondClassLevel" (fmt-class (second (coerce (aget :classes character) 'list))))
 		(emit-item "HeroCurrentXP" :xp)
 		(emit-item "HeroHair" :hair)
 		(emit-item "HeroSpeciality" :specialty)
 		(emit-value "HeroThirdClassLevel" (fmt-class
-						   (third (Aget :classes character))))
+						   (third (coerce (aget :classes character) 'list))))
 		(emit-field "HeroNextLevel" :next-xp)
 		(emit-item "HeroWeight"  :weight)
 		(emit-item "HeroEyes" :eyes)
@@ -147,19 +148,19 @@
 		(emit-list "FocusesRide~D" (aget :ride-foci character))
 		(emit-field "InterestsTotal" :total-studies)
 		(emit-list "Interests~d"
-			   (append
+			   (concatenate 'vector
 			    (when (not (emptyp (aget :alignment character)))
 			      (list #?"Alignment: $((aget :alignment character))"))
-			    (mapcar (lambda (x) #?"Language: ${x}")
+			    (mapcar* (lambda (x) #?"Language: ${x}")
 				    (aget :languages character))
-			    (mapcar (lambda (x) #?"Study: ${X}")
+			    (mapcar* (lambda (x) #?"Study: ${X}")
 				    (aget :studies character))))
 		(emit-list "Subplots~d"
-			   (append
+			   (concatenate 'vector
 			    (aget :incomplete-subplots character)
 			    (aget :completed-subplots character)))
 		(emit-list "SubplotsCheck~d"
-			   (append
+			   (concatenate 'vector
 			    (make-list (length (aget :incomplete-subplots character))
 				       :initial-element nil)
 			    (make-list (length (aget :completed-subplots character))
@@ -188,9 +189,9 @@
 		(emit-field "TravelSpdMPH" :travel-speed)
 		(loop for pdf in '("Unarmed" "Blunt" "Edged" "Hurled" "Bows" "BlackPow" "Siege")
 		   for key in +proficiencies+
-		   when (member key (aget :proficiency-list character))
+		   when (position key (aget :proficiency-list character))
 		   do (emit-value (format nil "Prof~a" pdf) "Yes")
-		   when (member key (aget :forte-list character))
+		   when (position key (aget :forte-list character))
 		   do (emit-value (format nil "Prof~aForte" pdf) "Yes"))
 		   
 		(emit-field "InitDexMod" :init-attr-modA)
@@ -238,7 +239,7 @@
 		(emit-item "ArmorDis" :armor-disguise)
 		(emit-value "ArmorUp"
 			    (format nil "~{~a~^, ~}"
-				    (aget :armor-customizations character)))
+				    (coerce (aget :armor-customizations character) 'list)))
 		(emit-field "ActionStandAtt" :action-attack)
 		(emit-field "ActionBull" :action-bullrush)
 		(emit-field  "ActionCoup" :action-coupe-de-grace)
@@ -254,10 +255,18 @@
 		(emit-field "ActionTotDef" :ground-speed)
 		(multiple-value-bind
 		      (nc-name nc-notes c-name c-notes s-name s-notes)
-			   (loop for item in
-				(append (aget :feat-list character)
-					(aget :ability-list character)
-					(get-trick-abilities character))
+			   (loop
+				with nc-name = (array*)
+				with nc-notes = (array*)
+				with c-name = (array*)
+				with c-notes = (array*)
+				with s-name = (array*)
+				with s-notes = (array*)
+			      for item in
+				(concatenate 'list
+					     (aget :feat-list character)
+					     (aget :ability-list character)
+					     (get-trick-abilities character))
 			      for desc = 
 				(cond
 				  ((aget :notes item)
@@ -266,14 +275,14 @@
 				   (aget :from item))
 				  (t (fmt-class (aget :from item))))
 			      when (eql (aget :list-as item) :non-combat)
-			      collect (aget :name item) into nc-name
-			      and collect desc into nc-notes
+			      do (vector-push-extend (aget :name item) nc-name)
+				(vector-push-extend desc nc-notes)
 			      when (eql (aget :list-as item) :combat)
-			      collect (aget :name item) into c-name
-			      and collect desc into c-notes
+			      do (vector-push-extend (aget :name item) c-name)
+				(vector-push-extend desc c-notes)
 			      when (eql (aget :list-as item) :spellcasting)
-			      collect (aget :name item) into s-name
-			      and collect desc into s-notes
+			      do (vector-push-extend (aget :name item) s-name)
+				(vector-push-extend desc s-notes)
 			      finally (return (values nc-name nc-notes
 						      c-name c-notes
 						      s-name s-notes)))
@@ -289,15 +298,15 @@
 				(aget :weapon-3 character)
 				(aget :weapon-4 character))))
 		  (emit-list "Weapon~DType"
-			     (mapcar (curry #'gethash :name) weapons))
+			     (map 'vector (curry #'gethash :name) weapons))
 		  (emit-list "Weapon~DAtk"
-			     (list
+			     (array*
 			      (calculate-field :weapon-1-atk-bonus character)
 			      (calculate-field :weapon-2-atk-bonus character)
 			      (calculate-field :weapon-3-atk-bonus character)
 			      (calculate-field :weapon-4-atk-bonus character)))
 		  (emit-list "Weapon~DDMG"
-			      (list
+			      (array*
 				(format nil "~A~:[+~;~]~A"
 					(aget :dmg-die (elt weapons 0))
 					(<
@@ -323,22 +332,22 @@
 					 0)
 					(calculate-field :weapon-4-dmg-bonus character))))
 		  (emit-list "Weapon~DThreat"
-			     (mapcar (curry #'gethash :threat) weapons))
+			     (map 'vector (curry #'gethash :threat) weapons))
 		  (emit-list "Weapon~DSzHand"
-			      (mapcar
+			      (map 'vector
 			       (lambda (x)
 				 (format nil "~A/~A"
 					 (aget :size x)
 					 (aget :hand x)))
 			       weapons))
 		  (emit-list "Weapon~DWgt"
-			     (mapcar (curry #'gethash :weight) weapons))
+			     (mapcar* (curry #'gethash :weight) weapons))
 		  (emit-list "Weapon~DRng"
-			     (mapcar (curry #'gethash :rng) weapons))
+			     (mapcar* (curry #'gethash :rng) weapons))
 		  (emit-list "Weapon~DShots"
-			     (mapcar (curry #'gethash :shots) weapons))
+			     (mapcar* (curry #'gethash :shots) weapons))
 		  (emit-list "Weapon~DQualUp"
-			     (mapcar (curry #'gethash :qualities) weapons))
+			     (mapcar* (curry #'gethash :qualities) weapons))
 		  )
 		  
 		(emit-field "CarCapHvy" :heavy-capacity)
@@ -351,15 +360,16 @@
 		(emit-item "RepRenHeroRen" :heroic-renown)
 		(emit-item "RepRenMilRen" :military-renown)
 		(emit-item "RepRenNobleRen" :noble-renown)
-		(emit-list "GearName~D" (mapcar (curry #'gethash :name)
-						(aget :gear character)))
-		(emit-list "GearEffects~D" (mapcar (curry #'gethash :effect)
+		(emit-list "GearName~D" (map 'vector
+					     (curry #'gethash :name)
+					     (aget :gear character)))
+		(emit-list "GearEffects~D" (map 'vector (curry #'gethash :effect)
 						(aget :gear character)))
 		(emit-list
 		 (lambda (item n)
 		   (emit-value #?"GearSzHand${n}" #?"\u$((aget :size item))/$((aget :hand item))"))
 		 (aget :gear character))
-		(emit-list "GearWgt~D" (mapcar (curry #'gethash :weight)
+		(emit-list "GearWgt~D" (mapcar* (curry #'gethash :weight)
 						(aget :gear character)))
 		(emit-item "MountName" :mount-name)
 		(emit-item "MountSz" :mount-size)
@@ -390,87 +400,87 @@
 		(emit-item "VehicleConst" :vehicle-const)
 		(emit-item "VehicleQual" :vehicle-qualities)
 		(emit-list "Contact~DName"
-			   (mapcar (curry #'gethash :name)
+			   (mapcar* (curry #'gethash :name)
 				   (aget :contacts character)))
 		(emit-list "Contact~DTrust"
-			   (mapcar (curry #'gethash :trust)
+			   (mapcar* (curry #'gethash :trust)
 				   (aget :contacts character)))
 		(emit-list "Contact~DSzReach"
-			   (mapcar 
+			   (mapcar* 
 			    (lambda (x)
 			      (format nil "~A/~A" (aget :size x) (aget :reach x)))
 			    (aget :contacts character)))
 		(emit-list "Contact~DSpd"
-			   (mapcar (curry #'gethash :speed)
+			   (mapcar* (curry #'gethash :speed)
 				   (aget :contacts character)))
 		(emit-list "Contact~DAttr"
-			   (mapcar (curry #'gethash :attributes)
+			   (mapcar* (curry #'gethash :attributes)
 				   (aget :contacts character)))
 		(emit-list "Contact~DRepCost"
-			   (mapcar (curry #'gethash :rep-cost)
+			   (mapcar* (curry #'gethash :rep-cost)
 				   (aget :contacts character)))
 		(emit-list "Contact~DInit"
-			   (mapcar (curry #'gethash :init)
+			   (mapcar* (curry #'gethash :init)
 				   (aget :contacts character)))
 		(emit-list "Contact~DAtk"
-			   (mapcar (curry #'gethash :atk)
+			   (mapcar* (curry #'gethash :atk)
 				   (aget :contacts character)))
 		(emit-list "Contact~DDef"
-			   (mapcar (curry #'gethash :Def)
+			   (mapcar* (curry #'gethash :Def)
 				   (aget :contacts character)))
 		(emit-list "Contact~DRes"
-			   (mapcar (curry #'gethash :Res)
+			   (mapcar* (curry #'gethash :Res)
 				   (aget :contacts character)))
 		(emit-list "Contact~DHealth"
-			   (mapcar (curry #'gethash :Health)
+			   (mapcar* (curry #'gethash :Health)
 				   (aget :contacts character)))
 		(emit-list "Contact~DComp"
-			   (mapcar (curry #'gethash :comp)
+			   (mapcar* (curry #'gethash :comp)
 				   (aget :contacts character)))
 		(emit-list "Contact~DSkills"
-			   (mapcar (curry #'gethash :skills)
+			   (mapcar* (curry #'gethash :skills)
 				   (aget :contacts character)))
 		(emit-list "Contact~DQual"
-			   (mapcar (curry #'gethash :qualities)
+			   (mapcar* (curry #'gethash :qualities)
 				   (aget :contacts character)))
 		(emit-list "Contact~DAttacks"
-			   (mapcar (curry #'gethash :attacks)
+			   (mapcar* (curry #'gethash :attacks)
 				   (aget :contacts character)))
 		(emit-list "Contact~DGear"
-			   (mapcar (curry #'gethash :gear)
+			   (mapcar* (curry #'gethash :gear)
 				   (aget :contacts character)))
 		(emit-list "Holding~DName"
-			   (mapcar (curry #'gethash :name)
+			   (mapcar* (curry #'gethash :name)
 				   (aget :holdings character)))
 		(emit-list "Holding~DScale"
-			   (mapcar (curry #'gethash :scale)
+			   (mapcar* (curry #'gethash :scale)
 				   (aget :holdings character)))
 		(emit-list "Holding~DGuests"
-			   (mapcar (curry #'gethash :guests)
+			   (mapcar* (curry #'gethash :guests)
 				   (aget :holdings character)))
 		(emit-list "Holding~DMax"
-			   (mapcar (curry #'gethash :max-guests)
+			   (mapcar* (curry #'gethash :max-guests)
 				   (aget :holdings character)))
 		(emit-list "Holding~DUpgrades1"
-			   (mapcar (curry #'gethash :upgrades)
+			   (mapcar* (curry #'gethash :upgrades)
 				   (aget :holdings character)))
 		(emit-list "Holding~DRepCost"
-			   (mapcar (curry #'gethash :Rep-Cost)
+			   (mapcar* (curry #'gethash :Rep-Cost)
 				   (aget :holdings character)))
 		(emit-list "MagicItemName~D"
-			   (mapcar (curry #'gethash :name)
+			   (mapcar* (curry #'gethash :name)
 				   (aget :magic-items character)))
 		(emit-list "MagicItemLvl~D"
-			   (mapcar (curry #'gethash :level)
+			   (mapcar* (curry #'gethash :level)
 				   (aget :magic-items character)))
 		(emit-list "MagicItemEssences~D"
-			   (mapcar (curry #'gethash :essences)
+			   (mapcar* (curry #'gethash :essences)
 				   (aget :magic-items character)))
 		(emit-list "MagicItemCharms~D"
-			   (mapcar (curry #'gethash :charms)
+			   (mapcar* (curry #'gethash :charms)
 				   (aget :magic-items character)))
 		(emit-list "MagicItemRepCost~D"
-			   (mapcar (curry #'gethash :rep-cost)
+			   (mapcar* (curry #'gethash :rep-cost)
 				   (aget :magic-items character)))
 		(emit-item "SpellPoints" :spell-points)
 		(emit-item "CastingLevel" :casting-level)
@@ -486,34 +496,34 @@
 		(emit-field "SaveDCChaMod" :cha-mod)
 		(emit-item "SaveDCFeats" :spellcasting-feats)
 		(emit-list "SpellListNameSchool~D"
-			   (mapcar
+			   (mapcar*
 			    (lambda (x)
 			      (format nil "~A/~A" (aget :name x) (aget :discipline x)))
 			    (aget :spells character)))
 		(emit-list "SpellListLvl~D"
-			   (mapcar (curry #'gethash :level) (aget :spells character)))
+			   (mapcar* (curry #'gethash :level) (aget :spells character)))
 		(emit-list "SpellListCasting~D"
-			   (mapcar (curry #'gethash :casting-time) (aget :spells character)))
+			   (mapcar* (curry #'gethash :casting-time) (aget :spells character)))
 		(emit-list "SpellListDist~D"
-			   (mapcar (curry #'gethash :distance) (aget :spells character)))
+			   (mapcar* (curry #'gethash :distance) (aget :spells character)))
 		(emit-list "SpellListArea~D"
-			   (mapcar
+			   (mapcar*
 			    (compose #'abbreviate-spell-info (curry #'gethash :area))
 			     (aget :spells character)))
 		(emit-list "SpellListDur~D"
-			   (mapcar
+			   (mapcar*
 			    (compose #'abbreviate-spell-info (curry #'gethash :duration))
 			    (aget :spells character)))
 		(emit-list "SpellListSav~D"
-			   (mapcar
+			   (mapcar*
 			    (compose #'abbreviate-spell-info (curry #'gethash :saving-throw))
 			    (aget :spells character)))
 		(emit-list "SpellListPrep~D"
-			   (mapcar
+			   (mapcar*
 			    (compose #'abbreviate-spell-info (curry #'gethash :preparation-cost))
 			    (aget :spells character)))
 		(emit-list "SpellListEffect~D"
-			   (mapcar
+			   (mapcar*
 			    (compose #'abbreviate-spell-info (curry #'gethash :effect))
 			    (aget :spells character)))
 		)))))
@@ -548,7 +558,7 @@
 	(tt:paragraph () "Spell Name"))
       (tt:cell ()
 	(tt:paragraph () "Description"))
-      (loop for item in (aget :spells character)
+      (loop for item across (aget :spells character)
 	 do
 	   (tt:row ()
 	     (tt:cell ()
@@ -607,7 +617,7 @@
 	(tt:paragraph () "Feature Name"))
       (tt:cell ()
 	(tt:paragraph () "Description")))
-    (loop for item in (aget :feat-list character)
+    (loop for item across (aget :feat-list character)
        for name = (aget :name item)
        for parameter = (nestring (aget :parameter item))
        do
@@ -636,7 +646,7 @@
 		else
 		do (tt:paragraph (:font "times-roman")
 		     (tt:put-string paragraph))))))
-  #-(or)(loop for item in (aget :ability-list character)
+  #-(or)(loop for item across (aget :ability-list character)
 	     for name = (substitute  #\Space #\-  (aget :name item))
 	     for parameter = (nestring (aget :parameter item))
 	   ;do (log:info name)

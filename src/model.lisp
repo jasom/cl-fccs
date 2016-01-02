@@ -83,7 +83,8 @@
 (defun list-of (predicate)
        (lambda (&key value &allow-other-keys)
 	 (and
-	  (listp value)
+	  #+ps(listp value)
+	  #-ps(typep value 'sequence)
 	      (every predicate value))))
 
 (defun get-species-mod (character attr)
@@ -95,7 +96,7 @@
 		    +species-hash+)))
 	 (attrs (if species-data
 		    (aget :attr species-data)
-		    (list)))
+		    (array*)))
 	 (strong (aget :strong-attr character))
 	 (weak (aget :weak-attr character))
 	 (mod 0))
@@ -167,8 +168,8 @@
 							  :level level)))))))
 
 (defun get-class-abilities (character)
-  (mapcan (lambda (lvlinfo)
-	    (mapcan
+  (mapcan* (lambda (lvlinfo)
+	    (mapcan*
 	     (lambda (i)
 	       (get-abilities-for-level (aget :the-class lvlinfo) i))
 	     (range 1 (1+ (aget :level lvlinfo)))))
@@ -178,10 +179,10 @@
   (let* ((specialty-name (aget :specialty character))
 	 (specialty-data (aget specialty-name +specialty-hash+)))
     (if specialty-data
-	(mapcar (lambda (ability)
+	(mapcar* (lambda (ability)
 		  (make-ability-info :name (better-capitalize ability) :from specialty-name))
 		(aget :qualities specialty-data))
-	(list))))
+	(array*))))
 
 (defun get-species-abilities (character)
   (let ((species-name
@@ -195,13 +196,13 @@
 	     (aget (aget :species character)
 		   +species-hash+))))
     (if species-data
-	(mapcar (lambda (ability)
+	(mapcar* (lambda (ability)
 		  (make-ability-info :name (better-capitalize ability) :from species-name))
 		(aget :qualities species-data))
-	(list))))
+	(array*))))
 
 (defun get-trick-abilities (character)
-  (mapcar (lambda (trick)
+  (mapcar* (lambda (trick)
 	    (make-ability-info :name trick
 			       :from "Proficiency"
 			       :list-as :combat))
@@ -243,7 +244,7 @@
 (defun fixup-abilities (character)
   (let ((old-abilities (aget :ability-list character))
 	(new-abilities (calculate-abilities character))
-	(result (list)))
+	(result (array*)))
     (loop for item in (loopable old-abilities)
 	 do
 	 ;;TODO Fix this for multiple abilites from diff. sources
@@ -290,9 +291,7 @@
 	 :validator #'string-validator))
 
 (defun list-fixup (&key value &allow-other-keys)
-  (if value
-      value
-      (list)))
+  value)
 
 (defun keyword-fixup (&key value &allow-other-keys)
   (to-keyword value))
@@ -424,10 +423,10 @@
 			     (member value (list :str :dex :con :int :wis :cha))))
      (talent :initform "" :validator #'string-validator)
      (specialty :initform "" :validator #'string-validator)
-     (classes :initform (list (make-fc-class))
+     (classes :initform (array* (make-fc-class))
 	      :fixup (lambda (&key value &allow-other-keys)
 		       #+ps(unless value (setf value (list)))
-		       (mapcar #'fixup-fc-class value))
+		       (mapcar* #'fixup-fc-class value))
 	      :validator (list-of #'fc-class-p))
      (xp :initform 0
 	 :validator #'integer-validator)
@@ -453,58 +452,58 @@
 	  collect
 	    `(,(intern (format nil "~a-THREAT" (ssub "_" " " (string skill))) *package*)
 	       :initform 20 :validator #'integer-validator))
-     (crafting-foci :initform (list)
+     (crafting-foci :initform (array*)
 		    :fixup #'list-fixup
 		    :validator (list-of #'stringp))
-     (ride-foci :initform (list)
+     (ride-foci :initform (array*)
 		:fixup #'list-fixup
 		:validator (list-of #'stringp))
      (alignment :initform "" :validator #'string-validator)
-     (languages :initform (list)
+     (languages :initform (array*)
 		:fixup #'list-fixup
 		:validator (list-of #'stringp))
-     (studies :initform (list)
+     (studies :initform (array*)
 		:fixup #'list-fixup
 		:validator (list-of #'stringp))
-     (completed-subplots :initform (list)
+     (completed-subplots :initform (array*)
 			 :fixup #'list-fixup
 			 :validator (list-of #'stringp))
-     (incomplete-subplots :initform (list)
+     (incomplete-subplots :initform (array*)
 			  :fixup #'list-fixup
 			  :validator (list-of #'stringp))
      (coin-in-hand :initform 0 :validator #'integer-validator)
      (stake :initform 0 :validator #'integer-validator)
      (panache :initform 0 :validator #'integer-validator)
      (prudence :initform 0 :validator #'integer-validator)
-     (ability-list :initform (list)
+     (ability-list :initform (array*)
 		   :fixup (lambda (&key value &allow-other-keys)
 			    (setf value (list-fixup :value value))
-			    (mapcar #'fixup-ability-info value))
+			    (mapcar* #'fixup-ability-info value))
 		   :validator (list-of #'ability-info-p))
-     (feat-list :initform (list)
+     (feat-list :initform (array*)
 		:fixup (lambda (&key value &allow-other-keys)
 			 (setf value (list-fixup :value value))
-			 (mapcar #'fixup-feat-info value))
+			 (mapcar* #'fixup-feat-info value))
 		:validator (list-of #'feat-info-p))
-     (proficiency-list :initform (list)
+     (proficiency-list :initform (array*)
 		       :fixup
 		       (lambda (&key value &allow-other-keys)
 			 (setf value (list-fixup :value value))
-			 (mapcar #'to-keyword value))
+			 (mapcar* #'to-keyword value))
 		       :validator (list-of #'keywordp))
-     (forte-list :initform (list)
+     (forte-list :initform (array*)
 		 :fixup
 		 (lambda (&key value &allow-other-keys)
 		   (setf value (list-fixup :value value))
-		   (mapcar #'to-keyword value))
+		   (mapcar* #'to-keyword value))
 		 :validator (list-of #'keywordp))
-     (tricks :initform (list)
+     (tricks :initform (array*)
 		 :fixup #'list-fixup
 		 :validator (list-of #'stringp))
      ;;TODO Better validator!!
      (fudges :initform (let ((val (amake)))
 			 (loop for item in (loopable (akeys *fields*))
-			    do (setf (aget (to-keyword item) val) (list)))
+			    do (setf (aget (to-keyword item) val) (array*)))
 			 val)
 	     :fixup (lambda (&key value &allow-other-keys)
 		      (loop for item in (loopable (akeys *fields*))
@@ -536,7 +535,7 @@
 			 :initform "")
      (armor-customizations :validator (list-of #'stringp)
 			   :fixup #'list-fixup
-			   :initform (list))
+			   :initform (array*))
      (armor-fittings :validator (lambda (&key value &allow-other-keys)
 				  (member value (list :none :light :heavy)))
 		     :fixup #'keyword-fixup
@@ -562,7 +561,7 @@
      (noble-renown :validator #'integer-validator
 		   :initform 0)
      (gear :validatior (list-of #'gear-info-p)
-	   :initform (list)
+	   :initform (array*)
 	   :fixup #'list-fixup)
      (mount-name :validator #'string-validator
 		 :initform "")
@@ -616,16 +615,16 @@
 		    :initform "")
      (contacts :validator (list-of #'contact-info-p)
 	       :fixup #'list-fixup
-	       :initform (list))
+	       :initform (array*))
      (holdings :validator (list-of #'holding-info-p)
 	      :fixup #'list-fixup
-	      :initform (list))
+	      :initform (array*))
      (magic-items :validator (list-of #'magic-item-info-p)
 		  :fixup #'list-fixup
-		  :initform (list))
+		  :initform (array*))
      (spells :validator (list-of #'spell-info-p)
 	     :fixup #'list-fixup
-	     :initform (list))
+	     :initform (array*))
      (casting-level :validator #'integer-validator
 		    :initform 0)
      (spell-points :validator #'integer-validator

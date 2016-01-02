@@ -30,7 +30,7 @@
     (let* ((saltb (random-bytes 4)))
       (multiple-value-bind 
 	    (hash salt algo iterations)
-	  (crypto-shortcuts:pbkdf2-hash password saltb :iterations *hash-iterations*)
+	  (crypto-shortcuts:pbkdf2-hash password (crypto-shortcuts:to-base64 saltb) :iterations *hash-iterations*)
 	(let ((user
 	       (make-instance 'user
 			      :name username

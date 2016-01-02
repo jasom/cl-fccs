@@ -59,6 +59,12 @@
       (unless (chain *immutable *list (is-list list))
 	(setf list (ps:new (chain *immutable (*list list)))))
       (chain list (map fun)))
+#+ps(defun mapcar* (fun list) (mapcar fun list))
+#-ps(defun mapcar* (&rest args) (apply #'map 'vector args))
+
+#+ps(defun mapcan* (fun list) (mapcan fun list))
+#-ps(defun mapcan* (&rest args)
+      (apply #'concatenate 'vector (apply #'map 'vector args)))
 
 #-ps(ps:defpsmacro list (&rest args)
       `(ps:new (chain *immutable (*list (ps:array ,@args)))))
@@ -266,15 +272,20 @@
 					:obj obj)))))))))))
 
 (defun pappend (list &rest lists)
-  #-ps (apply #'append list lists)
+  #-ps (apply #'concatenate 'vector list lists)
   #+ps (apply (chain list concat) lists))
 
 (defun unloopable (list)
-  #-ps list
+  #-ps (coerce list 'vector)
   #+ps (ps:new (chain *immutable (*list list))))
 
+#+ps(defun array* (&rest items)
+      (unloopable items))
+#-ps(defun array* (&rest contents) (make-array (length contents) :initial-contents contents :adjustable t :fill-pointer t))
+
+
 (defun loopable (list)
-  #-ps list
+  #-ps (coerce list 'list)
   #+ps (if list
 	   (chain list (to-array))
 	   nil))

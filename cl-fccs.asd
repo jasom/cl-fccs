@@ -32,7 +32,7 @@
 		((:file "ps-compat")
 		 (:file "util")
 		 (:file "view-macros")
-		 ;(:file "closure-server")
+		 (:file "schema")
 		 (:file "store")
 		 (:file "pdfout")
 		 (:file "session")

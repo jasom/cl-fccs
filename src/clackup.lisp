@@ -67,6 +67,7 @@
 	:value "Login"
 	:class-name "pure-button"))))))
 
+
 (defun parse-json-body (body)
   (let*
       ((obj-state)
@@ -82,7 +83,8 @@
        (json:*object-value-handler*
 	(lambda (val)
 	  (let ((key (pop obj-state)))
-	    (setf (gethash key (car obj-state)) val)))))
+	    (setf (gethash key (car obj-state)) val))))
+       (json:*json-array-type* 'vector))
     (json:decode-json-from-string (babel:octets-to-string body :encoding :utf-8))))
 
 (defmacro with-error-logging ((error-vname &optional debug) error-result &body b)
@@ -153,16 +155,20 @@
 	  (princ "React.render(React.createElement(CharacterList, {value : " s)
 	  (princ "Immutable.fromJS(" s)
 	  (encode-classish
-	   (loop for id in (get-all-character-ids)
+	   (loop with result = (array*)
+	      for id in (get-all-character-ids)
 	      for character = (get-character id)
-	      collect (make-character-summary
-		       :id id
-		       :char-name
-		       (aget :character-name character)
-		       :player-name
-		       (aget :player-name character)
-		       :career-level
-		       (calculate-field :career-level character)))
+	      do (vector-push-extend
+		  (make-character-summary
+		   :id id
+		   :char-name
+		   (aget :character-name character)
+		   :player-name
+		   (aget :player-name character)
+		   :career-level
+		   (calculate-field :career-level character))
+		  result)
+		finally (return result))
 	   s)
 	  (princ ")}),document.getElementById(\"react-content\"))" s)))))))
 
@@ -201,24 +207,28 @@
   (with-db-connection
     (cond
       ((null (get-character id))
-       `(404			; No such character
+       `(404				; No such character
 	 (:content-type "text/html")
 	 (cl-who:with-html-output-to-string (s)
 	   (:htm (:head) (:body "Couldn't locate character")))))
       ((not (user-can-edit-character-p id username))
-       `(403			;Wrong Permissions
+       `(403				; Wrong Permissions
 	 (:content-type "text/html")
 	 (cl-who:with-html-output-to-string (s)
 	   (:htm (:head) (:body "Forbidden")))))
-      (t				; Chaacter exists and We have permisison to edit it
+      (t	   			; Chaacter exists and We have permisison to edit it
        (let* ((parsed-body (parse-json-body body))
 	      (fixed-char (fixup-fc-character parsed-body)))
-	 (when (fc-character-p fixed-char)
-	   (log:debug "We have a character!")
-	   (save-character id fixed-char))
-	 `(200
-	   (:content-type "text/plain")
-	   ("")))))))
+	 (if (fc-character-p fixed-char)
+	     (progn
+	       (log:debug "We have a character!")
+	       (save-character id fixed-char)
+	       `(200
+		 (:content-type "text/plain")
+		 ("")))
+	     `(500
+	       (:content-type "text/plain")
+	       ("Error saving character"))))))))
 
 (defapprule view-char-rule (property :path-info (ppcre "^/view-character/(\\d*)$" id))
   (with-db-connection
@@ -390,44 +400,46 @@ characterId: ~D, defaultValue : " id)
        collect item)))
 
 (defun encode-json-list-to-string (list)
-  (let ((json::*json-list-encoder-fn* #'json::encode-json-list-explicit-encoder))
-    (json:encode-json-to-string (cons :list list))))
+  (json:encode-json-to-string (coerce 'vector list)))
 
 (defun fccs-complete (thing body)
-  (let ((partial (json:decode-json-from-string (babel:octets-to-string body))))
+  (let ((partial (parse-json-body body)))
     `(200
       (:content-type "application/json")
-      (,(encode-json-list-to-string
-	 (cond
-	   ((equalp thing "spell-info")
-	    (assoc partial fccg::+spells+ :test #'equalp))
-	   ((equalp thing "gear")
-	    (complete-from-list partial +all-gear-names+))
-	   ((equalp thing "gear-info")
-	    (lookup-gear partial))
-	   ((equalp thing "spell")
-	    (complete-from-list partial (mapcar
-					 (compose #'better-capitalize #'car)
-					 fccg::+spells+)))
-	   ((equalp thing "species")
-	    (complete-from-list partial
-	     (hash-table-keys +species-hash+)))
-	   ((equalp thing "specialty")
-	    (complete-from-list partial
-	     (hash-table-keys +specialty-hash+)))
-	   ((equalp thing "class")
-	    (complete-from-list
-	     partial
-	     (hash-table-keys +class-hash+)))
-	   ((equalp thing "feat")
-	    (complete-from-list
-	     partial
-	     (mapcar #'better-capitalize
-		     (hash-table-keys +feat-hash+))))
-	   ((equalp thing "talent")
-	    (complete-from-list partial
-	     (hash-table-keys +talent-hash+)))
-	   (t nil)))))))
+      (,(with-output-to-string
+	 (s)
+	 (encode-classish
+	  (cond
+	    ((equalp thing "spell-info")
+	     (assoc partial fccg::+spells+ :test #'equalp))
+	    ((equalp thing "gear")
+	     (complete-from-list partial +all-gear-names+))
+	    ((equalp thing "gear-info")
+	     (lookup-gear partial))
+	    ((equalp thing "spell")
+	     (complete-from-list partial (mapcar
+					  (compose #'better-capitalize #'car)
+					  fccg::+spells+)))
+	    ((equalp thing "species")
+	     (complete-from-list partial
+				 (hash-table-keys +species-hash+)))
+	    ((equalp thing "specialty")
+	     (complete-from-list partial
+				 (hash-table-keys +specialty-hash+)))
+	    ((equalp thing "class")
+	     (complete-from-list
+	      partial
+	      (hash-table-keys +class-hash+)))
+	    ((equalp thing "feat")
+	     (complete-from-list
+	      partial
+	      (mapcar #'better-capitalize
+		      (hash-table-keys +feat-hash+))))
+	    ((equalp thing "talent")
+	     (complete-from-list partial
+				 (hash-table-keys +talent-hash+)))
+	    (t nil))
+	  s))))))
 
 (defun lookup-gear (name)
   (loop for item in fccg::+gear+
