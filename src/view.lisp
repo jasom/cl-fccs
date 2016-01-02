@@ -398,12 +398,12 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 				    (if (eql item (chain this state selected-completion))
 					  "pure-menu-item pure-menu-selected"
 					  "pure-menu-item")
+				    :key item
 				    (:a
 				     :href "#"
 				     :class-name "pure-menu-link nopad"
 				     :on-click  (chain this (completion-clicked item))
 
-				     :key  item
 				      item)))))))))))))
 
 (defreact *validating-checkboxes
@@ -646,18 +646,18 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 		  (post-data
 		   (fixup-path "/complete/gear-info")
 		   name
-		   (let ((ginfo this))
 		     :complete-callback
-		     (lambda ()
-		       (let ((response (chain *json* (parse (chain this response-text)))))
-			 (when (> (chain response length) 0)
-			   (setf response
-				 (loop for item in response
-				    collect (if (= item null) "" item)))
-			   (funcall (chain ginfo (handle-change :effect)) (elt response 1))
-			   (funcall (chain ginfo (handle-change :size)) (elt response 2))
-			   (funcall (chain ginfo (handle-change :hand)) (elt response 3))
-			   (funcall (chain ginfo (handle-change :weight)) (elt response 4))))))))
+		     (let ((ginfo this))
+		       (lambda ()
+			 (let ((response (chain *json* (parse (chain this response-text)))))
+			   (when (and (/= response nil) (> (chain response length) 0))
+			     (setf response
+				   (loop for item in response
+				      collect (if (= item null) "" item)))
+			     (funcall (chain ginfo (handle-change :effect)) (elt response 1))
+			     (funcall (chain ginfo (handle-change :size)) (elt response 2))
+			     (funcall (chain ginfo (handle-change :hand)) (elt response 3))
+			     (funcall (chain ginfo (handle-change :weight)) (elt response 4))))))))
   render (lambda ()
 	   (htm
 	    (:div
