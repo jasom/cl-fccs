@@ -23,7 +23,7 @@
   (format nil "session-id=~A; path=~a" (session-id session) path))
 
 (defun make-session (&optional username)
-  (with-db-connection
+  (with-db-connection ()
     (let ((session (make-instance 'session :username username)))
       (set-session (session-id session) session)
       (expire-session (session-id session) *session-unauthenticated-expiry-time*)
@@ -39,7 +39,7 @@
     (update-session object)))
 
 (defun update-session (session)
-  (with-db-connection
+  (with-db-connection ()
     (set-session (session-id session) session)
     (expire-session (session-id session)
 		    (if (session-username session)
@@ -47,11 +47,11 @@
 			*session-unauthenticated-expiry-time*))))
 
 (defun invalidate-session (session)
-  (with-db-connection
+  (with-db-connection ()
     (del-session (session-id session))))
   
 (defun validate-session (env)
-  (with-db-connection
+  (with-db-connection ()
     (let ((cookies (split-sequence #\; (gethash "cookie" (getf env :headers)))))
       ;(log:debug env)
       ;(log:debug (alexandria:hash-table-plist (getf env :headers)))
@@ -121,15 +121,16 @@
 	       ((equal 
 		 "application/x-www-form-urlencoded"
 		 (gethash "content-type" (getf env :headers)))
-		(let ((body (slurp-body env)))
+		(let* ((body (slurp-body env))
+		       (params (and body (quri:url-decode-params body))))
 		  (log:debug
 		   (list
 		    (session-csrf-token session)
-		    (cdr (assoc "csrf-token" (quri:url-decode-params body) :test #'equal))))
+		    (cdr (assoc "csrf-token" params :test #'equal))))
 		  (if
 		   (equal
 		    (session-csrf-token session)
-		    (cdr (assoc "csrf-token" (quri:url-decode-params body) :test #'equal)))
+		    (cdr (assoc "csrf-token" params :test #'equal)))
 		   (progn
 		     (setf (getf env :raw-body)
 			   (flexi-streams:make-in-memory-input-stream body))

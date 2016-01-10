@@ -2,8 +2,6 @@
 
 (defvar *redis-index* 0)
 
-(defvar *current-schema-verison* 1)
-
 (defun dumb-byte-char (v)
   (declare (type (simple-array (unsigned-byte 8) (*)) v))
   "This is a dumb way to convert a byte-vector to a string.
@@ -18,13 +16,13 @@
     (dotimes (i (length s) v)
       (setf (aref v i) (char-code (aref s i))))))
 
-(defun db-connect ()
+(defun db-connect (&optional no-check-schema)
   (redis:connect)
   (red:select *redis-index*)
-  (unless (= (get-schema-version) *current-schema-verison*)
+  (unless (or no-check-schema (= (get-schema-version) *current-schema-verison*))
     (error "Schema version mismatch")))
 
-(defmacro with-db-connection (&body b)
+(defmacro with-db-connection ((&optional no-check-schema) &body b)
   `(let ((redis::*connection* redis::*connection*))
      (if (redis::connected-p)
 	 (progn
@@ -77,6 +75,10 @@
 (defun delete-character (id)
   (ensure-connected)
   (red:hdel "characters" id))
+
+(defun get-usernames ()
+  (ensure-connected)
+  (red:hkeys "users"))
 
 (defun get-user (username)
   (ensure-connected)

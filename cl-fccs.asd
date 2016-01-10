@@ -13,7 +13,6 @@
 	       #:cl-interpol
 	       #:cl-typesetting
 	       #:cl-store
-	       #:lzstring
 	       #:optima.ppcre
 	       #:crypto-shortcuts
 	       #:dissect
@@ -32,13 +31,16 @@
 		((:file "ps-compat")
 		 (:file "util")
 		 (:file "view-macros")
-		 (:file "schema")
 		 (:file "store")
+		 (:file "schema")
+		 (:file "users")
 		 (:file "pdfout")
 		 (:file "session")
 		 (:file "r20out")
+		 (:file "route")
+		 (:file "completions")
+		 (:file "admin")
 		 (:file "clackup")
-		 (:file "users")
 		 (:static-file "view.lisp")
 		 (:file "model" :depends-on ("view.lisp"))
 		 (:file "genparenscript")))))
