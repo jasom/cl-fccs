@@ -94,7 +94,7 @@
   (load-configuration)
   (setf *myapp*
 	(apply #'clack:clackup
-	 (clack.builder:builder
+	 (lack.builder:builder
 	  ;;clack.middleware.logger:<clack-middleware-logger>
 	  (authenticated-session
 	   :root-path *prepend-path*
@@ -112,10 +112,10 @@
 	   :login-url (format nil "~Alogin/" *prepend-path*)
 	   :authenticator (lambda (user pass)
 			    (funcall 'authenticate user pass)))
-	  (clack.middleware.static:<CLACK-MIDDLEWARE-STATIC>
+	  (:static
 	   :path (format nil "~apub/" *prepend-path*)
 	   :root (asdf:system-relative-pathname 'cl-fccs "build/pub/"))
-	  (lambda (env) (funcall 'app env)))
+	  'app)
 	 :use-default-middlewares nil
 	 *clack-args*)))
 
@@ -127,23 +127,21 @@
 (defun restart-server ()
   (stop) (Start))
 
-(in-package clack.app.file)
-(defmethod serve-path
-    ((this <clack-app-file>) env (file pathname) (encoding string))
-  (let ((content-type (or (mime-lookup file) "text/plain"))
-	(univ-time (or (file-write-date file)
-		       (get-universal-time))))
-    (when (text-file-p content-type)
+(in-package lack.app.file)
+(defun serve-path2 (env file encoding)
+  (let ((content-type (mimes:mime file "text/plain"))
+        (univ-time (or (file-write-date file)
+                       (get-universal-time))))
+    (when (starts-with-subseq "text" content-type)
       (setf content-type
-	    (format nil "~A;charset=~A"
-		    content-type encoding)))
+            (format nil "~A~:[~;~:*; charset=~A~]"
+                    content-type encoding)))
     (let* ((gzfile
 	    (and 
 	     (cl-ppcre:scan "gzip" (gethash "accept-encoding" (getf env :headers)))
 	     (probe-file (pathname (format nil "~A.gz" (namestring file))))))
 	   (file (or gzfile file)))
       (log:debug gzfile)
-      (log:debug (alexandria:hash-table-plist (getf env :headers)))
       (with-open-file (stream file
 			      :direction :input
 			      :if-does-not-exist nil)
@@ -155,3 +153,22 @@
 			 ,(format-rfc1123-timestring nil
 						     (universal-to-timestamp univ-time)))
 	  ,file)))))
+
+(defun make-app (&key file (root #P"./") (encoding "utf-8"))
+  (lambda (env)
+    (handler-case
+        (serve-path2
+	 env
+         (locate-file (or file
+                          ;; remove "/"
+                          (subseq (getf env :path-info) 1))
+                      root)
+         encoding)
+      (bad-request ()
+        '(400 (:content-type "text/plain"
+               :content-length 11)
+          ("Bad Request")))
+      (not-found ()
+        '(404 (:content-type "text/plain"
+               :content-length 9)
+          ("Not Found"))))))

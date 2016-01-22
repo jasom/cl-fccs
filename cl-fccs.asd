@@ -4,7 +4,10 @@
   :description "Character Sheet manager for FC"
   :author "Jason Miller <aidenn0@geocities.com>"
   :license "MIT/X11"
-  :depends-on (#:clack-v1-compat
+  :depends-on (;; #:clack-v1-compat
+               #:clack
+               #:lack-middleware-static
+               #:quri
                #:parenscriptx
 	       #:parse-number
                #:alexandria

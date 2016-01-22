@@ -3,6 +3,8 @@
 (defparameter *session-expiry-time* (* 60 60 24) ;; 1 day
   "Session Expiration time in seconds") 
 
+(defgeneric call (obj env))
+
 (defun generate-session-id ()
   ;; 12 bytes of random data gives us ~6e-12 chance of collision on 1e9 sessions
   (random-base64 12))
@@ -81,7 +83,7 @@
       (values (cdr (assoc "username" params :test #'equal))
 	      (cdr (assoc "password" params :test #'equal))))))
 
-(defclass authenticated-session  (clack:<middleware>)
+(defclass authenticated-session  ()
      ((authenticator :type function
                      :initarg :authenticator
                      :initform (lambda (user pass)
@@ -97,10 +99,20 @@
 		 :initform "/")
       (login-url :type string
 		 :initarg :login-url
-		 :initform "/login"))
+		 :initform "/login")
+      (app :type function
+	   :initarg :app))
   (:documentation "Clack Middleware to authenticate."))
 
-(defmethod clack:call ((this authenticated-session) env)
+(defun call-next (obj env) (funcall (slot-value obj 'app) env))
+
+(defun authenticated-session (&rest args)
+  (lambda (app)
+    (let ((obj (apply #'make-instance 'authenticated-session :app app args)))
+      (lambda (env)
+	(call obj env)))))
+
+(defmethod call ((this authenticated-session) env)
   (log:debug (validate-session env))
   (let ((session (or (validate-session env) (make-session))))
     (log:debug (session-username session))
@@ -112,12 +124,12 @@
 	 (setf (getf env :remote-user) (session-username session)
 	       (getf env :session) session)
 	 (if (member (getf env :request-method) '(:head :get))
-	     (clack:call-next this env)
+	     (call-next this env)
 	     (cond
 	       ((equal (session-csrf-token session)
 		       (gethash "x-csrf-token" (getf env :headers)))
 		(log:debug "CSRF Token Header Match")
-		(clack:call-next this env))
+		(call-next this env))
 	       ((equal 
 		 "application/x-www-form-urlencoded"
 		 (gethash "content-type" (getf env :headers)))
@@ -134,7 +146,7 @@
 		   (progn
 		     (setf (getf env :raw-body)
 			   (flexi-streams:make-in-memory-input-stream body))
-		     (clack:call-next this env))
+		     (call-next this env))
 		   `(403
 		     ()
 		     ("CSRF Token validation failed")))))
