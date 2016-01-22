@@ -19,6 +19,6 @@
 
 (eval-when (:load-toplevel)
   (uiop:run-program
-   (format nil "~A" (namestring (uiop:merge-pathnames* "gh/redo/redo" (user-homedir-pathname))))
+   (format nil "~A" (namestring (asdf:system-relative-pathname 'cl-fccs "build/do")))
    :directory (asdf:system-relative-pathname 'cl-fccs "build/")
-   :output t :error-output :output))
+   :output *error-output* :error-output :output))
