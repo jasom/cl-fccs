@@ -80,7 +80,7 @@
 	  (:content-type "text/html")
 	  (,(with-html-output-to-string (s)
 					(:html (:body (:p "Error"))))))
-      (log:info body)
+      (log:debug body)
       (expand-app-rules env body
 			`(404
 			  (:content-type "text/html")
