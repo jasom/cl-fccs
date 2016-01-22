@@ -114,21 +114,7 @@
 	       (chain *json* (stringify data)))))
      (when complete-callback
 	(setf (chain request onload) complete-callback))
-     (chain request (send encoded-data))
-      
-      #+(or)(chain console (log (chain encoded-data length)))
-      #+(or)(chain console (log (chain *l-z-string (compress encoded-data) length) ))
-      #+(or)(let ((request2 (new *x-m-l-http-request))
-	    (comp-data (chain *l-z-string (compress-to-u-t-f-8
-#+(or)"abcdefghijklmnopqrstuvwxyzqwertyuiopasdfghjklzxcvbnm,1234567890imqwoimf9082mfoimqw
-qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
-					   #-(or)encoded-data))))
-	(chain request2 (open "POST" "/fccs2/lztest/" t))
-	(chain request2 (set-request-header "Content-Type" "bin"))
-	(console.log (chain comp-data (char-code-at 0)))
-	(console.log (chain comp-data (char-code-at 1)))
-	(chain request2 (send comp-data)))
-      )))
+     (chain request (send encoded-data)))))
 
 (defun get-h-offset (element)
   (let* ((rect (chain element (get-bounding-client-rect)))
@@ -137,7 +123,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 
 
 (defreact *fudgable-field
-    mixins (ps:array (chain *react addons *pure-render-mixin))
+    mixins (ps:array (chain *react addons *pure-eender-mixin))
     get-initial-state (lambda ()
 			(create popup nil))
     handle-click (lambda (ev)
@@ -892,6 +878,10 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 							    (fixup-abilities newch)))))
 				   (chain this (set-state
 						(create obj new-obj)))))))))
+  delete (lambda ()
+	   (post-data "./delete/" ""
+		      :raw t
+		      :complete-callback (lambda () (setf (ps:@ window location) (fixup-path "/")))))
   upload-data (lambda ()
 		(post-data
 		 (+
@@ -947,6 +937,40 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
 			:target "_blank"
 			:class-name "pure-menu-link"
 			"PDF"))
+		   (unless
+		    (or (chain this props read-only) *view-only*)
+		     (htm
+		      (:li
+		       :class-name "pure-menu-item"
+		       (:a :href "#" 
+			   :class-name "pure-menu-link"
+			   :on-click (tlambda (ev)
+				      (chain ev (prevent-default))
+				      (chain this
+					     (set-state
+					      (create delete-popup t))))
+			   "Delete")
+		       (when (chain this state delete-popup)
+			 (htm
+			  (:div
+			   :style (create position :fixed
+					  width "100%" 
+					  display :block
+					  height "100%"
+					  background-color "white")
+			   (:p "Are you sure?")
+			   (:a :class-name "pure-button"
+			       :href "#"
+			       :on-click (chain this delete)
+			       "Yes")
+			   (:a :class-name "pure-button"
+			       :href "#"
+			       :on-click (tlambda (ev)
+					   (chain ev (prevent-default))
+					   (chain this
+						  (set-state
+						   (create delete-popup nil))))
+			       "No")))))))
 		   (:li
 		    :class-name "pure-menu-item"
 		    (:a :href (fixup-path "/") :class-name "pure-menu-link"
@@ -1936,7 +1960,7 @@ qowimefoqmwefoimwoifmqoimoimiomeoimfoimoimoqiwmeimfoim"
     edit (lambda (id)
 	   (lambda ()
 	     (setf (chain window location)
-		   (+ (fixup-path "/character/") id))))
+		   (+ (fixup-path "/character/") id "/"))))
     render (lambda ()
 	     (htm
 	      (:div

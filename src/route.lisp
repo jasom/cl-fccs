@@ -113,7 +113,7 @@
   (with-db-connection ()
     (let ((id (new-character username)))
       `(303
-	(:location ,(fixup-path (format nil "/character/~A" id))
+	(:location ,(fixup-path (format nil "/character/~A/" id))
 		   :content-type "text/html")
 	(,(cl-who:with-html-output-to-string
 	   (s)
@@ -164,7 +164,22 @@
 	       (:content-type "text/plain")
 	       ("Error saving character"))))))))
 
-(defapprule view-char-rule (property :path-info (ppcre "^/view-character/(\\d*)$" id))
+(defapprule delete-char-rule (and
+			      (property :path-info (ppcre "^/character/(\\d*)/delete/$" id))
+			      (property :remote-user username))
+  (with-db-connection ()
+    (if (user-can-edit-character-p id username)
+	(progn
+	  (delete-character id)
+	  `(303
+	    (:location ,(fixup-path "/"))
+	    (())))
+	`(403				; Wrong Permissions
+	  (:content-type "text/html")
+	  (cl-who:with-html-output-to-string (s)
+	    (:htm (:head) (:body "Forbidden")))))))
+
+(defapprule view-char-rule (property :path-info (ppcre "^/character/(\\d*)/view/$" id))
   (with-db-connection ()
     (let ((character (get-character id)))
       (if character
@@ -200,7 +215,7 @@ characterId: ~D, defaultValue : " id)
 						       (:body (:P "Error: could-not-find character"))))))))))
 
 (defapprule edit-char-rule (and
-			    (property :path-info (ppcre "^/character/(\\d*)$" id))
+			    (property :path-info (ppcre "^/character/(\\d*)/$" id))
 			    (property :remote-user username))
   (with-db-connection ()
     (if (user-can-edit-character-p id username)
@@ -221,7 +236,7 @@ characterId: ~D, defaultValue : " id)
 						     (:htm (:head)
 							   (:body (:P "Error: could-not-find character"))))))))
 	`(303
-	  (:location ,(fixup-path (format nil "/view-character/~d" id)))
+	  (:location ,(fixup-path (format nil "/character/~d/view/" id)))
 	  (())))))
 
 
