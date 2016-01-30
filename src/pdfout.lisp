@@ -2,7 +2,7 @@
 (declaim (optimize (speed 0) (debug 3)))
 (cl-interpol:enable-interpol-syntax)
 
-(defparameter *path-to-charsheet* "/home/aidenn/Downloads/Fantasy_Craft_Character_Sheets-v6-Fillable.pdf")
+(defvar *path-to-charsheet*)
 
 (defvar *character*)
 (defvar *out-stream*)
@@ -705,7 +705,7 @@
 		 ((uiop:subprocess-error
 		   (lambda (condition)
 		     (declare (ignorable condition))
-		     (uiop:run-program `("cp" ,(namestring path) "/home/aidenn/error.tmp")))))
+		     (uiop:run-program `("cp" ,(namestring path) "/tmp/error.tmp")))))
 	       (uiop:run-program `("pdftk" ,*path-to-charsheet* "fill_form" ,(namestring path) "output" "-")
 				 :input "" :output :string :external-format :iso-8859-1))))
 (uiop:run-program `("pdftk" "-" ,(namestring table-pathname) "cat" "output" "-")

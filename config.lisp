@@ -1,7 +1,8 @@
 (in-package :cl-fccs)
 
 (asdf:load-system '#:clack-handler-mongrel2)
-(setf *redis-index* 1)
+(setf *path-to-charsheet* "/data/Fantasy_Craft_Character_Sheets-v6-Fillable.pdf")
+(setf *redis-index* 0)
 (setf *prepend-path* "/fccs2dev/")
 (setf *clack-args*
       '(
