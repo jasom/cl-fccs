@@ -21,4 +21,4 @@
   (uiop:run-program
    (format nil "~A" (namestring (asdf:system-relative-pathname 'cl-fccs "build/do")))
    :directory (asdf:system-relative-pathname 'cl-fccs "build/")
-   :output *error-output* :error-output :output))
+   :output :string :error-output :output))
