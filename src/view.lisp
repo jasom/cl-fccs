@@ -1998,7 +1998,7 @@
 		(:a :href (fixup-path "/account/")
 		    "Account Settings"))
 	       (:p
-		(:a :href "https://phab.jasom.org/"
+		(:a :href "https://github.com/jasom/cl-fccs/issues"
 		    "Bugs/Feature requests"))))))
 
 
