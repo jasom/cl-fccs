@@ -21,3 +21,28 @@
 	      (<= content-length max-length))
       (and body
 	   (read-bytes body content-length)))))
+
+(defun parse-json-body (body)
+  (let*
+      ((obj-state)
+       (json:*beginning-of-object-handler*
+	(lambda ()
+	  (push (make-hash-table) obj-state)))
+       (json:*end-of-object-handler*
+	(lambda ()
+	  (pop obj-state)))
+       (json:*object-key-handler*
+	(lambda (key)
+	  (push (to-keyword key) obj-state)))
+       (json:*object-value-handler*
+	(lambda (val)
+	  (let ((key (pop obj-state)))
+	    (setf (gethash key (car obj-state)) val))))
+       (json:*json-array-type* 'vector))
+    (json:decode-json-from-string (babel:octets-to-string body :encoding :utf-8))))
+
+(defun encode-classish (obj stream)
+  (let ((json:*lisp-identifier-name-to-json*
+	 (lambda (id)
+	   (string-downcase (string id)))))
+    (json:encode-json obj stream)))

@@ -255,6 +255,7 @@
 (defreact *validating-autocomplete
     get-initial-state (lambda ()
 			(let ((val (chain this props default-value)))
+			  (setf (chain this pending-autocomplete) nil)
 			  (create
 			   value val
 			   focused nil
@@ -264,9 +265,17 @@
 					(validator
 					 (chain this props (parser val)))))))
     completions-changed (lambda (new-completions)
+			  (if (/= (chain this pending-autocomplete)
+				    (chain this rawval))
+			      (progn
+				(setf (chain this pending-autocomplete) (chain this rawval))
+				(chain this props
+				       (update-completions
+					(chain this rawval)
+					(chain this completions-changed))))
+			      (setf (chain this pending-autocomplete) nil))
 			  (chain this (set-state (create completions new-completions)))
-			  (when new-completions
-			    (chain this (set-state (create selected-completion (elt new-completions 0))))))
+			  (chain this (set-state (create selected-completion (elt new-completions 0)))))
     defocus (lambda ()
 	      (chain this (set-state (create focused nil))))
     focus (lambda ()
@@ -323,25 +332,23 @@
 		       (t
 			 (chain this (focus)))))
     handle-changed (lambda (ev)
-		     (when (chain this timeout)
-		       (chain window (clear-timeout (chain this timeout))))
 		     (let* ((rawval (chain ev target value))
-			    (val (chain this props (parser rawval)))
-			    (fn
-			     (tlambda ()
-			       (chain this props (update-completions
-						  rawval
-						  (chain this completions-changed)))
-			       (if (chain this props (validator val))
-				   (progn
-				     (chain this props (on-change val))
-				     (chain this (set-state
-						  (create valid t))))
-				   (chain this (set-state (create valid nil)))
-				   )))
-			    (timeout (chain window (set-timeout fn 250))))
+			    (val (chain this props (parser rawval))))
+		       (setf (chain this rawval) rawval)
 		       (chain this (set-state (create value rawval)))
-		       (setf (chain this timeout) timeout)))
+		       (unless (or (chain this pending-autocomplete)
+				   (not rawval))
+			 (setf (chain this pending-autocomplete) rawval)
+			 (chain this props (update-completions
+					    rawval
+					    (chain this completions-changed))))
+		       (if (chain this props (validator val))
+			   (progn
+			     (chain this props (on-change val))
+			     (chain this (set-state
+					  (create valid t))))
+			   (chain this (set-state (create valid nil))))))
+
     completion-clicked (lambda (item)
 			 (tlambda (ev)
 			   (chain ev (prevent-default))
@@ -366,7 +373,9 @@
 				    (chain this props style)
 				    (chain this props error-style)))
 	       
-		 (when (chain this state focused)
+	       (when (and
+		      (chain this state focused)
+		      (/= 0 (length (chain this state completions))))
 		   (htm
 		    (:div
 		     :style (create position :relative
@@ -690,6 +699,7 @@
 		(post-data
 		 (fixup-path "/complete/class")
 		 val
+		 :parser (lambda (x) (chain x (to-lower-case)))
 		 :complete-callback
 		 (lambda ()
 		   (funcall fn

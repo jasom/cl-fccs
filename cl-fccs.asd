@@ -31,7 +31,8 @@
 	       (:module "src"
 		:serial t
 		:components
-		((:file "ps-compat")
+		((:file "route")
+		 (:file "ps-compat")
 		 (:file "util")
 		 (:file "view-macros")
 		 (:file "store")
@@ -40,11 +41,10 @@
 		 (:file "pdfout")
 		 (:file "session")
 		 (:file "r20out")
-		 (:file "route")
+		 (:static-file "view.lisp")
+		 (:file "model" :depends-on ("view.lisp"))
 		 (:file "completions")
 		 (:file "admin")
 		 (:file "clackup")
-		 (:static-file "view.lisp")
-		 (:file "model" :depends-on ("view.lisp"))
 		 (:file "genparenscript")))))
 

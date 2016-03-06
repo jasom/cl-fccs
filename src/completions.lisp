@@ -1,6 +1,8 @@
 (in-package :cl-fccs)
 
-(defapprule autocomplete (property :path-info (ppcre "^/complete/(.*)" thing))
+(defapprule autocomplete (and
+			  (property :path-info (ppcre "^/complete/(.*)" thing))
+			  (property :raw-body body))
   (let ((partial (parse-json-body body)))
     `(200
       (:content-type "application/json")
@@ -27,7 +29,8 @@
 	    ((equalp thing "class")
 	     (complete-from-list
 	      partial
-	      (hash-table-keys +class-hash+)))
+	      (mapcar #'better-capitalize
+		      (hash-table-keys +class-hash+))))
 	    ((equalp thing "feat")
 	     (complete-from-list
 	      partial
@@ -40,10 +43,12 @@
 	  s))))))
 
 (defun complete-from-list (partial list)
-  (when (>= (length partial) 1)
-    (loop for item in list
-       when (alexandria:starts-with-subseq (string-downcase partial) (string-downcase item))
-       collect item)))
+  (coerce
+   (when (>= (length partial) 1)
+     (loop for item in list
+	when (alexandria:starts-with-subseq (string-downcase partial) (string-downcase item))
+	collect item))
+   'vector))
 
 (defun lookup-gear (name)
   (loop for item in fccg::+gear+

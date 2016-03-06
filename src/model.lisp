@@ -151,15 +151,16 @@
     (the-class :initform :assassin
 	       :fixup (lambda (&key value &allow-other-keys) (to-keyword value))
 	   :validator (lambda (&key value &allow-other-keys)
-			(member value (akeys +class-hash+))))
+			(keywordp value)))
   (level :initform 1
 	 :validator #'integer-validator))
 
 (defun get-abilities-for-level (clss level)
-  (when (and (> level 0)
-	     (<= level 20))
-    (let ((lvlinfo (nth (1- level) (aget clss +class-hash+))))
-      (unloopable
+  (unloopable
+   (when (and (> level 0)
+	      (<= level 20)
+	      (aget clss +class-hash+))
+     (let ((lvlinfo (nth (1- level) (aget clss +class-hash+))))
        (loop for name in
 	    (or (loopable (aget :abilities lvlinfo))
 		(loopable (aget :special lvlinfo)))
