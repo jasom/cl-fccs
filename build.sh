@@ -3,6 +3,7 @@ set -e
 #export LD_LIBRARY_PATH="/lib/"
 #export LOCALE_ARCHIVE="/lib/locale/locale-archive"
 sbcl <<END
+(ql:update-dist "quicklisp")
 (ql:quickload :fccgparse)
 (ql:quickload :cffi-grovel)
 (push "-I/include" cffi-grovel::*cc-flags*)
