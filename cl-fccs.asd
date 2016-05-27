@@ -8,7 +8,7 @@
                #:clack
                #:lack-middleware-static
                #:quri
-               #:parenscriptx
+               #:parenscriptm
 	       #:parse-number
                #:alexandria
                #:log4cl

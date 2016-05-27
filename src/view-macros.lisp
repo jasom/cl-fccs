@@ -1,8 +1,10 @@
 (in-package :cl-fccs)
 
+(defmacro ^ (&rest r) `(chain ,@r))
+
 (defmacro mlambda ((arg) &body b)
   (let ((memo (gensym)))
-    `(lambda (,arg)
+    `(tlambda (,arg)
        (unless (ps:in ',memo this)
 	 (setf (ps:@ this ,memo) (create)))
        (if (ps:in ,arg (ps:@ this ,memo))
@@ -22,15 +24,15 @@
 	      (:div
 	       :class-name ,class-name
 	       :style (create margin 0)
-	       (:*validating-checkbox :default-value (aget ,name (chain this state obj))
+	       (:*validating-checkbox :default-value (aget ,name (chain c (obj)))
 				   :id id
 				   :input-class ,input-class
 				   :error-style (create background-color "pink"
 							  padding 0)
 				   :style (create background-color "white"
 						    padding 0)
-				   :validator (chain this (validate ',name))
-				   :on-change (chain this (handle-change ',name)))
+				   :validator (chain c (validate ',name))
+				   :onchange (chain c (handle-change ',name)))
 	       ,@(when show-label
 		       `((:label :html-for id
 				 ,(better-capitalize (string name)))))
@@ -53,7 +55,7 @@
 	       :class-name ,class-name
 	       :style (create margin 0)
 	       (:*validating-autocomplete
-		:default-value (funcall ,formatter (aget ,name (chain this state obj)))
+		:default-value (funcall ,formatter (aget ,name (chain c (obj))))
 		:parser ,parser
 		:id id
 		:input-class ,input-class
@@ -63,8 +65,8 @@
 		:style (create background-color "white"
 				 padding 0)
 		:update-completions ,update-completions
-		:validator (chain this (validate ',name))
-		:on-change (chain this (handle-change ',name)))
+		:validator (chain c (validate ',name))
+		:onchange (chain c (handle-change ',name)))
 	       ,@(when show-label
 		       `((:label :html-for id
 				 ,(if label-as
@@ -80,14 +82,14 @@
     `(tlet ((id (genid)))
 	     (htm
 	      (:textarea
-	       :default-value (funcall ,formatter (aget ,name (chain this state obj)))
 	       :id id
 	       :class-name ,class-name
 	       :rows ,rows
 	       :style (create background-color "white" padding 0)
-	       :on-change (let ((fn (chain this (handle-change ',name))))
-			      (lambda (ev)
-				(funcall fn (chain ev target value)))))))))
+	       :onchange (let ((fn (chain c (handle-change ',name))))
+                           (lambda (ev)
+                             (funcall fn (chain ev target value))))
+               (funcall ,formatter (aget ,name (chain c (obj)))))))))
 
 (defmacro input-field (name  &key
 			       (class-name "pure-u-1 pure-u-md-1-6")
@@ -105,7 +107,8 @@
 	(:div
 	 :class-name ,class-name
 	 :style (create margin 0)
-	 (:*validating-input :default-value (funcall ,formatter (aget ,name (chain this state obj)))
+	 (:*validating-input :default-value
+                             (funcall ,formatter (aget ,name (chain c (obj))))
 			     :parser ,parser
 			     :id id
 			     :input-class ,input-class
@@ -114,8 +117,8 @@
 						    padding 0)
 			     :style (create background-color "white"
 					      padding 0)
-			     :validator (chain this (validate ',name))
-			     :on-change (chain this (handle-change ',name))
+			     :validator (chain c (validate ',name))
+			     :onchange (chain c (handle-change ',name))
 			     ,@(when override-value
 				     `(:override-value ,override-value)))
 
@@ -206,9 +209,9 @@
 	  ,@(loop for i from 1 to n
 	       collect
 		 `(:*weapon-info
-		   :default-value (aget ,(key-fmt :weapon-~d i) (chain this state obj) nil)
+		   :default-value (aget ,(key-fmt :weapon-~d i) (chain c (obj)) nil)
 					;TODO validator
-		   :on-change (chain this (handle-change ,(key-fmt :weapon-~d i)))
+		   :onchange (chain c (handle-change ,(key-fmt :weapon-~d i)))
 		   :atk-bonus (output-field ,(key-fmt :weapon-~d-atk-bonus i)
 					      :label-as "Atk"
 					      :class-name "pure-u-1-6 pure-u-md-1-12")
@@ -227,46 +230,52 @@
      :class-name ,class-name
      :show-label ,show-label
      :label-as ,label-as
-     :default-fudge (if (listp (aget ,(make-keyword name) (aget :fudges (chain this state obj))))
-			   (aget ,(make-keyword name) (aget :fudges (chain this state obj)))
+     :default-fudge (if (listp (aget ,(make-keyword name) (aget :fudges (chain c (obj)))))
+			   (aget ,(make-keyword name) (aget :fudges (chain c (obj))))
 			   (list))
-     :validate-fudge (chain this
+     :validate-fudge (chain c
 			      (validate-fudge this ,(make-keyword name)))
-     :fudge-changed (chain this
+     :fudge-changed (chain c
 			     (on-fudge-change ,(make-keyword name)))
-     :value (calculate-field ,(make-keyword name) (chain this state obj))
+     :value (calculate-field ,(make-keyword name) (chain c (obj)))
      :input-class ,input-class)))
 
-(defmacro defreact-for-classish ((react-name name &key
-					     on-change) &body b)
-  `(defreact ,react-name
-       mixins (ps:array (chain *react addons *pure-render-mixin))
-       handle-change (mlambda (v)
-		       (tlambda (newval)
-			 (chain this
-				(set-state
-				 (lambda (state props context)
-				   (let ((newobj (chain state obj (set v newval))))
-				     ,@(when on-change
-					     `((,on-change newobj v)))
-				     (create obj newobj)))))))
-       validate-fudge (mlambda (the-fudge)
+(defmacro defmithril-for-classish ((react-name name &key
+					     onchange)
+                                   controller-body
+                                   &body b)
+  `(defmithril ,react-name
+               controller
+               (lambda (props children)
+                 (setf (^ this obj) (^ m (prop (^ props default-value)))
+                       (^ this handle-change)
+                       (mlambda (v)
+			 (tlambda (newval)
+			   (let ((newobj (chain this (obj) (set v newval))))
+			     (chain this (obj newobj))
+			     ,@(when onchange
+				     `((funcall ,onchange newobj v))))))
+                       (chain this validate-fudge)
+                       (mlambda (the-fudge)
 			(tlambda (newval)
 			  (let* ((obj
-				  (chain this state obj))
+				  (chain this (obj)))
 				 (newobj
-				  (chain this state obj
-					 (update-in
+				  (chain obj
+                                         (update-in
 					  (ps:array :fudges the-fudge)
 					  (lambda (oldval) newval)))))
 			    (,(intern (format nil "~A-P" (string name)) (symbol-package name))
 			      newobj))))
-       validate (mlambda (v)
-		  (tlambda (newval)
-		    (let ((newstate (chain this state obj (set v newval))))
+       (chain this validate)
+       (mlambda (v)
+                (tlambda (newval)
+		    (let ((newobj (chain this (obj) (set v newval))))
 		      (,(intern (format nil "VALIDATE-CHANGED-~A" (string name)) (symbol-package name))
-			newstate
-			v))))
+			newobj
+			v)))))
+       ,controller-body
+       this)
        ,@b))
 
 (defmacro choice-field (name choices &key
@@ -282,8 +291,8 @@
 	      (:div
 	       :class-name ,class-name
 	       (:*validating-select
-		:default-value (aget ,name (chain this state obj))
-		:validator (chain this (validate ',name))
+		:default-value (aget ,name (chain c (obj)))
+		:validator (chain c (validate ',name))
 		:error-style (create background-color "pink"
 				       padding 0)
 		:style (create background-color "white"
@@ -292,7 +301,7 @@
 		:class-name ,choice-class
 		:id id
 		,@(when override-value (list :override-value override-value))
-		:on-change (chain this (handle-change ',name))
+		:onchange (chain c (handle-change ',name))
 		,@(loop for choice in choices
 		     for choice-value in choice-values
 		     collect `(:option :value ,choice-value
@@ -313,11 +322,11 @@
 	  ,(better-capitalize (string name)))
 
 	 (:*validating-checkboxes
-	  :default-value (aget ,name (chain this state obj))
-	  :validator (chain this (validate ',name))
+	  :default-value (aget ,name (chain c (obj)))
+	  :validator (chain c (validate ',name))
 	  :parser ,parser
 	  :class-name ,checkbox-class
-	  :on-change (chain this (handle-change ',name))
+	  :onchange (chain c (handle-change ',name))
 	  :choices ,choices)))))
 
 #+ps(defvar *row-keyn* 0)
@@ -336,13 +345,18 @@
        ,@(when show-name (list (better-capitalize (string name))))
        (:*val-list
 	:read-only ,read-only
-	:value (aget ,name (chain this state obj))
-	:validator (chain this (validate ',name))
-	:on-change (chain this (handle-change ',name))
+	:value (aget ,name (chain c (obj)))
+	:validator (chain c (validate ',name))
+	:onchange (chain c (handle-change ',name))
 	:inner-class ,inner-class
 	:row-key ,row-key
 	:make-new ,make-new
 	:make-row ,make-row)))))
 
-(defmacro ^ (&rest r) `(chain ,@r))
 
+ 
+
+(defmacro defreact-for-classish (args controller-body &body b)
+  `(defmithril-for-classish ,args (progn) view (lambda () (htm (:div)))))
+
+(defmacro defreact (name &body b) `(defmithril ,name view (lambda () (htm (:div)))))

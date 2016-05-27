@@ -66,7 +66,12 @@
   (let ((content-length (getf env :content-length)) (body))
     (log:debug content-length)
     (cond
-      ((null content-length))
+      ((null content-length)
+       `(413
+	(:content-type "text/html")
+	(,(cl-who:with-html-output-to-string
+	   (s)
+	   (htm (:html (:head) (:body "Requests without contentl-length unsupported")))))))
       ((> content-length *max-length*)
        `(413
 	 (:content-type "text/html")
@@ -128,26 +133,33 @@
   `(cl-who:with-html-output-to-string (,stream-name nil
 						    :indent t
 						    :prologue "<!DOCTYPE html>")
-    (:html
-     (:head
-      (:meta :charset "utf-8")
-      ;(:script :src (fixup-path "/pub/build/react-with-addons.js"))
-      ;(:script :src (fixup-path "/pub/build/lz-string.min.js"))
-      (:link :rel "stylesheet" :href (fixup-path "/pub/all.css"))
-      ;(:link :rel "stylesheet" :href (fixup-path "/pub/style/pure-min.css"))
-      ;(:link :rel "stylesheet" :href (fixup-path "/pub/style/grid.css"))
-      ;(:link :rel "stylesheet" :href (fixup-path "/pub/style/local.css"))
-      (:meta :name "viewport" :content "width=device=width, intial-scale=1")
-      (:body #+(or)(:script :src (fixup-path "/pub/build/psx.js"))
-	     ;(:img :src (fixup-path "/pub/images/fc.png"))
-	     (:script :src (fixup-path "/pub/all.js"))
-	     (:script
-	      (format ,stream-name "var PREPENDPATH = '~a'" *prepend-path*))
-	     (:div :hidden t
-		    :id "csrf"
-		    (esc (session-csrf-token (getf env :session))))
-	      (:div :id "react-content")
-	     ,@body)))))
+     (:html
+      (:head
+       (:meta :charset "utf-8")
+       (:link :rel "stylesheet" :href (fixup-path "/pub/all.css"))
+       (:meta :name "viewport" :content "width=device-width, initial-scale=1")
+       (:body 
+	(:script :src (fixup-path "/pub/all.js"))
+	(:script
+	 (format ,stream-name "var PREPENDPATH = '~a'" *prepend-path*))
+	(:div :hidden t
+	      :id "csrf"
+	      (esc (session-csrf-token (getf env :session))))
+	(:div :id "mithril-content")
+	,@body)))))
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun render-mithril (class options stream)
+    (let ((element "document.getElementById(\"mithril-content\")"))
+      (format stream "
+<script>
+ m.mount(~a,
+         {view : function (){
+            return m.component(~a, {
+               ~{~A: ~A~^,~%~}
+            })}})
+</script>"
+       element class options))))
 
 (defapprule root-rule (property :path-info "/")
   (with-db-connection ()
@@ -155,29 +167,32 @@
       (:content-type "text/html")
       (,(render-page
 	 (s)
-	 (:script
-	  (princ "React.render(React.createElement(CharacterList, {value : " s)
-	  (princ "Immutable.fromJS(" s)
-	  (encode-classish
-	   (coerce
-	    (loop with result = (array*)
-	       for id in (get-all-character-ids)
-	       for character = (get-character id)
-	       do (vector-push-extend
-		   (make-character-summary
-		    :id id
-		    :char-name
-		    (aget :character-name character)
-		    :player-name
-		    (aget :player-name character)
-		    :career-level
-		    (calculate-field :career-level character))
-		   result)
-	       finally (return result))
-	    'vector)
-	   s)
-	  (princ ")}),document.getElementById(\"react-content\"))" s)))))))
-
+	 (render-mithril "CharacterList"
+			 `("value" ,
+			   (with-output-to-string (s)
+			     
+			   (princ "Immutable.fromJS(" s)
+			   (encode-classish
+			    (coerce
+			     (loop with result = (array*)
+				for id in (get-all-character-ids)
+				for character = (get-character id)
+				do (vector-push-extend
+				    (make-character-summary
+				     :id id
+				     :char-name
+				     (aget :character-name character)
+				     :player-name
+				     (aget :player-name character)
+				     :career-level
+				     (calculate-field :career-level character))
+				    result)
+				finally (return result))
+			     'vector)
+			    s)
+			   (princ ")" s)))
+			 s))))))
+	  
 (defapprule new-character-rule (and (property :request-method :POST)
 				    (property :remote-user username)
 				    (property :path-info "/new-character/"))
@@ -261,12 +276,17 @@
 	    (,(render-page
 	       (s)
 	       (:script
-		(format s (ps:ps (setf *view-only* t)))
-		(format s "React.render(React.createElement(CharacterMenu, {
-characterId: ~D, defaultValue : " id)
-		(princ "fixupFcCharacter(Immutable.fromJS(" s)
-		(encode-classish character s)
-		(princ "))}),document.getElementById(\"react-content\"))" s)))))
+		(format s (ps:ps (setf *view-only* t))))
+	       (render-mithril
+		"CharacterMenu"
+		`("characterId"
+		  ,id
+		  "defaultValue"
+		  ,(with-output-to-string (s)
+					  (princ "fixupFcCharacter(Immutable.fromJS(" s)
+					  (encode-classish character s)
+					  (princ "))" s)))
+		s))))
 	  `(404
 	    (:content-type "text/html")
 	    (,(cl-who:with-html-output-to-string (s)
@@ -298,11 +318,16 @@ characterId: ~D, defaultValue : " id)
 		(:content-type "text/html")
 		(,(render-page
 		   (s)
-		   (:script
-		    (format s "React.render(React.createElement(CharacterMenu, {characterId: ~D, defaultValue : " id)
-		    (princ "fixupFcCharacter(Immutable.fromJS(" s)
-		    (encode-classish character s)
-		    (princ "))}),document.getElementById(\"react-content\"))" s)))))
+		   (render-mithril
+		    "CharacterMenu"
+		    `("characterId"
+		      ,id
+		      "defaultValue"
+		      ,(with-output-to-string (s)
+					      (princ "fixupFcCharacter(Immutable.fromJS(" s)
+					      (encode-classish character s)
+					      (princ "))" s)))
+		    s))))
 	      `(404
 		(:content-type "text/html")
 		(,(cl-who:with-html-output-to-string (s)
@@ -329,9 +354,7 @@ characterId: ~D, defaultValue : " id)
       (:content-type "text/html; charset=UTF-8")
       (,(render-page
 	 (s)
-	 (:script
-	  (format s
-		  "React.render(React.createElement(AccountSettings, {user: \"~A\"}),document.getElementById(\"react-content\"))" username)))))))
+	 (render-mithril "AccountSettings" `("user" ,(format nil "'~a'" username)) s))))))
 
 (defapprule set-password-rule (and
 			       (property :path-info "/set-password/")
