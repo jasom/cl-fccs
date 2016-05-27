@@ -7,6 +7,7 @@
 
 (defapprule modify-user (and (property :path-info "/admin/moduser/")
 			  (property :request-method :post)
+			  (property :raw-body body)
 			  (property :remote-user username))
   (if (not (member :administrator (user-roles (get-user username))))
       '(403
@@ -35,6 +36,7 @@
 
 (defapprule new-user (and (property :path-info "/admin/newuser/")
 			  (property :request-method :post)
+			  (property :raw-body body)
 			  (property :remote-user username))
   (if (not (member :administrator (user-roles (get-user username))))
       '(403
