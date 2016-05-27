@@ -43,6 +43,7 @@ div.pure-input-1 {
     -moz-box-sizing: border-box;
 }
 
+/*
 div.positioned-popup-left, div.positioned-popup-right {
     position: fixed;
     background-color: white;
@@ -54,8 +55,11 @@ div.positioned-popup-left, div.positioned-popup-right {
     left: 5%;
     top: 5%;
 }
+*/
 
+/*
 @media screen and (min-width: 35.5em) {
+*/
     div.positioned-popup-left {
         position: absolute;
         background-color: white;
@@ -80,7 +84,9 @@ div.positioned-popup-left, div.positioned-popup-right {
         left: auto;
         right: 0
     }
+    /*
 }
+*/
 @media screen and (min-width: 48em) {
 }
 @media screen and (min-width: 64em) {
