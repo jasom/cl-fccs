@@ -134,7 +134,7 @@
 	  (input (alexandria:make-keyword (format nil "BASE-~A" attribute-name))))
       `(loose-sum
 	(aget ,input ,character)
-	(get-species-mod character ,atr)))))
+	(get-species-mod ,character ,atr)))))
 
 (defun calculate-column (column character)
        (loop for item in (loopable (aget :classes character))
