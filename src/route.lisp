@@ -2,16 +2,9 @@
 
 (defvar *route-fn*)
 (defvar *prepend-path*)
+
 (defvar *default-rule*
   (lambda (env)
-    (declare (ignorable env))
-    `(404
-      (:content-type "text/html")
-      (,(cl-who:with-html-output-to-string (s)
-					   (:htm (:head) (:body (:p "Not found"))))))))
-
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defvar *default-rule*
     `(404
       (:content-type "text/html")
       (,(cl-who:with-html-output-to-string (s)
@@ -31,7 +24,7 @@
 			(,fname env
 				,@(optima::pattern-variables
 				   (optima::parse-pattern pattern)))))
-	 (_ (funcall *default-rule*))))))
+	 (_ (funcall *default-rule* env))))))
 
 (defun list-app-rules ()
   (let ((*print-case* :downcase)
