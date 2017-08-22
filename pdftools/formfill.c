@@ -48,7 +48,7 @@ int main (int argc, char *argv[])
 
     fz_try(ctx)
     {
-        fz_write_options opts = { 0};
+        pdf_write_options opts = { 0};
         doc = open_pdf_document(ctx,argv[1]);
 
         fields = fopen(argv[2],"rb");
@@ -74,7 +74,7 @@ int main (int argc, char *argv[])
     }
     fz_always(ctx)
     {
-        pdf_close_document(ctx,doc);
+        pdf_drop_document(ctx,doc);
         fclose(fields);
     }
     fz_catch(ctx)

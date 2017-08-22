@@ -11,36 +11,29 @@ fz_buffer *file_to_buffer(fz_context *ctx, FILE *in) {
     while(1) {
         size_t count = fread(buf,1,sizeof(buf),in);
         if(count == 0) break;
-        fz_write_buffer(ctx,new_buf,buf,count);
+        fz_append_data(ctx,new_buf,buf,count);
     }
     return new_buf;
 }
 
-void write_pdf_document(fz_context *ctx, char *fname, pdf_document *doc, fz_write_options *opts)
+void write_pdf_document(fz_context *ctx, char *fname, pdf_document *doc, pdf_write_options *opts)
 {
-    if(strcmp(fname,"-")) {
-        pdf_write_document(ctx,doc, fname, opts);
-    } else {
-        char tmpnam[] ="/tmp/pdfoutXXXXXX";
-        static char buf[1024*1024];
+    fz_output *out = NULL;
 
-        mkstemp(tmpnam);
-        fz_try(ctx) {
-            FILE *in = fopen(tmpnam,"rb");
-            pdf_write_document(ctx, doc, tmpnam, opts);
-            while(1) {
-                size_t count = fread(buf,1,sizeof(buf),in);
-                if(count == 0) break;
-                fwrite(buf,1,count,stdout);
-            }
-            fclose(in);
+    fz_try(ctx) {
+        if(strcmp(fname,"-")) {
+            out = fz_new_output_with_path(ctx, fname, 0);
+        } else {
+            out = fz_stdout(ctx);
         }
-        fz_always(ctx) {
-            unlink(tmpnam);
-        }
-        fz_catch(ctx) {
-            fz_rethrow(ctx);
-        }
+        pdf_write_document(ctx, doc, out, opts);
+    }
+    fz_always(ctx) {
+        pdf_drop_document(ctx, doc);
+        fz_drop_output(ctx, out);
+    }
+    fz_catch(ctx) {
+        fz_rethrow(ctx);
     }
 }
 
@@ -50,7 +43,8 @@ pdf_document * open_pdf_document(fz_context *ctx, char *fname)
     if(strcmp(fname,"-")) {
         doc = pdf_open_document(ctx,fname);
     } else {
-        fz_stream *stream = fz_open_buffer(ctx,file_to_buffer(ctx,stdin));
+        fz_buffer * buf = file_to_buffer(ctx,stdin);
+        fz_stream *stream = fz_open_buffer(ctx, buf);
         doc = pdf_open_document_with_stream(ctx,stream);
     }
     return doc;

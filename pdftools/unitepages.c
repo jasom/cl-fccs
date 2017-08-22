@@ -27,21 +27,23 @@ void drawpage(fz_context *ctx, pdf_document *doc, int pagenum, pdf_document *pdf
 	fz_try(ctx)
 		page = pdf_load_page(ctx, doc, pagenum);
 	fz_catch(ctx)
-		fz_rethrow_message(ctx, "cannot load page ");
+		fz_rethrow(ctx);
 
 
 	{
 		fz_matrix ctm = fz_identity;
 		fz_rect bounds;
-		pdf_page *newpage;
 
 		pdf_bound_page(ctx, page, &bounds);
+                pdf_obj *newpage;
+                pdf_obj * presources;
+                fz_buffer * pcontents;
+                    
 
-		newpage = pdf_create_page(ctx, pdfout, bounds, 72, 0);
 
 		fz_try(ctx)
 		{
-			dev = pdf_page_write(ctx, pdfout, newpage);
+			dev = pdf_page_write(ctx, pdfout, &bounds, &presources, &pcontents);
                         pdf_run_page(ctx, page, dev, &ctm, &cookie);
 			fz_drop_device(ctx, dev);
 			dev = NULL;
@@ -56,8 +58,9 @@ void drawpage(fz_context *ctx, pdf_document *doc, int pagenum, pdf_document *pdf
 			fz_drop_display_list(ctx, list);
 			fz_rethrow(ctx);
 		}
-		pdf_insert_page(ctx, pdfout, newpage, INT_MAX);
-		fz_drop_page(ctx, &newpage->super);
+                newpage = pdf_add_page(ctx, pdfout, &bounds, 0, presources, pcontents);
+		pdf_insert_page(ctx, pdfout, INT_MAX, newpage);
+                /* TODO destroy resources */
 	}
 
 	if (list)
@@ -82,7 +85,7 @@ int main (int argc, char *argv[])
     fz_try(ctx)
     {
         int i;
-        fz_write_options opts = { 0};
+        pdf_write_options opts = { 0};
 
         doc1 = open_pdf_document(ctx,argv[1]);
         doc2 = open_pdf_document(ctx,argv[2]);
@@ -131,8 +134,8 @@ int main (int argc, char *argv[])
     }
     fz_always(ctx)
     {
-        pdf_close_document(ctx,doc1);
-        pdf_close_document(ctx,doc2);
+        pdf_drop_document(ctx,doc1);
+        pdf_drop_document(ctx,doc2);
     }
     fz_catch(ctx)
     {
