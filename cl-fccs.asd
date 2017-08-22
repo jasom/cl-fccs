@@ -7,6 +7,7 @@
   :depends-on (;; #:clack-v1-compat
                #:clack
                #:lack-middleware-static
+	       #:optima-router
                #:quri
                #:parenscriptm
 	       #:parse-number
@@ -31,8 +32,7 @@
 	       (:module "src"
 		:serial t
 		:components
-		((:file "route")
-		 (:file "ps-compat")
+		((:file "ps-compat")
 		 (:file "util")
 		 (:file "view-macros")
 		 (:file "store")

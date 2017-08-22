@@ -86,7 +86,7 @@
 	  (,(with-html-output-to-string (s)
 					(:html (:body (:p "Error"))))))
       (log:debug body)
-      (funcall *route-fn* env))))
+      (route env))))
 
 (defun authenticate (user pass)
   (validate-user user pass))
