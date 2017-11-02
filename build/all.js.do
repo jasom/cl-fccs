@@ -1,6 +1,6 @@
 . ./config.sh
-SOURCES="$REACTJS
-    $IMMUTABLEJS
+SOURCES="prefix.js
+    $MITHRILJS
     ./static/js/lz-string.js
     ./in.js
     ./exports.js"
@@ -13,6 +13,7 @@ case "$OPT" in
   ADVANCED) java -jar "$CLOSURE" \
       $SOURCES \
       --compilation_level ADVANCED_OPTIMIZATIONS \
+      --externs extern.js \
       --js_output_file $3 ;;
   *) exit 1 ;;
       esac

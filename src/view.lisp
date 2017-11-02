@@ -1,11 +1,11 @@
 (in-package cl-fccs)
 
-(defvar *view-only* nil)
+(parenscriptm::psm-header)
 
-(defmacro constructor (args &body b)
-  `(lambda ,args
-     ,@b
-     this))
+(defvar *view-only* nil)
+(defvar *prepend-path*)
+
+(setf (^ m prop) (^ m stream))
 
 (defun index-of (item the-array)
   (if (not (chain *array prototype index-of))
@@ -22,39 +22,42 @@
 		path)))
 
 (defmithril-for-classish (*contact-info
-			contact-info
-			:onchange (tlambda (v) (chain props (onchange v))))
+			  contact-info
+			  :onchange (tlambda (v) (chain props (onchange v))))
     (setf (^ this obj) (^ m (prop (^ props default-value))))
-  view (lambda (c props children)
-	 (htm
-	  (:div
-	   (input-field name
-			:class-name "pure-u-md-1-2")
-	   (input-field trust
-			:class-name "pure-u-md-1-8")
-	   (input-field size
-			:class-name "pure-u-md-1-8")
-	   (input-field reach
-			:class-name "pure-u-md-1-8")
-	   (input-field speed
-			:class-name "pure-u-md-1-8")
-	   (input-field attributes
-			:class-name "pure-u-md-5-6")
-	   (input-field rep-cost)
-	   (input-field init)
-	   (input-field atk)
-	   (input-field def)
-	   (input-field res)
-	   (input-field health)
-	   (input-field comp)
-	   (input-field skills
-			:class-name "pure-u-1")
-	   (input-field qualities
-			:class-name "pure-u-1")
-	   (input-field attacks
-			:class-name "pure-u-1")
-	   (input-field gear
-			:class-name "pure-u-1")))))
+  view (lambda (vnode)
+	 (let ((c (^ vnode state))
+	       (props (^ vnode attrs))
+	       (children (^ vnode children)))
+	   (htm
+	    (:div
+	     (input-field name
+			  :class-name "pure-u-md-1-2")
+	     (input-field trust
+			  :class-name "pure-u-md-1-8")
+	     (input-field size
+			  :class-name "pure-u-md-1-8")
+	     (input-field reach
+			  :class-name "pure-u-md-1-8")
+	     (input-field speed
+			  :class-name "pure-u-md-1-8")
+	     (input-field attributes
+			  :class-name "pure-u-md-5-6")
+	     (input-field rep-cost)
+	     (input-field init)
+	     (input-field atk)
+	     (input-field def)
+	     (input-field res)
+	     (input-field health)
+	     (input-field comp)
+	     (input-field skills
+			  :class-name "pure-u-1")
+	     (input-field qualities
+			  :class-name "pure-u-1")
+	     (input-field attacks
+			  :class-name "pure-u-1")
+	     (input-field gear
+			  :class-name "pure-u-1"))))))
 
 
 (defmithril-for-classish (*holding-info
@@ -62,7 +65,10 @@
 			:onchange (tlambda (v) (chain props (onchange v))))
     (setf (^ this obj)
 	  (^ m (prop (^ props default-value))))
-  view (lambda (c props children)
+  view (lambda (vnode)
+	 (let ((c (^ vnode state))
+	       (props (^ vnode attrs))
+	       (children (^ vnode children)))
 	 (htm
 	  (:div
 	   (input-field name
@@ -75,14 +81,17 @@
 			)
 	   (input-field upgrades
 			:class-name "pure-u-1 pure-u-md-5-6")
-	   (input-field rep-cost)))))
+	   (input-field rep-cost))))))
 
 (defmithril-for-classish (*magic-item-info
 			magic-item-info
 			:onchange (tlambda (v) (chain props (onchange v))))
     (setf (^ this obj)
 	  (^ m (prop (^ props default-value))))
-  view (lambda (c props children)
+  view (lambda (vnode)
+	 (let ((c (^ vnode state))
+	       (props (^ vnode attrs))
+	       (children (^ vnode children)))
 	   (htm
 	    (:div
 	     (input-field name
@@ -94,12 +103,15 @@
 	     (input-field charms
 			  :class-name "pure-u-1 pure-u-md-1-4")
 	     (input-field rep-cost
-			  :class-name "pure-u-1 pure-u-md-1-8")))))
+			  :class-name "pure-u-1 pure-u-md-1-8"))))))
 
 (defmithril-for-classish (*fudge fudge
 			       :onchange (tlambda (v) (chain props (onchange v))))
   (setf (^ this obj) (^ m (prop (^ props default-value))))
-  view (lambda (c props children)
+  view (lambda (vnode)
+	 (let ((c (^ vnode state))
+	       (props (^ vnode attrs))
+	       (children (^ vnode children)))
 	   (htm
 	    (:div
 	     :class-name "pure-u-1"
@@ -107,7 +119,7 @@
 			  :parser  parse-int
 			  :class-name "pure-u-1-2")
 	     (input-field notes
-			  :class-name "pure-u-1-2")))))
+			  :class-name "pure-u-1-2"))))))
 (defun xhr-config (request)
   (chain request (set-request-header "Content-Type" "application/json; charset=utf-8"))
   (chain request (set-request-header "x-csrf-token"
@@ -135,21 +147,27 @@
 
 
 (defmithril *fudgable-field
-  controller
-  (constructor ()
+  oninit
+  (lambda (vnode)
     (setf
-     (chain this popup) (chain m (prop nil))
-     (chain this handle-click)
+     (chain vnode state popup) (chain m (prop nil))
+     (chain vnode state handle-click)
      (tlambda (ev)
        (chain ev (prevent-default))
        (when (> (chain ev detail) 1)
-	 (chain this
+	 (chain vnode state
 		(popup
 		 (if (> (get-h-offset (chain ev current-target))
 			200)
 		     :right
 		     :left)))))))
-  view (lambda (c props children)
+  view (lambda (vnode)
+	 (let ((c (^ vnode state))
+	       (props (^ vnode attrs))
+	       (children (^ vnode children)))
+	 (let ((c (^ vnode state))
+	       (props (^ vnode attrs))
+	       (children (^ vnode children)))
          (htm
 	  (:div
 	   :class-name (chain props class-name)
@@ -197,20 +215,26 @@
 	        (when (chain props show-label)
 		 (htm (:label (better-capitalize
 				 (or (chain props label-as)
-				     (chain props name))))))))))
+				     (chain props name))))))))))))
 
 (defmithril *validating-checkbox
-    controller
-    (constructor (props children)
+    oninit
+    (my-make-state (vnode)
       (setf (chain this value)
             (chain m (prop (chain props default-value)))
             (chain this handle-changed)
             (tlambda (ev)
               (let ((val (chain ev target checked)))
-                (chain this (value val))
+                (chain vnode state (value val))
                 (when (chain props (validator val))
                   (chain props (onchange val)))))))
-    view (lambda (c props children)
+    view (lambda (vnode)
+	   (let ((c (^ vnode state))
+		 (props (^ vnode attrs))
+		 (children (^ vnode children)))
+	 (let ((c (^ vnode state))
+	       (props (^ vnode attrs))
+	       (children (^ vnode children)))
 	  (htm (:input :checked (chain c (value))
                        :id  (chain props id)
                        :type :checkbox
@@ -222,157 +246,161 @@
                                   (validator
                                     (chain c (value))))
                          (chain props style)
-                         (chain props error-style))))))
+                         (chain props error-style))))))))
 
 (defmithril *validating-input
-    controller
-    (constructor (props children)
-       (setf (^ this value)
-             (^ m (prop (chain props default-value)))
-             (^ this valid)
-             (^ m (prop
-		   (^ props (validator
-			     (^ props
-				(parser (chain props default-value)))))))
-             (^ this handle-changed)
-             (tlambda (ev)
-               (if (chain this timeout)
-                 (chain window (clear-timeout (chain this timeout)))
-                 (^ m (start-computation)))
-               (let* ((rawval (chain ev target value))
-                      (val (chain props (parser rawval)))
-                      (fn
-                        (tlambda ()
-                                 (if (chain props (validator val))
-                                   (progn
-                                     (chain props (onchange val))
-                                     (chain this (valid t)))
-                                   (chain this (valid nil)))
-                                 (^ m (end-computation))))
-                      (timeout (chain window (set-timeout fn 250))))
-                 (chain this (value rawval))
-                 (setf (chain this timeout) timeout)))))
-       view (tlambda (c props children)
-	     (htm (:input :value  (if (and (^ c (valid))
-                                           (ps:in 'override-value (chain props)))
-                                    (chain props override-value)
-                                    (chain c (value)))
-                          :id  (chain props id)
-                          :type (if (chain props type)
-                                  (chain props type)
-                                  "text")
-                          :oninput  (chain c handle-changed)
-                          :class-name  (chain props input-class)
-                          :disabled  *view-only*
-                          :style 
-                          (if (chain c (valid))
-                            (chain props style)
-                            (chain props error-style))))))
+    oninit
+  (my-make-state (vnode)
+    (setf
+     (^ this value) (^ m (prop (chain props default-value)))
+     (^ this valid)
+     (^ m (prop
+	   (^ props (validator
+		     (^ props
+			(parser (chain props default-value)))))))
+     (^ this handle-changed)
+     (tlambda (ev)
+       (if (chain this timeout)
+	   (chain window (clear-timeout (chain this timeout))))
+       (let* ((rawval (chain ev target value))
+	      (val (chain props (parser rawval)))
+	      (fn
+		  (tlambda ()
+		    (if (chain props (validator val))
+			(progn
+			  (chain props (onchange val))
+			  (chain this (valid t)))
+			(chain this (valid nil)))
+		    (^ m (redraw))))
+	      (timeout (chain window (set-timeout fn 250))))
+	 (chain this (value rawval))
+	 (setf (chain this timeout) timeout)))))
+  view (tlambda (vnode)
+	 (let ((c (^ vnode state))
+	       (props (^ vnode attrs))
+	       (children (^ vnode children)))
+	 (htm (:input :value  (if (and (^ c (valid))
+				       (ps:in 'override-value (chain props)))
+				  (chain props override-value)
+				  (chain c (value)))
+		      :id  (chain props id)
+		      :type (if (chain props type)
+				(chain props type)
+				"text")
+		      :oninput  (chain c handle-changed)
+		      :class-name  (chain props input-class)
+		      :disabled  *view-only*
+		      :style 
+		      (if (chain c (valid))
+			  (chain props style)
+			  (chain props error-style)))))))
 
 (defmithril *validating-autocomplete
-    controller
-    (constructor (props children)
-                 (let ((val (chain props default-value)))
-                   (setf
-                     (^ this pending-autocomplete) (^ m (prop nil))
-                     (^ this value) (^ m (prop val))
-                     (^ this focused) (^ m (prop nil))
-                     (^ this completions) (^ m (prop (array)))
-                     (^ this selected-completion) (^ m (prop nil))
-                     (^ this valid) (^ m (prop
-                                           (^ props (validator (^ props (parser val))))))
-                     (^ this rawval) (^ m (prop nil))
-                     (^ this completions-changed)
-                     (tlambda (new-completions)
-                              (if (/= (chain this (pending-autocomplete))
-                                      (chain this (rawval)))
-                                (progn
-                                  (chain this (pending-autocomplete (chain this (rawval))))
-                                  (chain props
-                                         (update-completions
-                                           (chain this (rawval))
-                                           (chain this (completions-changed)))))
-                                (chain this (pending-autocomplete nil)))
-                              (chain this (completions new-completions))
-                              (chain this (selected-completion (elt new-completions 0)))
-			      (^ m (start-computation))
-                              (^ m (end-computation)))
-                     (^ this defocus) (tlambda () (chain this (focused nil)))
-                     (^ this focus) (tlambda () (chain this (focused t)))
-                     (^ this handle-keydown)
-                     (tlambda (ev)
-                              (cond
-                                ((= (chain ev key-code) 27)   ;Escape
-                                 (when (chain this (focused))
-                                   (chain ev (prevent-default))
-                                   (chain this (defocus))))
-                                ((or
-                                   (= (chain ev key-code) 13)  ;Enter
-                                   (and
-                                     (= (chain ev key-code) 9)  ;Tab
-                                     (chain this (focused))))
-                                 (chain ev (prevent-default))
-                                 (when (^ this (selected-completion))
-                                   (chain this (handle-changed (^ this (selected-completion)) t)))
-				 (chain this (defocus)))
-                              ((= (chain ev key-code) 9)    ;Tab, completions not open
-                               ;; Do nothing
-                               )
-                              ((and
-                                 (= (chain ev key-code) 40)   ;Down
-                                 (chain this (focused)))
-                               (chain ev (prevent-default))
-                               (let ((completions
-                                       (chain this (completions)))
-                                     (selected-completion (chain this (selected-completion))))
-                                 (when completions
-                                   (loop for i from 0 below (length completions)
-                                         when (= (elt completions i) selected-completion)
-                                         do (chain this (selected-completion
-                                                          (elt completions
-                                                               (mod (1+ i) (length completions)))))))))
-                              ;;Up
-                              ((and
-                                 (= (chain ev key-code) 38)
-                                 (chain this (focused)))
-                               (chain ev (prevent-default))
-                               (let ((completions
-                                       (chain this completions))
-                                     (selected-completion (chain this (selected-completion)))
-                                     (when completions
-                                       (loop for i from 0 below (length completions)
-                                             when (= (elt completions i) selected-completion)
-                                             do (chain this (selected-completion
-                                                              (elt completions
-                                                                   (mod (+ i (1- (length completions)))
-                                                                        (length completions))))))))))
-                              (t
-                                (chain this (focus)))))
-		     (^ this handle-changed)
-		     (tlambda (rawval &optional no-autocomplete)
-		       (let* ((val (chain props (parser rawval))))
-			 (chain this (rawval rawval))
-			 (chain this (value rawval))
-			 (unless (or (chain this (pending-autocomplete))
-				     no-autocomplete
-				     (not rawval))
-			   (chain this (pending-autocomplete rawval))
-			   (chain props (update-completions
-					 rawval
-					 (chain this completions-changed))))
-			 (if (chain props (validator val))
-			     (progn
-			       (chain props (onchange val))
-			       (chain this (valid t)))
-			     (chain this (valid nil)))))
-                   (^ this completion-clicked)
-                   (tlambda (item)
-                            (tlambda (ev)
-                                     (chain ev (prevent-default))
-                                     (chain this (handle-changed item))
-                                     (chain this (defocus)))))))
+    oninit
+    (my-make-state (vnode)
+      (let ((val (chain vnode attrs default-value)))
+	(setf
+	 (^ this pending-autocomplete) (^ m (prop nil))
+	 (^ this value) (^ m (prop val))
+	 (^ this focused) (^ m (prop nil))
+	 (^ this completions) (^ m (prop (array)))
+	 (^ this selected-completion) (^ m (prop nil))
+	 (^ this valid) (^ m (prop
+			      (^ props (validator (^ props (parser val))))))
+	 (^ this rawval) (^ m (prop nil))
+	 (^ this completions-changed)
+	 (tlambda (new-completions)
+	   (if (/= (chain this (pending-autocomplete))
+		   (chain this (rawval)))
+	       (progn
+		 (chain this (pending-autocomplete (chain this (rawval))))
+		 (chain props
+			(update-completions
+			 (chain this (rawval))
+			 (chain this completions-changed))))
+	       (chain this (pending-autocomplete nil)))
+	   (chain this (completions new-completions))
+	   (when new-completions
+	       (chain this (selected-completion (elt new-completions 0)))))
+	 (^ this defocus) (tlambda () (chain this (focused nil)))
+	 (^ this focus) (tlambda () (chain this (focused t)))
+	 (^ this handle-keydown)
+	 (tlambda (ev)
+	   (cond
+	     ((= (chain ev key-code) 27)   ;Escape
+	      (when (chain this (focused))
+		(chain ev (prevent-default))
+		(chain this (defocus))))
+	     ((or
+	       (= (chain ev key-code) 13)  ;Enter
+	       (and
+		(= (chain ev key-code) 9)  ;Tab
+		(chain this (focused))))
+	      (chain ev (prevent-default))
+	      (when (^ this (selected-completion))
+		(chain this (handle-changed (^ this (selected-completion)) t)))
+	      (chain this (defocus)))
+	     ((= (chain ev key-code) 9)    ;Tab, completions not open
+	      ;; Do nothing
+	      )
+	     ((and
+	       (= (chain ev key-code) 40)   ;Down
+	       (chain this (focused)))
+	      (chain ev (prevent-default))
+	      (let ((completions
+		     (chain this (completions)))
+		    (selected-completion (chain this (selected-completion))))
+		(when completions
+		  (loop for i from 0 below (length completions)
+		     when (= (elt completions i) selected-completion)
+		     do (chain this (selected-completion
+				     (elt completions
+					  (mod (1+ i) (length completions)))))))))
+	     ;;Up
+	     ((and
+	       (= (chain ev key-code) 38)
+	       (chain this (focused)))
+	      (chain ev (prevent-default))
+	      (let ((completions
+		     (chain this completions))
+		    (selected-completion (chain this (selected-completion))))
+		(when completions
+		  (loop for i from 0 below (length completions)
+		     when (= (elt completions i) selected-completion)
+		     do (chain this (selected-completion
+				     (elt completions
+					  (mod (+ i (1- (length completions)))
+					       (length completions)))))))))
+	     (t
+	      (chain this (focus)))))
+	 (^ this handle-changed)
+	 (tlambda (rawval &optional no-autocomplete)
+	   (let* ((val (chain props (parser rawval))))
+	     (chain this (rawval rawval))
+	     (chain this (value rawval))
+	     (unless (or (chain this (pending-autocomplete))
+			 no-autocomplete
+			 (not rawval))
+	       (chain this (pending-autocomplete rawval))
+	       (chain props (update-completions
+			     rawval
+			     (chain this completions-changed))))
+	     (if (chain props (validator val))
+		 (progn
+		   (chain props (onchange val))
+		   (chain this (valid t)))
+		 (chain this (valid nil)))))
+	 (^ this completion-clicked)
+	 (tlambda (item)
+	   (tlambda (ev)
+	     (chain ev (prevent-default))
+	     (chain this (handle-changed item))
+	     (chain this (defocus)))))))
     view
-    (lambda (c props children)
+    (lambda (vnode)
+      (let ((c (^ vnode state))
+	    (props (^ vnode attrs))
+	    (children (^ vnode children)))
       (htm
         (:div
           (:input :value  (^ c (value))
@@ -412,11 +440,11 @@
                                    :href "#"
                                    :class-name "pure-menu-link nopad"
                                    :onclick  (chain c (completion-clicked item))
-                                   item)))))))))))))
+                                   item))))))))))))))
 
 (defmithril *validating-checkboxes
-    controller
-    (constructor (props children)
+    oninit
+    (my-make-state (vnode)
       (setf
         (^ this value) (^ m (prop (^ props default-value)))
         (^ this handle-changed)
@@ -432,7 +460,10 @@
                (chain this (value value-copy))
                (when (chain props (validator value-copy))
                  (chain props (onchange value-copy))))))))
-    view (lambda (c props children)
+    view (lambda (vnode)
+	   (let ((c (^ vnode state))
+		 (props (^ vnode attrs))
+		 (children (^ vnode children)))
            (htm
              (:fieldset
                ;:class-name  (chain props class-name)
@@ -447,19 +478,18 @@
                                        ;:label  item
                                        :checked  (member item (chain c (value)))
                                        :oninput  (chain c (handle-changed item)))
-                                     (:label  item))))))))
+                                     (:label  item)))))))))
 
 (defmithril *validating-select
-    controller
-  (constructor (props children)
+    oninit
+  (my-make-state (vnode)
 	       (setf
 		(^ this value) (^ m (prop (^ props default-value)))
 		(^ this valid) (^ m (prop (^ props (validator (^ props default-avlue)))))
 		(^ this handle-changed)
 		(tlambda (rawval)
 		  (if (chain this timeout)
-		      (chain window (clear-timeout (chain this timeout)))
-		      (^ m (start-computation)))
+		      (chain window (clear-timeout (chain this timeout))))
 		  (let* ((val (chain props (parser rawval)))
 			 (fn (tlambda ()
 			       (if (chain props (validator val))
@@ -467,11 +497,14 @@
 				     (chain props (onchange val))
 				     (chain this (valid t)))
 				   (chain this (valid nil)))
-			       (^ m (end-computation))))
+			       (^ m (redrawo))))
 			 (timeout (chain window (set-timeout fn 250))))
 		    (chain this (value rawval))
 		    (setf (chain this timeout) timeout)))))
-  view (tlambda (c props children)
+  view (tlambda (vnode)
+	 (let ((c (^ vnode state))
+	       (props (^ vnode attrs))
+	       (children (^ vnode children)))
                    (htm (:select
                           :disabled  *view-only*
                           :value
@@ -486,22 +519,22 @@
                           (if (chain props (validator (chain c (value))))
                             (chain props style)
                             (chain props error-style))
-                          children))))
+                          children)))))
 
 (defmithril *val-list
-    controller
-    (constructor (props children)
+    oninit
+    (my-make-state (vnode)
       (setf
         (^ this keys)
         (^ m (prop
-               (loop for item in (chain props value (to-array))
+               (loop for item in (chain props value)
                      for i from 0
                      collect (chain props (row-key item i)))))
         (^ this handle-change)
         (mlambda (v)
           (tlambda (newval)
-            (let ((newarray (chain props value (set v newval))))
-              (chain props (onchange newarray)))))
+	    (setf (elt (^ props value) v) newval)
+	    (chain props (onchange (^ props value (slice))))))
         (^ this del)
         (tlambda (the-key)
 	  (tlambda (ev)
@@ -538,7 +571,7 @@
         (tlambda (the-key)
 	   (tlambda (ev)
 	     (chain ev (prevent-default))
-	     (let ((item-position (index-of the-key (chain (keys)))))
+	     (let ((item-position (index-of the-key (chain this (keys)))))
 	       (unless (>= item-position (1- (chain this (keys) length)))
 		 (chain this (move-helper (1+ item-position)))))))
         (^ this up)
@@ -561,16 +594,19 @@
                                                newitem
                                                (1- (chain newarray (count))))))))))
             (chain props (onchange newarray))))))
-    view (lambda (c props children)
+    view (lambda (vnode)
+	   (let ((c (^ vnode state))
+		 (props (^ vnode attrs))
+		 (children (^ vnode children)))
 	     (let* ((keys
 		     (if (or (chain props read-only) *view-only*)
-			 (loop for item in (chain props value (to-array))
+			 (loop for item in (chain props value )
 			    for i from 0
 			    collect (chain props (row-key item i)))
 			 (chain c (keys))))
 		    (items
 		     (loop
-			for item in (chain props value (to-array))
+			for item in (chain props value )
 			for key in keys
 			for i from 0
 			collect
@@ -611,12 +647,15 @@
 				 :onclick (lambda (event)
                                             (chain event (prevent-default))
                                             (chain c (add props)))
-				 "+"))))))))
+				 "+")))))))))
 
 (defmithril-for-classish (*weapon-info weapon-info
 			       :onchange (tlambda (v) (chain props (onchange v))))
     (setf (^ this obj) (^ m (prop (^ props default-value))))
-  view (lambda (c props children)
+  view (lambda (vnode)
+	 (let ((c (^ vnode state))
+	       (props (^ vnode attrs))
+	       (children (^ vnode children)))
 	    (htm
 	     (:div
 	      (input-field name :class-name "pure-u-1 pure-u-md-9-24")
@@ -640,7 +679,7 @@
 			  :class-name "pure-u-1-6 pure-u-md-1-12")
 	      (input-field shots
 			  :parser  parse-int :class-name "pure-u-1-6 pure-u-md-1-12")
-	      (input-field qualities :class-name "pure-u-1 pure-u-md-1-2")))))
+	      (input-field qualities :class-name "pure-u-1 pure-u-md-1-2"))))))
 
 		  
 (defmithril-for-classish (*gear-info gear-info
@@ -652,22 +691,26 @@
     (^ this obj) (^ m (prop (^ props default-value)))
     (^ this update-fields)
     (tlambda (name)
-      (^ m (request (create
-                 :method "POST"
-                 :url (fixup-path "/complete/gear-info")
-                 :config xhr-config
-                 :data name))
-         then
-         (tlambda (response)
-           (when (and (/= response nil) (> (chain response length) 0))
-             (setf response
-                   (loop for item in response
-                         collect (if (= item null) "" item)))
-             (funcall (chain this (handle-change :effect)) (elt response 1))
-             (funcall (chain this (handle-change :size)) (elt response 2))
-             (funcall (chain this (handle-change :hand)) (elt response 3))
-             (funcall (chain this (handle-change :weight)) (elt response 4)))))))
-  view (lambda (c props children)
+      (chain m
+	 (request (create
+		   :method "POST"
+		   :url (fixup-path "/complete/gear-info")
+		   :config xhr-config
+		   :data name))
+         (then
+	  (tlambda (response)
+	    (when (and (/= response nil) (> (chain response length) 0))
+	      (setf response
+		    (loop for item in response
+		       collect (if (= item null) "" item)))
+	      (funcall (chain this (handle-change :effect)) (elt response 1))
+	      (funcall (chain this (handle-change :size)) (elt response 2))
+	      (funcall (chain this (handle-change :hand)) (elt response 3))
+	      (funcall (chain this (handle-change :weight)) (elt response 4))))))))
+  view (lambda (vnode)
+	 (let ((c (^ vnode state))
+	       (props (^ vnode attrs))
+	       (children (^ vnode children)))
 	   (htm
 	    (:div
 	     (autocomplete-input-field
@@ -697,7 +740,7 @@
 	     (input-field weight
 			  :override-value (aget :weight (chain c (obj)))
 			  :class-name "pure-u-1 pure-u-md-1-12"
-			  :parser  #'parse-int)))))
+			  :parser  #'parse-int))))))
 
 
 	     
@@ -705,7 +748,10 @@
 (defmithril-for-classish (*fc-class fc-class
 				  :onchange (tlambda (v) (chain props (onchange v))))
     (setf (^ this obj) (^ m (prop (^ props default-value))))
-  view (lambda (c props children)
+  view (lambda (vnode)
+	 (let ((c (^ vnode state))
+	       (props (^ vnode attrs))
+	       (children (^ vnode children)))
          (htm
            (:div
              :class-name "pure-u-1 pure-u-md-11-12"
@@ -727,7 +773,7 @@
              (input-field level
                           :class-name "pure-u-1 pure-u-md-1-4"
                           :input-type "number"
-                          :parser  parse-int)))))
+                          :parser  parse-int))))))
 
 
 
@@ -745,23 +791,26 @@
              (create :method "POST"
                      :url (fixup-path "/complete/spell-info")
                      :config xhr-config
-                     :data name)
-             (then
-               (tlambda (response)
-                (when (> (chain response length) 0)
-                  (setf response
-                        (loop for item in response
-                              collect (if (= item null) "" item)))
-                  (funcall (chain this (handle-change :level)) (elt response 1))
-                  (funcall (chain this (handle-change :discipline)) (elt response 2))
-                  (funcall (chain this (handle-change :casting-time)) (elt response 3))
-                  (funcall (chain this (handle-change :distance)) (elt response 4))
-                  (funcall (chain this (handle-change :area)) (elt response 5))
-                  (funcall (chain this (handle-change :saving-throw)) (elt response 6))
-                  (funcall (chain this (handle-change :duration)) (elt response 7))
-                  (funcall (chain this (handle-change :preparation-cost)) (elt response 8))
-                  (funcall (chain this (handle-change :effect)) (elt response 9)))))))))
-  view (lambda (c props children)
+                     :data name))
+	   (then
+	    (tlambda (response)
+	      (when (> (chain response length) 0)
+		(setf response
+		      (loop for item in response
+			 collect (if (= item null) "" item)))
+		(funcall (chain this (handle-change :level)) (elt response 1))
+		(funcall (chain this (handle-change :discipline)) (elt response 2))
+		(funcall (chain this (handle-change :casting-time)) (elt response 3))
+		(funcall (chain this (handle-change :distance)) (elt response 4))
+		(funcall (chain this (handle-change :area)) (elt response 5))
+		(funcall (chain this (handle-change :saving-throw)) (elt response 6))
+		(funcall (chain this (handle-change :duration)) (elt response 7))
+		(funcall (chain this (handle-change :preparation-cost)) (elt response 8))
+		(funcall (chain this (handle-change :effect)) (elt response 9))))))))
+  view (lambda (vnode)
+	 (let ((c (^ vnode state))
+	       (props (^ vnode attrs))
+	       (children (^ vnode children)))
          (htm
            (:div
              :class-name nil
@@ -807,12 +856,15 @@
                           :override-value (aget :preparation-cost (chain c (obj))))
              (input-field effect
                           :class-name "pure-u-1 pure-u-md-1-4"
-                          :override-value (aget :effect (chain c (obj))))))))
+                          :override-value (aget :effect (chain c (obj)))))))))
 
 (defmithril-for-classish (*ability-info ability-info
 				  :onchange (tlambda (v) (chain props (onchange v))))
     nil
-  view (lambda (c props children)
+  view (lambda (vnode)
+	 (let ((c (^ vnode state))
+	       (props (^ vnode attrs))
+	       (children (^ vnode children)))
          (htm
            (:div :class-name nil
                  (:div
@@ -834,12 +886,15 @@
                  (choice-field list-as 
                                (:combat :non-combat :spellcasting :none)
                                :choice-values ("combat" "non-combat" "spellcasting" "none")
-                               :class-name "pure-u-5-12")))))
+                               :class-name "pure-u-5-12"))))))
 
 (defmithril-for-classish (*feat-info feat-info
 				  :onchange (tlambda (v) (chain props (onchange v))))
     nil
-  view (lambda (c props children)
+  view (lambda (vnode)
+	 (let ((c (^ vnode state))
+	       (props (^ vnode attrs))
+	       (children (^ vnode children)))
          (htm
            (:div :class-name nil
                  (autocomplete-input-field
@@ -861,11 +916,11 @@
                  (choice-field list-as 
                                (:combat :non-combat :spellcasting)
                                :choice-values ("combat" "non-combat" "spellcasting")
-                               :class-name "pure-u-5-12")))))
+                               :class-name "pure-u-5-12"))))))
 			
 (defmithril *character-menu
-    controller
-  (constructor ()
+    oninit
+  (my-make-state (vnode)
     (setf (chain this section)
           (chain m (prop (or (^ window location hash (slice 1)) "basics")))
           (chain this change-section)
@@ -874,13 +929,15 @@
 	      (chain ev (prevent-default))
               (setf (^ window location hash) section)
               (chain this (section section))))))
-  view
-  (lambda (c props children)
+  view (lambda (vnode)
+	 (let ((c (^ vnode state))
+	       (props (^ vnode attrs))
+	       (children (^ vnode children)))
     (htm (:*character
            :default-value (chain props default-value)
            :change-section  (chain c change-section)
            :character-id (chain props character-id)
-           :section (chain c (section))))))
+           :section (chain c (section)))))))
 
 (defun simple-update (path)
   (lambda (val fn)
@@ -903,23 +960,16 @@
       (^ this on-fudge-change)
       (mlambda (the-fudge)
         (tlambda (newval)
-          (let ((newobj (chain this
-                               (obj)
-                               (set-in (ps:array :fudges the-fudge)
-                                       newval))))
-            (chain (obj newobj))
-            (chain this (update-abilities newobj)))))
+	  (setf (chain this (obj) fudges) the-fudge)
+	  (chain this (update-abilities (^ this (obj))))))
       (^ this update-abilities)
       (tlambda (newch field)
 	(unless (chain this upload-timer)
 	  (setf (chain this upload-timer)
 		(chain window (set-timeout (chain this upload-data) 10000))))
 	(when (or t (eql field :classes))
-	  (let ((new-obj (chain this
-				(obj)
-				(set :ability-list
-				     (fixup-abilities newch)))))
-	    (chain this (obj new-obj)))))
+	  (setf (elt (^ this (obj)) :ability-list)
+		(fixup-abilities newch))))
       (^ this delete)
       (lambda ()
         (^ m
@@ -943,9 +993,12 @@
                :config xhr-config
 	       :deserialize (lambda (x) x)
                :data
-		 (chain this (obj) (to-j-s)))))
+		 (chain this (obj)))))
         (setf (chain this upload-timer) nil)))
-  view (lambda (c props children)
+  view (lambda (vnode)
+	 (let ((c (^ vnode state))
+	       (props (^ vnode attrs))
+	       (children (^ vnode children)))
          (htm
            (:div
              (:div
@@ -1869,19 +1922,25 @@
                            notes
                            :rows 30
                            :class-name "pure-input-1"))
-                       (:div :class-name "pure-u-1-12")))))))))
+                       (:div :class-name "pure-u-1-12"))))))))))
 
 
 
 (defmithril *account-settings
-    view (lambda (c props children)
+    view (lambda (vnode)
+	   (let ((c (^ vnode state))
+		 (props (^ vnode attrs))
+		 (children (^ vnode children)))
 	     (htm
 	      (:div
 	       (:*logout)
-	       (:*change-password)))))
+	       (:*change-password))))))
 
 (defmithril *logout
-    view (lambda (c props children)
+    view (lambda (vnode)
+	   (let ((c (^ vnode state))
+		 (props (^ vnode attrs))
+		 (children (^ vnode children)))
 	     (htm
 	      (:form
 	       :action (fixup-path "/logout/")
@@ -1894,15 +1953,18 @@
 	       (:input
 		:type "submit"
 		:class-name "pure-button"
-		:value "Logout")))))
+		:value "Logout"))))))
 
 (defmithril *change-password
-    controller
-  (constructor (props children)
+    oninit
+  (my-make-state (vnode)
     (setf (chain this password1) (chain m (prop ""))
 	  (chain this password2) (chain m (prop ""))
 	  (chain this state) (chain m (prop :initial))))
-    view (lambda (c)
+    view (lambda (vnode)
+	   (let ((c (^ vnode state))
+		 (props (^ vnode attrs))
+		 (children (^ vnode children)))
 	     (htm
 	      (:form
 	       :class-name "pure-form"
@@ -1930,11 +1992,9 @@
 						:raw t
 						:complete-callback
 						(tlambda ()
-						  (^ m (start-computation))
 						  (^ c (state :success))
 						  (^ c (password1 ""))
-						  (^ c (password2 ""))
-						  (^ m (end-computation)))))
+						  (^ c (password2 "")))))
 				   (alert "Passwords must match")))
 		 "Submit")
 		(cond
@@ -1942,18 +2002,21 @@
 		    ((eql (chain c (state)) :sent)
 		     (htm (:p "In-progress...")))
 		    ((eql (chain c (state)) :success)
-		     (htm (:p "Success!"))))))))
+		     (htm (:p "Success!")))))))))
 
 (defmithril *character-list
-    controller
-  (constructor ()
+    oninit
+  (my-make-state (vnode)
 	       (setf
 		(chain this edit)
 		(tlambda (id)
 		  (lambda ()
 		    (setf (chain window location)
 			  (+ (fixup-path "/character/") id "/"))))))
-  view (lambda (c props children)
+  view (lambda (vnode)
+	 (let ((c (^ vnode state))
+	       (props (^ vnode attrs))
+	       (children (^ vnode children)))
 	 (htm
 	  (:div
 	   (:table
@@ -1991,15 +2054,14 @@
 		"Account Settings"))
 	   (:p
 	    (:a :href "https://github.com/jasom/cl-fccs/issues"
-		"Bugs/Feature requests"))))))
+		"Bugs/Feature requests")))))))
 
 
 
 ; I want AJAX errors to be swallowed, but lets log in case there's anything interesting
-(setf (^ m deferred onerror) (lambda (e) (^ console (error e))))
+; (setf (^ m deferred onerror) (lambda (e) (^ console (error e))))
 
 ;; Keep session alive
 (set-interval (lambda ()
 		(post-data (fixup-path "/dummy/") ""))
 	      (* 60 60 1000))
-

@@ -1,10 +1,10 @@
 (in-package #:cl-fccs)
 #-ps(declaim (optimize (speed 1)(space 1) (debug 1)))
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-(defun key-fmt (k &rest args)
-  (make-keyword
-   (apply #'format nil (string k) args))))
+#-ps(eval-when (:compile-toplevel :load-toplevel :execute)
+      (defun key-fmt (k &rest args)
+	(make-keyword
+	 (apply #'format nil (string k) args))))
 
 (defp +career-levels+
     #-ps fccg::+career-levels+
@@ -28,8 +28,7 @@
 		     (t
 		      (push `',v result)))
 		   (push k result)) ht)
-	`(chain *Immutable
-		(from-j-s (create ,@result)))))
+	`(create ,@result)))
 
 (defun calculate-field (fn character)
   (or
@@ -157,16 +156,18 @@
 
 (defun get-abilities-for-level (clss level)
   (unloopable
-   (when (and (> level 0)
-	      (<= level 20)
-	      (aget clss +class-hash+))
+   (if
+    (and (> level 0)
+	 (<= level 20)
+	 (aget clss +class-hash+))
      (let ((lvlinfo (nth (1- level) (aget clss +class-hash+))))
        (loop for name in
 	    (or (loopable (aget :abilities lvlinfo))
 		(loopable (aget :special lvlinfo)))
 	  collect (make-ability-info :name name
 				     :from (make-fc-class :the-class clss
-							  :level level)))))))
+							  :level level))))
+     (list))))
 
 (defun get-class-abilities (character)
   (mapcan* (lambda (lvlinfo)
@@ -221,13 +222,10 @@
 	0)))
 
 (defun calculate-abilities (character)
-  (let ((abilities
-	 (append
-	  (get-class-abilities character)
-	  (get-specialty-abilities character)
-	  (get-species-abilities character))))
-    #+ps(ps:new (chain *immutable (*list abilities)))
-    #-ps abilities))
+  (append
+   (get-class-abilities character)
+   (get-specialty-abilities character)
+   (get-species-abilities character)))
 
 (defun ability-equal-p (ab1 ab2)
   (let ((f1 (aget :from ab1))

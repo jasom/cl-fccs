@@ -155,7 +155,7 @@
 <script>
  m.mount(~a,
          {view : function (){
-            return m.component(~a, {
+            return m(~a, {
                ~{~A: ~A~^,~%~}
             })}})
 </script>"
@@ -170,8 +170,6 @@
 	 (render-mithril "CharacterList"
 			 `("value" ,
 			   (with-output-to-string (s)
-			     
-			   (princ "Immutable.fromJS(" s)
 			   (encode-classish
 			    (coerce
 			     (loop with result = (array*)
@@ -189,8 +187,7 @@
 				    result)
 				finally (return result))
 			     'vector)
-			    s)
-			   (princ ")" s)))
+			    s)))
 			 s))))))
 	  
 (defapprule new-character-rule (and (property :request-method :POST)
@@ -283,9 +280,7 @@
 		  ,id
 		  "defaultValue"
 		  ,(with-output-to-string (s)
-					  (princ "fixupFcCharacter(Immutable.fromJS(" s)
-					  (encode-classish character s)
-					  (princ "))" s)))
+			    (encode-classish character s)))
 		s))))
 	  `(404
 	    (:content-type "text/html")
@@ -323,10 +318,7 @@
 		    `("characterId"
 		      ,id
 		      "defaultValue"
-		      ,(with-output-to-string (s)
-					      (princ "fixupFcCharacter(Immutable.fromJS(" s)
-					      (encode-classish character s)
-					      (princ "))" s)))
+		      ,(with-output-to-string (s) (encode-classish character s)))
 		    s))))
 	      `(404
 		(:content-type "text/html")

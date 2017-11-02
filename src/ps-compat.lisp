@@ -3,12 +3,20 @@
 ;#+ps(ps:lisp ps:*ps-lisp-library*)
 
 #+ps(defun aget (key table &optional def)
-      (chain table (get key def)))
+      (if (ps:in key table)
+	  (elt table key)
+	  def))
 
 #+ps(defun len (item)
-      (@ item (count)))
+      (ps:chain item (count)))
 #-ps(defun len (item)
       (length item))
+
+#+ps(defun truncate (item divisor)
+      (let ((val (if divisor
+		     (/ item divisor)
+		     item)))
+	(funcall (elt *math (if (< val 0) :ceil :floor)) val)))
 
 #-ps(eval-when (:compile-toplevel :load-toplevel :execute)
       (defun optimize-setf (exp)
@@ -56,8 +64,6 @@
 
 
 #+ps(defun mapcar (fun list)
-      (unless (chain *immutable *list (is-list list))
-	(setf list (ps:new (chain *immutable (*list list)))))
       (chain list (map fun)))
 #+ps(defun mapcar* (fun list) (mapcar fun list))
 #-ps(defun mapcar* (&rest args) (apply #'map 'vector args))
@@ -66,23 +72,20 @@
 #-ps(defun mapcan* (&rest args)
       (apply #'concatenate 'vector (apply #'map 'vector args)))
 
-#-ps(ps:defpsmacro list (&rest args)
-      `(ps:new (chain *immutable (*list (ps:array ,@args)))))
-  
 #-ps(defmacro aget (key table &optional def)
       `(gethash ,key ,table ,def))
 
 (defun amake ()
-  #+ps(ps:new (chain *immutable (*map)))
+  #+ps(ps:create)
   #-ps(make-hash-table :test #'equalp))
 
 (defun akeys (obj)
-  #+ps(chain obj (key-seq))
+  #+ps(chain obj (keys))
   #-ps(loop for k being the hash-keys of obj
 	   collect k))
 
 (defun ain (key table)
-  #+ps(chain table (has key))
+  #+ps(ps:in key table)
   #-ps(let ((v '#:dummy))
 	(not (eql (gethash key table v) v))))
 
@@ -277,7 +280,7 @@
 
 (defun unloopable (list)
   #-ps (coerce list 'vector)
-  #+ps (ps:new (chain *immutable (*list list))))
+  #+ps list)
 
 #+ps(defun array* (&rest items)
       (unloopable items))
@@ -286,17 +289,16 @@
 
 (defun loopable (list)
   #-ps (coerce list 'list)
-  #+ps (if list
-	   (chain list (to-array))
-	   nil))
+  #+ps list)
 
 #+ps(defun nth (n list)
-      (chain list (get n)))
+      (elt list n))
       
 #+ps(defun mapcan (fn list)
       (chain (mapcar fn list)
 	     (reduce (lambda (sofar val)
-		       (chain sofar (concat val))))))
+		       (chain sofar (concat val)))
+		     (ps:list))))
 
 #+ps(defun stringp (value)
       (= (typeof value) "string"))
@@ -307,21 +309,23 @@
 			      (funcall test
 				       (funcall key k)
 				       value))))
-	  (chain (mapcar key list) (contains value))))
+	  (chain (mapcar key list) (includes value))))
 
 #+ps(defun every (predicate list)
       (chain list (every predicate)))
 
 #+ps(defun listp (item)
-      (chain *immutable *list (is-list item)))
+      (eql
+       (chain *object prototype to-string (call item))
+       "[object Array]"))
 
 #+ps(defun emptyp (item)
       (and (listp item)
-	   (chain item (is-empty))))
+	   (= 0 (@ item length))))
 
 (defun range (start end &optional (step 1))
-  #-ps(loop for i from start below end by step)
-  #+ps(ps:new (chain *immutable (*range start end step))))
+  (loop for i from start below end by step collect i))
+  
 
 #+ps(defmacro tlet ((&rest bindings) &body b)
       `(funcall
@@ -354,30 +358,51 @@
 		     ,@b)))))
   '(progn))
 	  
+#-ps(defun ps-setf-fname (sym)
+      (make-symbol (format nil "__SETF_~A" (string sym))))
+
 #-ps(defun ps-get-setf-expansion (place &optional environment)
       (cond
 	((and (listp place) (gethash (car place) *ps-setf-expanders*))
 	 (funcall (gethash (car place) *ps-setf-expanders*) place environment))
-	(t
-	 (let ((new (gensym)))
-	   (values nil nil (list new) `(ps::ps-assign ,place ,new) place)))))
+	((or
+	  (not (consp place))
+	  (member (car place)
+		  '(ps:getprop
+		    ps:@
+		    ps:chain
+		    ps:aref
+		    ps:elt))
+	  t)
+	 (let ((new (gensym "NEW")))
+	   (values nil nil (list new) `(ps::ps-assign ,place ,new) place)))
+	((not (eql (ps::ps-macroexpand-1 place) place))
+	 (ps-get-setf-expansion (ps::ps-macroexpand-1 place)))
+	#+(or)(t
+	 (let ((new (gensym "NEW"))
+	       (argsyms (loop for item in (cdr place)
+			   if (symbolp item)
+			     collect (gensym (string item))
+			   else if (consp item)
+			     collect (gensym)
+			   else collect item))
+	       (args (loop for item in (cdr place)
+			     when (or (symbolp item) (consp item))
+			  collect item)))
+	   (values (remove-if-not #'symbolp argsyms) args (list new) `(,(ps-setf-fname (car place)) ,@argsyms ,new))))))
+	 
 
 (ps-define-setf-expander aget (key table &optional def &environment env)
-  (multiple-value-bind (dummies vals newval setter getter)
-      (ps-get-setf-expansion table env)
-    (declare (ignorable setter newval))
-    (let ((store (gensym))
-	  (key-dummy (gensym))
-	  (def-dummy (gensym)))
-      (values
-       `(,key-dummy ,def-dummy ,@dummies)
-       `(,key ,def ,@vals)
-       `(,store)
-       `(progn
-	  (setf ,table
-		(chain ,getter (set ,key-dummy ,store)))
-	  ,store)
-       `(aget ,key-dummy ,getter ,def-dummy)))))
+  (let ((store (gensym))
+	(table-dummy (gensym))
+	(key-dummy (gensym))
+	(def-dummy (gensym)))
+    (values
+     `(,key-dummy ,table-dummy ,@(when def (list def-dummy)))
+     `(,key ,table ,@(when def (list def)))
+     `(,store)
+     `(setf (elt ,table-dummy ,key-dummy) ,store)
+     `(aget ,key-dummy ,table-dummy ,@(when def (list def-dummy))))))
 
 #-ps(ps:defmacro+ps ps-incf (place &optional (n 1))
   (multiple-value-bind (temp-vars value-forms store-vars store-form access-form)
@@ -396,7 +421,7 @@
 	  (ps-get-setf-expansion place)
 	(declare (ignorable access-form))
 	`(progn
-	   ,(optimize-setf
+	   ,(#+(or)progn #-(or)optimize-setf
 	     `(let* (,@(loop for temp in temp-vars
 			  for value in value-forms
 			  collect (list temp value)))
