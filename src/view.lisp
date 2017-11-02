@@ -497,7 +497,7 @@
 				     (chain props (onchange val))
 				     (chain this (valid t)))
 				   (chain this (valid nil)))
-			       (^ m (redrawo))))
+			       (^ m (redraw))))
 			 (timeout (chain window (set-timeout fn 250))))
 		    (chain this (value rawval))
 		    (setf (chain this timeout) timeout)))))
