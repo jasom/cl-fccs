@@ -1,6 +1,5 @@
 . ./config.sh
-SOURCES="prefix.js
-    $MITHRILJS
+SOURCES="$MITHRILJS
     ./static/js/lz-string.js
     ./in.js
     ./exports.js"
