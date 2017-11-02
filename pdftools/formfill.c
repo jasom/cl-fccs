@@ -6,11 +6,19 @@
 
 void fill_a_field(fz_context *ctx, pdf_document *doc, char *field_name, char *value)
 {
-    pdf_obj *form = pdf_dict_getp(ctx,pdf_trailer(ctx,doc), "Root/AcroForm/Fields");
+    fprintf(stderr,"Filling: %s = %s\n",field_name, value);
+    fz_try(ctx)
+    {
+        pdf_obj *form = pdf_dict_getp(ctx,pdf_trailer(ctx,doc), "Root/AcroForm/Fields");
 
-    pdf_obj *field = pdf_lookup_field(ctx,form, field_name);
+        pdf_obj *field = pdf_lookup_field(ctx,form, field_name);
 
-    pdf_field_set_value(ctx, doc, field, value);
+        pdf_field_set_value(ctx, doc, field, value);
+    }
+    fz_catch(ctx)
+    {
+        fprintf(stderr,"Error filling field!\n");
+    }
 
 }
 
